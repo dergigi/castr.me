@@ -11,7 +11,6 @@
       "src": "/(.*)",
       "dest": "dist/server/index.js"
     }
-  ],
-  "framework": "node"
+  ]
 }
  
