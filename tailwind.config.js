@@ -21,24 +21,33 @@ module.exports = {
           900: '#2f3a98',
         },
       },
-      typography: {
+      typography: theme => ({
         DEFAULT: {
           css: {
-            maxWidth: '65ch',
-            color: 'rgb(var(--foreground-rgb))',
+            color: theme('colors.gray.900'),
             a: {
-              color: '#3d4de0',
+              color: theme('colors.brand.600'),
               '&:hover': {
-                color: '#2f3a98',
+                color: theme('colors.brand.800'),
               },
+            },
+            h1: {
+              color: theme('colors.gray.900'),
+              fontWeight: '700',
+            },
+            h2: {
+              color: theme('colors.gray.900'),
+              fontWeight: '600',
             },
           },
         },
-      },
+      }),
     },
   },
   plugins: [
     require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
+    require('@tailwindcss/forms')({
+      strategy: 'class',
+    }),
   ],
 } 
