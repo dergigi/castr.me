@@ -27,9 +27,9 @@ export default async function NpubPage({
   
   if (!npub) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Invalid Profile</h1>
+          <h1 className="text-2xl font-bold mb-4 text-gray-900">Invalid Profile</h1>
           <p className="text-gray-600">No profile ID provided.</p>
         </div>
       </div>
@@ -42,9 +42,9 @@ export default async function NpubPage({
   
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
+          <h1 className="text-2xl font-bold mb-4 text-gray-900">Profile Not Found</h1>
           <p className="text-gray-600">The requested profile could not be found.</p>
         </div>
       </div>
@@ -53,84 +53,84 @@ export default async function NpubPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {/* Profile Header */}
-          <div className="relative h-48 bg-gray-100">
-            {profile.banner && (
+      {/* Banner */}
+      <div className="relative h-64 bg-gray-900">
+        {profile.banner && (
+          <Image
+            src={profile.banner}
+            alt="Profile banner"
+            fill
+            className="object-cover opacity-80"
+            priority
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/60" />
+      </div>
+      
+      <div className="max-w-3xl mx-auto px-4 -mt-32">
+        {/* Profile Info */}
+        <div className="relative flex flex-col items-center text-center mb-12">
+          <div className="relative w-32 h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden mb-4">
+            {profile.image && (
               <Image
-                src={profile.banner}
-                alt="Profile banner"
+                src={profile.image}
+                alt={profile.name || 'Profile picture'}
                 fill
                 className="object-cover"
                 priority
               />
             )}
           </div>
-          
-          <div className="p-6">
-            <div className="flex items-center -mt-16 mb-6">
-              <div className="relative w-24 h-24 rounded-full border-4 border-white bg-gray-100 overflow-hidden">
-                {profile.image && (
-                  <Image
-                    src={profile.image}
-                    alt={profile.name || 'Profile picture'}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                )}
-              </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold">{profile.name || 'Anonymous'}</h1>
-                {profile.about && (
-                  <p className="text-gray-600 mt-1">{profile.about}</p>
-                )}
-              </div>
-            </div>
+          <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">{profile.name || 'Anonymous'}</h1>
+          {profile.about && (
+            <p className="text-gray-200 text-lg max-w-2xl drop-shadow-lg">{profile.about}</p>
+          )}
+        </div>
 
-            {/* Podcast Feed Link */}
-            <div className="mb-8">
-              <a
-                href={`/${npub}/rss.xml`}
-                className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                </svg>
-                Subscribe to podcast feed
-              </a>
-            </div>
+        {/* Podcast Feed Link */}
+        <div className="mb-12 text-center">
+          <a
+            href={`/${npub}/rss.xml`}
+            className="inline-flex items-center text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+            </svg>
+            RSS Feed
+          </a>
+        </div>
 
-            {/* Audio Posts */}
-            <div className="space-y-6">
-              {audioEvents.map((event: NDKEvent) => {
-                const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
-                return (
-                  <div key={event.id} className="border-t pt-6 first:border-t-0 first:pt-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-gray-800">{event.content.replace(audioUrl || '', '').trim()}</p>
-                      <span className="text-sm text-gray-500">
-                        {new Date(event.created_at * 1000).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {audioUrl && (
-                      <audio
-                        controls
-                        className="w-full h-10"
-                        src={audioUrl}
-                      >
-                        Your browser does not support the audio element.
-                      </audio>
-                    )}
+        {/* Audio Posts */}
+        <div className="space-y-8">
+          {audioEvents.map((event: NDKEvent) => {
+            const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
+            return (
+              <div key={event.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-gray-900 font-medium">{event.content.replace(audioUrl || '', '').trim()}</p>
+                    <span className="text-sm text-gray-500">
+                      {new Date(event.created_at * 1000).toLocaleDateString()}
+                    </span>
                   </div>
-                )
-              })}
-              {audioEvents.length === 0 && (
-                <p className="text-gray-600 text-center py-8">No audio posts found.</p>
-              )}
+                  {audioUrl && (
+                    <audio
+                      controls
+                      className="w-full h-10"
+                      src={audioUrl}
+                    >
+                      Your browser does not support the audio element.
+                    </audio>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+          {audioEvents.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No audio posts found.</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
