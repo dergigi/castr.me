@@ -28,17 +28,9 @@ export class NostrService {
 
   private getPubkeyFromNpub(npub: string): string | null {
     try {
-      if (!npub.startsWith('npub1')) {
-        return npub // Assume it's already a pubkey
-      }
-      
       const decoded = decode(npub)
-      if (decoded.type !== 'npub') {
-        console.error('Invalid npub format')
-        return null
-      }
-      
-      return decoded.data as string
+      if (decoded.type !== 'npub') return null
+      return decoded.data
     } catch (error) {
       console.error('Error decoding npub:', error)
       return null
@@ -47,9 +39,9 @@ export class NostrService {
 
   async getUserProfile(npub: string = this.defaultNpub) {
     try {
-      const decoded = decode(npub)
-      if (decoded.type !== 'npub') return null
-      const user = await this.ndk?.getUser({ pubkey: decoded.data })
+      const pubkey = this.getPubkeyFromNpub(npub)
+      if (!pubkey) return null
+      const user = await this.ndk?.getUser({ pubkey })
       if (!user) return null
       const profile = await user.fetchProfile()
       return profile
@@ -61,11 +53,11 @@ export class NostrService {
 
   async getAudioEvents(npub: string = this.defaultNpub) {
     try {
-      const decoded = decode(npub)
-      if (decoded.type !== 'npub') return []
+      const pubkey = this.getPubkeyFromNpub(npub)
+      if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [31990],
-        authors: [decoded.data],
+        authors: [pubkey],
       })
       return events ? Array.from(events) : []
     } catch (error) {
@@ -76,11 +68,11 @@ export class NostrService {
 
   async getKind1Events(npub: string = this.defaultNpub) {
     try {
-      const decoded = decode(npub)
-      if (decoded.type !== 'npub') return []
+      const pubkey = this.getPubkeyFromNpub(npub)
+      if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [1],
-        authors: [decoded.data],
+        authors: [pubkey],
         limit: 420,
       })
       return events ? Array.from(events) : []
