@@ -112,7 +112,7 @@ export class NostrService {
     return match ? match[0] : undefined;
   }
 
-  private extractTitle(event: NDKEvent): string {
+  extractTitle(event: NDKEvent): string {
     // Try to find a title tag
     const titleTag = event.tags.find(tag => tag[0] === 'title');
     if (titleTag) return titleTag[1];

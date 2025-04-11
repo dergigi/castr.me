@@ -11,8 +11,8 @@ let initialized = false
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { npub: string } }
-) {
+  { params }: { params: Promise<{ npub: string }> }
+): Promise<NextResponse> {
   try {
     // Initialize NDK if not already initialized
     if (!initialized) {
@@ -21,7 +21,8 @@ export async function GET(
       console.log('NDK initialized successfully')
     }
     
-    const npub = params.npub
+    const resolvedParams = await params
+    const npub = resolvedParams.npub
     const profile = await nostrService.getUserProfile(npub)
     const audioEvents = await nostrService.getAudioEvents(npub)
     

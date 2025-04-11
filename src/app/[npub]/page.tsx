@@ -1,6 +1,7 @@
 import { NostrService } from '@/services/nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
 import Image from 'next/image'
+import type { ReactElement } from 'react'
 
 // Create service instance
 const nostrService = new NostrService()
@@ -11,8 +12,8 @@ let initialized = false
 export default async function NpubPage({
   params,
 }: {
-  params: { npub: string }
-}) {
+  params: Promise<{ npub: string }>
+}): Promise<ReactElement> {
   // Initialize NDK if not already initialized
   if (!initialized) {
     await nostrService.initialize()
@@ -21,7 +22,8 @@ export default async function NpubPage({
   }
   
   // Get the npub from params
-  const npub = params.npub
+  const resolvedParams = await params
+  const npub = resolvedParams.npub
   
   if (!npub) {
     return (
@@ -56,10 +58,12 @@ export default async function NpubPage({
           {/* Profile Header */}
           <div className="relative h-48 bg-gray-100">
             {profile.banner && (
-              <img
+              <Image
                 src={profile.banner}
                 alt="Profile banner"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                priority
               />
             )}
           </div>
@@ -68,10 +72,12 @@ export default async function NpubPage({
             <div className="flex items-center -mt-16 mb-6">
               <div className="relative w-24 h-24 rounded-full border-4 border-white bg-gray-100 overflow-hidden">
                 {profile.image && (
-                  <img
+                  <Image
                     src={profile.image}
                     alt={profile.name || 'Profile picture'}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    priority
                   />
                 )}
               </div>

@@ -1,6 +1,8 @@
 import express from 'express';
-import { NostrService } from '../services/nostr/NostrService';
-import { PodcastFeedGenerator } from '../services/podcast/PodcastFeedGenerator';
+import { NostrService } from '@/services/nostr/NostrService';
+import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator';
+import { NDKEvent } from '@nostr-dev-kit/ndk';
+import { NostrProfile } from '@/services/nostr/NostrService';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,7 +28,7 @@ app.get('/', (req, res) => {
 // Main route handler
 app.get('/:npub', async (req, res) => {
   const npub = req.params.npub;
-  const profile = await nostrService.getUserProfile(npub);
+  const profile = await nostrService.getUserProfile(npub) as NostrProfile;
   
   if (!profile) {
     return res.status(404).send('Profile not found');
@@ -38,7 +40,7 @@ app.get('/:npub', async (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>${profile.profile?.name || 'Unknown'} - Podcast Feed</title>
+        <title>${profile.name || 'Unknown'} - Podcast Feed</title>
         <style>
           body { font-family: system-ui; max-width: 800px; margin: 0 auto; padding: 20px; }
           .profile { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
@@ -51,21 +53,25 @@ app.get('/:npub', async (req, res) => {
       </head>
       <body>
         <div class="profile">
-          <img src="${profile.profile?.image || 'https://via.placeholder.com/150'}" alt="${profile.profile?.name || 'Profile'}">
+          <img src="${profile.picture || 'https://via.placeholder.com/150'}" alt="${profile.name || 'Profile'}">
           <div class="profile-info">
-            <h1>${profile.profile?.name || 'Unknown'}</h1>
-            <p>${profile.profile?.about || 'No description available'}</p>
+            <h1>${profile.name || 'Unknown'}</h1>
+            <p>${profile.about || 'No description available'}</p>
             <p>RSS Feed: <a href="/feed/${npub}">/feed/${npub}</a></p>
           </div>
         </div>
         <h2>Episodes</h2>
-        ${events.map(event => `
-          <div class="episode">
-            <h3>${event.title}</h3>
-            <p>${event.content}</p>
-            <audio controls src="${event.audioUrl}"></audio>
-          </div>
-        `).join('')}
+        ${events.map((event: NDKEvent) => {
+          const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0];
+          const title = nostrService.extractTitle(event);
+          return `
+            <div class="episode">
+              <h3>${title}</h3>
+              <p>${event.content}</p>
+              ${audioUrl ? `<audio controls src="${audioUrl}"></audio>` : ''}
+            </div>
+          `;
+        }).join('')}
       </body>
     </html>
   `);
@@ -74,7 +80,7 @@ app.get('/:npub', async (req, res) => {
 // RSS/XML feed route
 app.get('/feed/:npub', async (req, res) => {
   const npub = req.params.npub;
-  const profile = await nostrService.getUserProfile(npub);
+  const profile = await nostrService.getUserProfile(npub) as NostrProfile;
   
   if (!profile) {
     return res.status(404).send('Profile not found');
