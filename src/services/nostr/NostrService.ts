@@ -15,10 +15,11 @@ export class NostrService {
     await this.ndk.connect();
   }
 
-  async getUserProfile(npub: string = this.defaultNpub) {
+  async getUserProfile(npub: string = this.defaultNpub): Promise<NDKUser | null> {
     try {
       const user = this.ndk.getUser({ npub });
-      return await user.fetchProfile();
+      await user.fetchProfile();
+      return user;
     } catch (error) {
       console.error("Error fetching user profile:", error);
       return null;

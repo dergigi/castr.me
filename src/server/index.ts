@@ -25,51 +25,67 @@ app.get('/', (req, res) => {
 
 // Main route handler
 app.get('/:npub', async (req, res) => {
-  try {
-    const { npub } = req.params;
-    const profile = await nostrService.getUserProfile(npub);
-    
-    if (!profile) {
-      return res.status(404).send('Profile not found');
-    }
-    
-    const audioEvents = await nostrService.getAudioEvents(npub);
-
-    if (res.locals.format === 'xml') {
-      const feed = feedGenerator.generateFeed(profile, audioEvents);
-      res.type('application/rss+xml').send(feed);
-    } else {
-      // For now, just send a simple HTML response
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${profile.name || 'Untitled Podcast'}</title>
-            <meta charset="utf-8">
-            <style>
-              body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-              .episode { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
-              audio { width: 100%; margin-top: 10px; }
-            </style>
-          </head>
-          <body>
-            <h1>${profile.name || 'Untitled Podcast'}</h1>
-            <p>${profile.about || ''}</p>
-            ${audioEvents.map(event => `
-              <div class="episode">
-                <h2>${event.title || 'Untitled Episode'}</h2>
-                <p>${event.content}</p>
-                <audio controls src="${event.audioUrl}"></audio>
-              </div>
-            `).join('')}
-          </body>
-        </html>
-      `);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Error generating feed');
+  const npub = req.params.npub;
+  const profile = await nostrService.getUserProfile(npub);
+  
+  if (!profile) {
+    return res.status(404).send('Profile not found');
   }
+
+  const events = await nostrService.getAudioEvents(npub);
+  const feed = feedGenerator.generateFeed(profile, events);
+  
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${profile.profile?.name || 'Unknown'} - Podcast Feed</title>
+        <style>
+          body { font-family: system-ui; max-width: 800px; margin: 0 auto; padding: 20px; }
+          .profile { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+          .profile img { width: 150px; height: 150px; border-radius: 75px; object-fit: cover; }
+          .profile-info { flex: 1; }
+          .episode { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+          .episode h3 { margin-top: 0; }
+          .episode audio { width: 100%; margin-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="profile">
+          <img src="${profile.profile?.image || 'https://via.placeholder.com/150'}" alt="${profile.profile?.name || 'Profile'}">
+          <div class="profile-info">
+            <h1>${profile.profile?.name || 'Unknown'}</h1>
+            <p>${profile.profile?.about || 'No description available'}</p>
+            <p>RSS Feed: <a href="/feed/${npub}">/feed/${npub}</a></p>
+          </div>
+        </div>
+        <h2>Episodes</h2>
+        ${events.map(event => `
+          <div class="episode">
+            <h3>${event.title}</h3>
+            <p>${event.content}</p>
+            <audio controls src="${event.audioUrl}"></audio>
+          </div>
+        `).join('')}
+      </body>
+    </html>
+  `);
+});
+
+// RSS/XML feed route
+app.get('/feed/:npub', async (req, res) => {
+  const npub = req.params.npub;
+  const profile = await nostrService.getUserProfile(npub);
+  
+  if (!profile) {
+    return res.status(404).send('Profile not found');
+  }
+
+  const events = await nostrService.getAudioEvents(npub);
+  const feed = feedGenerator.generateFeed(profile, events);
+  
+  res.set('Content-Type', 'application/xml');
+  res.send(feed);
 });
 
 app.listen(port, () => {

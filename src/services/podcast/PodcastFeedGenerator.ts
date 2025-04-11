@@ -1,64 +1,42 @@
-import { PodcastFeed, AudioEvent } from "../../types";
-import { NDKUserProfile } from "@nostr-dev-kit/ndk";
+import { NDKUser } from "@nostr-dev-kit/ndk";
+import { AudioEvent } from "../../types";
 
 export class PodcastFeedGenerator {
-  generateFeed(profile: NDKUserProfile, events: AudioEvent[]): string {
-    const feed: PodcastFeed = {
-      title: profile.name || 'Untitled Podcast',
-      description: profile.about || '',
-      image: profile.image,
-      author: profile.name || '',
-      email: profile.nip05,
-      items: events.map(event => ({
-        title: event.title || 'Untitled Episode',
-        description: event.content,
-        audioUrl: event.audioUrl!,
-        pubDate: new Date(event.created_at * 1000),
-        author: profile.name
-      }))
-    };
+  generateFeed(profile: NDKUser, events: AudioEvent[]): string {
+    const title = profile.profile?.name || 'Unknown Podcast';
+    const description = profile.profile?.about || 'No description available';
+    const image = profile.profile?.image || 'https://via.placeholder.com/150';
+    const link = `https://castr.app/${profile.npub}`;
 
-    return this.generateXML(feed);
-  }
+    const items = events.map(event => `
+      <item>
+        <title>${event.title}</title>
+        <description>${event.content}</description>
+        <enclosure url="${event.audioUrl}" type="audio/mpeg" length="0"/>
+        <guid>${event.id}</guid>
+        <pubDate>${new Date(event.created_at * 1000).toUTCString()}</pubDate>
+      </item>
+    `).join('\n');
 
-  private generateXML(feed: PodcastFeed): string {
     return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" 
-     xmlns:podcast="https://podcastindex.org/namespace/1.0"
-     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
   <channel>
-    <title>${this.escapeXml(feed.title)}</title>
-    <description>${this.escapeXml(feed.description)}</description>
-    ${feed.image ? `<image><url>${this.escapeXml(feed.image)}</url></image>` : ''}
-    <author>${this.escapeXml(feed.author)}</author>
-    ${feed.email ? `<itunes:author>${this.escapeXml(feed.email)}</itunes:author>` : ''}
-    <podcast:medium>podcast</podcast:medium>
-    ${feed.items.map(item => this.generateItemXML(item)).join('\n    ')}
+    <title>${title}</title>
+    <description>${description}</description>
+    <link>${link}</link>
+    <image>
+      <url>${image}</url>
+      <title>${title}</title>
+      <link>${link}</link>
+    </image>
+    <itunes:image href="${image}"/>
+    <language>en-us</language>
+    <itunes:author>${profile.profile?.name || 'Unknown'}</itunes:author>
+    <itunes:summary>${description}</itunes:summary>
+    <itunes:type>episodic</itunes:type>
+    <itunes:explicit>false</itunes:explicit>
+    ${items}
   </channel>
 </rss>`;
-  }
-
-  private generateItemXML(item: PodcastFeed['items'][0]): string {
-    return `<item>
-      <title>${this.escapeXml(item.title)}</title>
-      ${item.description ? `<description>${this.escapeXml(item.description)}</description>` : ''}
-      <enclosure url="${this.escapeXml(item.audioUrl)}" type="audio/mpeg" />
-      <pubDate>${item.pubDate.toUTCString()}</pubDate>
-      ${item.author ? `<itunes:author>${this.escapeXml(item.author)}</itunes:author>` : ''}
-      ${item.duration ? `<itunes:duration>${this.escapeXml(item.duration)}</itunes:duration>` : ''}
-    </item>`;
-  }
-
-  private escapeXml(unsafe: string): string {
-    return unsafe.replace(/[<>&'"]/g, c => {
-      switch (c) {
-        case '<': return '&lt;';
-        case '>': return '&gt;';
-        case '&': return '&amp;';
-        case "'": return '&apos;';
-        case '"': return '&quot;';
-        default: return c;
-      }
-    });
   }
 } 
