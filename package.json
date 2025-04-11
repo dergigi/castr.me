@@ -7,7 +7,9 @@
     "start": "node dist/server/index.js",
     "dev": "ts-node-dev src/server/index.ts",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
   },
   "keywords": [
     "nostr",
@@ -27,6 +29,9 @@
     "@types/jest": "^29.0.0",
     "@types/node": "^20.0.0",
     "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.0.0",
     "jest": "^29.0.0",
     "supertest": "^7.1.0",
     "ts-jest": "^29.0.0",

@@ -1,11 +1,19 @@
 import { NostrService } from '../src/services/nostr/NostrService';
 import { NDKEvent } from '@nostr-dev-kit/ndk';
+import { AudioEvent } from '../src/types';
+
+// Create a test class that extends NostrService to access protected methods
+class TestNostrService extends NostrService {
+  public testTransformToAudioEvent(event: NDKEvent): AudioEvent {
+    return this.transformToAudioEvent(event);
+  }
+}
 
 describe('NostrService', () => {
-  let nostrService: NostrService;
+  let nostrService: TestNostrService;
 
   beforeEach(() => {
-    nostrService = new NostrService();
+    nostrService = new TestNostrService();
   });
 
   describe('defaultNpub', () => {
@@ -66,6 +74,32 @@ describe('NostrService', () => {
       const title = nostrService['extractTitle'](event);
       expect(title.length).toBe(100);
       expect(title.endsWith('...')).toBe(true);
+    });
+  });
+
+  describe('transformToAudioEvent', () => {
+    it('should transform NDKEvent to AudioEvent', () => {
+      const mockNDKEvent: NDKEvent = {
+        id: 'test-id',
+        pubkey: 'test-pubkey',
+        created_at: 1234567890,
+        content: 'Test content with https://example.com/audio.mp3',
+        tags: [['title', 'Test Title']],
+        sig: 'test-sig'
+      } as NDKEvent;
+
+      const result = nostrService.testTransformToAudioEvent(mockNDKEvent);
+
+      expect(result).toEqual({
+        id: 'test-id',
+        pubkey: 'test-pubkey',
+        created_at: 1234567890,
+        content: 'Test content with https://example.com/audio.mp3',
+        tags: [['title', 'Test Title']],
+        sig: 'test-sig',
+        audioUrl: 'https://example.com/audio.mp3',
+        title: 'Test Title'
+      });
     });
   });
 }); 

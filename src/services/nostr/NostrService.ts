@@ -11,7 +11,7 @@ export class NostrService {
     });
   }
 
-  async initialize() {
+  async initialize(): Promise<void> {
     await this.ndk.connect();
   }
 
@@ -58,7 +58,7 @@ export class NostrService {
     );
   }
 
-  private transformToAudioEvent(event: NDKEvent): AudioEvent {
+  protected transformToAudioEvent(event: NDKEvent): AudioEvent {
     const audioUrl = this.extractAudioUrl(event.content);
     return {
       id: event.id,

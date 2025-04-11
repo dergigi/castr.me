@@ -33,7 +33,6 @@ app.get('/:npub', async (req, res) => {
   }
 
   const events = await nostrService.getAudioEvents(npub);
-  const feed = feedGenerator.generateFeed(profile, events);
   
   res.send(`
     <!DOCTYPE html>
