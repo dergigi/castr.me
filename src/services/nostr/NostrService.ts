@@ -13,18 +13,17 @@ export interface NostrProfile {
 }
 
 export class NostrService {
-  private ndk: NDK
-  private defaultRelay = 'wss://relay.nostr.band'
-  private defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
+  private ndk: NDK | null = null
+  private readonly defaultRelay = 'wss://relay.nostr.band'
+  private readonly defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
-  constructor() {
-    this.ndk = new NDK({
-      explicitRelayUrls: [this.defaultRelay],
-    })
-  }
-
-  async initialize(): Promise<void> {
-    await this.ndk.connect();
+  async initialize() {
+    if (!this.ndk) {
+      this.ndk = new NDK({
+        explicitRelayUrls: [this.defaultRelay],
+      })
+      await this.ndk.connect()
+    }
   }
 
   private getPubkeyFromNpub(npub: string): string | null {
@@ -46,43 +45,52 @@ export class NostrService {
     }
   }
 
-  async getUserProfile(npub: string): Promise<NostrProfile | null> {
+  async getUserProfile(npub: string = this.defaultNpub) {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return null
-
-      const user = await this.ndk.getUser({ pubkey })
+      const decoded = decode(npub)
+      if (decoded.type !== 'npub') return null
+      const user = await this.ndk?.getUser({ pubkey: decoded.data })
       if (!user) return null
-
       const profile = await user.fetchProfile()
-      return profile || null
+      return profile
     } catch (error) {
       console.error('Error fetching user profile:', error)
       return null
     }
   }
 
-  async getAudioEvents(npub: string): Promise<NDKEvent[]> {
+  async getAudioEvents(npub: string = this.defaultNpub) {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return []
-
-      const user = await this.ndk.getUser({ pubkey })
-      if (!user) return []
-
-      const events = await this.ndk.fetchEvents({
-        kinds: [1],
-        authors: [pubkey],
+      const decoded = decode(npub)
+      if (decoded.type !== 'npub') return []
+      const events = await this.ndk?.fetchEvents({
+        kinds: [31990],
+        authors: [decoded.data],
       })
-
-      return Array.from(events)
+      return events ? Array.from(events) : []
     } catch (error) {
       console.error('Error fetching audio events:', error)
       return []
     }
   }
 
-  private isAudioEvent(event: NDKEvent): boolean {
+  async getKind1Events(npub: string = this.defaultNpub) {
+    try {
+      const decoded = decode(npub)
+      if (decoded.type !== 'npub') return []
+      const events = await this.ndk?.fetchEvents({
+        kinds: [1],
+        authors: [decoded.data],
+        limit: 420,
+      })
+      return events ? Array.from(events) : []
+    } catch (error) {
+      console.error('Error fetching kind1 events:', error)
+      return []
+    }
+  }
+
+  isAudioEvent(event: NDKEvent): boolean {
     const content = event.content;
     return (
       content.includes('.mp3') ||

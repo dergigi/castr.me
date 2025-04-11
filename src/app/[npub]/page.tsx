@@ -1,4 +1,5 @@
 import { NostrService } from '@/services/nostr/NostrService'
+import { NDKEvent } from '@nostr-dev-kit/ndk'
 
 // Create service instance
 const nostrService = new NostrService()
@@ -32,6 +33,8 @@ export default async function NpubPage({
   }
 
   const profile = await nostrService.getUserProfile(npub)
+  const events = await nostrService.getKind1Events(npub)
+  const audioEvents = events.filter(event => nostrService.isAudioEvent(event))
   
   if (!profile) {
     return (
@@ -64,6 +67,23 @@ export default async function NpubPage({
               >
                 {`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/${npub}/rss.xml`}
               </a>
+            </div>
+
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Latest Audio Posts</h2>
+              <div className="space-y-4">
+                {audioEvents.map((event: NDKEvent) => (
+                  <div key={event.id} className="border rounded-lg p-4">
+                    <p className="text-gray-800 whitespace-pre-wrap">{event.content}</p>
+                    <div className="mt-2 text-sm text-gray-500">
+                      {new Date(event.created_at * 1000).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+                {audioEvents.length === 0 && (
+                  <p className="text-gray-600">No audio posts found.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
