@@ -7,7 +7,20 @@ export default async function NpubPage({
 }: {
   params: { npub: string }
 }) {
-  const profile = await nostrService.getUserProfile(params.npub)
+  // Ensure params is properly typed and awaited
+  const npub = params?.npub
+  if (!npub) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Invalid Profile</h1>
+          <p className="text-gray-600">No profile ID provided.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const profile = await nostrService.getUserProfile(npub)
   
   if (!profile) {
     return (
@@ -35,10 +48,10 @@ export default async function NpubPage({
                 Subscribe to this profile's podcast feed using the link below:
               </p>
               <a
-                href={`/api/feed/${params.npub}`}
+                href={`/api/feed/${npub}`}
                 className="text-blue-600 hover:text-blue-800 break-all"
               >
-                {`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/feed/${params.npub}`}
+                {`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/feed/${npub}`}
               </a>
             </div>
           </div>
