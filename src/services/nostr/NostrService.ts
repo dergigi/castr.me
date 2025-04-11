@@ -16,22 +16,35 @@ export class NostrService {
   }
 
   async getUserProfile(npub: string = this.defaultNpub) {
-    const user = this.ndk.getUser({ npub });
-    return await user.fetchProfile();
+    try {
+      const user = this.ndk.getUser({ npub });
+      return await user.fetchProfile();
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
   }
 
   async getAudioEvents(npub: string = this.defaultNpub): Promise<AudioEvent[]> {
-    const filter: NDKFilter = {
-      kinds: [1],
-      authors: [npub],
-      since: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60, // Last 30 days
-    };
+    try {
+      const user = this.ndk.getUser({ npub });
+      
+      const filter: NDKFilter = {
+        kinds: [1],
+        authors: [user.pubkey],
+        since: Math.floor(Date.now() / 1000) - 420 * 24 * 60 * 60, // Last 420 days
+        limit: 420
+      };
 
-    const events = await this.ndk.fetchEvents(filter);
-    return Array.from(events)
-      .filter(event => this.isAudioEvent(event))
-      .map(event => this.transformToAudioEvent(event))
-      .filter((event): event is AudioEvent => event.audioUrl !== undefined);
+      const events = await this.ndk.fetchEvents(filter);
+      return Array.from(events)
+        .filter(event => this.isAudioEvent(event))
+        .map(event => this.transformToAudioEvent(event))
+        .filter((event): event is AudioEvent => event.audioUrl !== undefined);
+    } catch (error) {
+      console.error("Error fetching audio events:", error);
+      return [];
+    }
   }
 
   private isAudioEvent(event: NDKEvent): boolean {
