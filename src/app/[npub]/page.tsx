@@ -59,10 +59,10 @@ export default async function NpubPage({
                 Subscribe to this profile's podcast feed using the link below:
               </p>
               <a
-                href={`/api/feed/${npub}`}
+                href={`/${npub}/rss.xml`}
                 className="text-blue-600 hover:text-blue-800 break-all"
               >
-                {`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/feed/${npub}`}
+                {`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/${npub}/rss.xml`}
               </a>
             </div>
           </div>
