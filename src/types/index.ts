@@ -1,4 +1,4 @@
-export interface AudioEvent {
+export interface MediaEvent {
   id: string;
   pubkey: string;
   created_at: number;
@@ -6,6 +6,8 @@ export interface AudioEvent {
   tags: string[][];
   sig: string;
   audioUrl?: string;
+  videoUrl?: string;
+  mediaType?: 'audio' | 'video';
   title?: string;
 }
 

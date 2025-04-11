@@ -1,7 +1,7 @@
 import NDK from '@nostr-dev-kit/ndk'
 import { decode } from 'nostr-tools/nip19'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
-import { AudioEvent } from "../../types";
+import { MediaEvent } from "../../types";
 
 export interface NostrProfile {
   name?: string
@@ -53,7 +53,7 @@ export class NostrService {
     }
   }
 
-  async getAudioEvents(npub: string = this.defaultNpub) {
+  async getMediaEvents(npub: string = this.defaultNpub) {
     try {
       const pubkey = this.getPubkeyFromNpub(npub)
       if (!pubkey) return []
@@ -63,7 +63,7 @@ export class NostrService {
       })
       return events ? Array.from(events) : []
     } catch (error) {
-      console.error('Error fetching audio events:', error)
+      console.error('Error fetching media events:', error)
       return []
     }
   }
@@ -84,18 +84,24 @@ export class NostrService {
     }
   }
 
-  isAudioEvent(event: NDKEvent): boolean {
+  isMediaEvent(event: NDKEvent): boolean {
     const content = event.content;
     return (
       content.includes('.mp3') ||
       content.includes('.m4a') ||
       content.includes('.wav') ||
-      content.includes('.ogg')
+      content.includes('.ogg') ||
+      content.includes('.mp4') ||
+      content.includes('.webm') ||
+      content.includes('.mov')
     );
   }
 
-  protected transformToAudioEvent(event: NDKEvent): AudioEvent {
+  protected transformToMediaEvent(event: NDKEvent): MediaEvent {
     const audioUrl = this.extractAudioUrl(event.content);
+    const videoUrl = this.extractVideoUrl(event.content);
+    const mediaType = videoUrl ? 'video' : audioUrl ? 'audio' : undefined;
+    
     return {
       id: event.id,
       pubkey: event.pubkey,
@@ -104,12 +110,20 @@ export class NostrService {
       tags: event.tags,
       sig: event.sig || '',
       audioUrl,
+      videoUrl,
+      mediaType,
       title: this.extractTitle(event)
     };
   }
 
   private extractAudioUrl(content: string): string | undefined {
     const urlRegex = /(https?:\/\/[^\s]+\.(?:mp3|m4a|wav|ogg))/i;
+    const match = content.match(urlRegex);
+    return match ? match[0] : undefined;
+  }
+
+  private extractVideoUrl(content: string): string | undefined {
+    const urlRegex = /(https?:\/\/[^\s]+\.(?:mp4|webm|mov))/i;
     const match = content.match(urlRegex);
     return match ? match[0] : undefined;
   }

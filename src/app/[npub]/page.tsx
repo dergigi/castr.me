@@ -38,7 +38,7 @@ export default async function NpubPage({
 
   const profile = await nostrService.getUserProfile(npub)
   const events = await nostrService.getKind1Events(npub)
-  const audioEvents = events.filter(event => nostrService.isAudioEvent(event))
+  const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
   
   if (!profile) {
     return (
@@ -100,11 +100,12 @@ export default async function NpubPage({
           </a>
         </div>
 
-        {/* Audio Posts */}
+        {/* Media Posts */}
         <div className="space-y-6">
-          {audioEvents.map((event: NDKEvent) => {
+          {mediaEvents.map((event: NDKEvent) => {
             const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
-            const cleanContent = event.content.replace(audioUrl || '', '').trim()
+            const videoUrl = event.content.match(/https?:\/\/[^\s]+\.(mp4|webm|mov)/)?.[0]
+            const cleanContent = event.content.replace(audioUrl || videoUrl || '', '').trim()
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
@@ -129,13 +130,24 @@ export default async function NpubPage({
                       </audio>
                     </div>
                   )}
+                  {videoUrl && (
+                    <div className="mt-4">
+                      <video
+                        controls
+                        className="w-full rounded-lg"
+                        src={videoUrl}
+                      >
+                        Your browser does not support the video element.
+                      </video>
+                    </div>
+                  )}
                 </div>
               </div>
             )
           })}
-          {audioEvents.length === 0 && (
+          {mediaEvents.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-gray-500">No audio posts found.</p>
+              <p className="text-gray-500">No media posts found.</p>
             </div>
           )}
         </div>
