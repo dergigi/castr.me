@@ -8,27 +8,53 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#f5f7ff',
-          100: '#ebf0fe',
-          200: '#dce3fd',
-          300: '#c3cffc',
-          400: '#a5b4fa',
-          500: '#8293f8',
-          600: '#5668f5',
-          700: '#3d4de0',
-          800: '#3240bd',
-          900: '#2f3a98',
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       typography: theme => ({
         DEFAULT: {
           css: {
             color: theme('colors.gray.900'),
             a: {
-              color: theme('colors.brand.600'),
+              color: theme('colors.primary.DEFAULT'),
               '&:hover': {
-                color: theme('colors.brand.800'),
+                color: theme('colors.primary.DEFAULT/0.8'),
               },
             },
             h1: {
