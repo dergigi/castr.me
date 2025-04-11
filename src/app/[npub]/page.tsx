@@ -1,12 +1,23 @@
 import { NostrService } from '@/services/nostr/NostrService'
 
+// Create service instance
 const nostrService = new NostrService()
+
+// Initialize NDK connection
+let initialized = false
 
 export default async function NpubPage({
   params,
 }: {
   params: { npub: string }
 }) {
+  // Initialize NDK if not already initialized
+  if (!initialized) {
+    await nostrService.initialize()
+    initialized = true
+    console.log('NDK initialized successfully')
+  }
+  
   // Ensure params is properly typed and awaited
   const npub = params?.npub
   if (!npub) {
