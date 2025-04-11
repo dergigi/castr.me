@@ -1,50 +1,61 @@
-import NDK, { NDKEvent, NDKUser, NDKFilter } from "@nostr-dev-kit/ndk";
+import NDK from '@nostr-dev-kit/ndk'
+import { decode } from 'nostr-tools/nip19'
+import { NDKEvent } from '@nostr-dev-kit/ndk'
 import { AudioEvent } from "../../types";
 
+export interface NostrProfile {
+  name?: string
+  about?: string
+  picture?: string
+  nip05?: string
+  lud16?: string
+  lud06?: string
+}
+
 export class NostrService {
-  private ndk: NDK;
-  private defaultNpub: string = "npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n";
+  private ndk: NDK
+  private defaultRelay = 'wss://relay.nostr.band'
+  private defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
   constructor() {
     this.ndk = new NDK({
-      explicitRelayUrls: ["wss://relay.nostr.band"],
-    });
+      explicitRelayUrls: [this.defaultRelay],
+    })
   }
 
   async initialize(): Promise<void> {
     await this.ndk.connect();
   }
 
-  async getUserProfile(npub: string = this.defaultNpub): Promise<NDKUser | null> {
+  async getUserProfile(npub: string): Promise<NostrProfile | null> {
     try {
-      const user = this.ndk.getUser({ npub });
-      await user.fetchProfile();
-      return user;
+      const { data: pubkey } = decode(npub)
+      const user = await this.ndk.getUser({ pubkey })
+      if (!user) return null
+
+      const profile = await user.fetchProfile()
+      return profile || null
     } catch (error) {
-      console.error("Error fetching user profile:", error);
-      return null;
+      console.error('Error fetching user profile:', error)
+      return null
     }
   }
 
-  async getAudioEvents(npub: string = this.defaultNpub): Promise<AudioEvent[]> {
+  async getAudioEvents(npub: string): Promise<NDKEvent[]> {
     try {
-      const user = this.ndk.getUser({ npub });
-      
-      const filter: NDKFilter = {
-        kinds: [1],
-        authors: [user.pubkey],
-        since: Math.floor(Date.now() / 1000) - 420 * 24 * 60 * 60, // Last 420 days
-        limit: 420
-      };
+      const { data: pubkey } = decode(npub)
+      const user = await this.ndk.getUser({ pubkey })
+      if (!user) return []
 
-      const events = await this.ndk.fetchEvents(filter);
+      const events = await this.ndk.fetchEvents({
+        kinds: [1],
+        authors: [pubkey],
+      })
+
       return Array.from(events)
-        .filter(event => this.isAudioEvent(event))
-        .map(event => this.transformToAudioEvent(event))
-        .filter((event): event is AudioEvent => event.audioUrl !== undefined);
     } catch (error) {
-      console.error("Error fetching audio events:", error);
-      return [];
+      console.error('Error fetching audio events:', error)
+      return []
     }
   }
 
