@@ -1,5 +1,6 @@
 import { NostrService } from '@/services/nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
+import Image from 'next/image'
 
 // Create service instance
 const nostrService = new NostrService()
@@ -19,8 +20,9 @@ export default async function NpubPage({
     console.log('NDK initialized successfully')
   }
   
-  // Ensure params is properly typed and awaited
-  const npub = params?.npub
+  // Get the npub from params
+  const npub = params.npub
+  
   if (!npub) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -48,42 +50,79 @@ export default async function NpubPage({
   }
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h1 className="text-3xl font-bold mb-4">{profile.name || 'Anonymous'}</h1>
-          {profile.about && (
-            <p className="text-gray-600 mb-6">{profile.about}</p>
-          )}
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Podcast Feed</h2>
-              <p className="text-gray-600 mb-2">
-                Subscribe to this profile's podcast feed using the link below:
-              </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Profile Header */}
+          <div className="relative h-48 bg-gray-100">
+            {profile.banner && (
+              <img
+                src={profile.banner}
+                alt="Profile banner"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+          
+          <div className="p-6">
+            <div className="flex items-center -mt-16 mb-6">
+              <div className="relative w-24 h-24 rounded-full border-4 border-white bg-gray-100 overflow-hidden">
+                {profile.image && (
+                  <img
+                    src={profile.image}
+                    alt={profile.name || 'Profile picture'}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+              <div className="ml-4">
+                <h1 className="text-2xl font-bold">{profile.name || 'Anonymous'}</h1>
+                {profile.about && (
+                  <p className="text-gray-600 mt-1">{profile.about}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Podcast Feed Link */}
+            <div className="mb-8">
               <a
                 href={`/${npub}/rss.xml`}
-                className="text-blue-600 hover:text-blue-800 break-all"
+                className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
               >
-                {`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/${npub}/rss.xml`}
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+                Subscribe to podcast feed
               </a>
             </div>
 
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Latest Audio Posts</h2>
-              <div className="space-y-4">
-                {audioEvents.map((event: NDKEvent) => (
-                  <div key={event.id} className="border rounded-lg p-4">
-                    <p className="text-gray-800 whitespace-pre-wrap">{event.content}</p>
-                    <div className="mt-2 text-sm text-gray-500">
-                      {new Date(event.created_at * 1000).toLocaleString()}
+            {/* Audio Posts */}
+            <div className="space-y-6">
+              {audioEvents.map((event: NDKEvent) => {
+                const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
+                return (
+                  <div key={event.id} className="border-t pt-6 first:border-t-0 first:pt-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-gray-800">{event.content.replace(audioUrl || '', '').trim()}</p>
+                      <span className="text-sm text-gray-500">
+                        {new Date(event.created_at * 1000).toLocaleDateString()}
+                      </span>
                     </div>
+                    {audioUrl && (
+                      <audio
+                        controls
+                        className="w-full h-10"
+                        src={audioUrl}
+                      >
+                        Your browser does not support the audio element.
+                      </audio>
+                    )}
                   </div>
-                ))}
-                {audioEvents.length === 0 && (
-                  <p className="text-gray-600">No audio posts found.</p>
-                )}
-              </div>
+                )
+              })}
+              {audioEvents.length === 0 && (
+                <p className="text-gray-600 text-center py-8">No audio posts found.</p>
+              )}
             </div>
           </div>
         </div>

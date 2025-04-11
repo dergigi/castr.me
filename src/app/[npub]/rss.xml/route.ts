@@ -23,7 +23,8 @@ export async function GET(
     
     const npub = params.npub
     const profile = await nostrService.getUserProfile(npub)
-    const audioEvents = await nostrService.getAudioEvents(npub)
+    const events = await nostrService.getKind1Events(npub)
+    const audioEvents = events.filter(event => nostrService.isAudioEvent(event))
     
     if (!profile) {
       return NextResponse.json(
