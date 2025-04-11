@@ -5,6 +5,9 @@ import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator'
 const nostrService = new NostrService()
 const feedGenerator = new PodcastFeedGenerator()
 
+// Initialize NDK connection
+nostrService.initialize().catch(console.error)
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { npub: string } }

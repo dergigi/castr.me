@@ -29,7 +29,13 @@ export class NostrService {
 
   async getUserProfile(npub: string): Promise<NostrProfile | null> {
     try {
-      const { data: pubkey } = decode(npub)
+      const decoded = decode(npub)
+      if (decoded.type !== 'npub') {
+        console.error('Invalid npub format')
+        return null
+      }
+      
+      const pubkey = decoded.data as string
       const user = await this.ndk.getUser({ pubkey })
       if (!user) return null
 
@@ -43,7 +49,13 @@ export class NostrService {
 
   async getAudioEvents(npub: string): Promise<NDKEvent[]> {
     try {
-      const { data: pubkey } = decode(npub)
+      const decoded = decode(npub)
+      if (decoded.type !== 'npub') {
+        console.error('Invalid npub format')
+        return []
+      }
+      
+      const pubkey = decoded.data as string
       const user = await this.ndk.getUser({ pubkey })
       if (!user) return []
 
