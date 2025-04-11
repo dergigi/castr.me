@@ -28,7 +28,9 @@ export class NostrService {
 
   private getPubkeyFromNpub(npub: string): string | null {
     try {
-      const decoded = decode(npub)
+      // Ensure npub has the correct prefix
+      const normalizedNpub = npub.startsWith('npub1') ? npub : `npub1${npub}`
+      const decoded = decode(normalizedNpub)
       if (decoded.type !== 'npub') return null
       return decoded.data
     } catch (error) {
