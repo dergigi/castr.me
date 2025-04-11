@@ -54,23 +54,23 @@ export default async function NpubPage({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner */}
-      <div className="relative h-64 bg-gray-900">
+      <div className="relative h-72 bg-gray-900">
         {profile.banner && (
           <Image
             src={profile.banner}
             alt="Profile banner"
             fill
-            className="object-cover opacity-80"
+            className="object-cover opacity-90"
             priority
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/10 via-gray-900/50 to-gray-900/80" />
       </div>
       
-      <div className="max-w-3xl mx-auto px-4 -mt-32">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-40">
         {/* Profile Info */}
-        <div className="relative flex flex-col items-center text-center mb-12">
-          <div className="relative w-32 h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden mb-4">
+        <div className="relative flex flex-col items-center text-center mb-16">
+          <div className="relative w-40 h-40 rounded-full ring-4 ring-white bg-white shadow-xl overflow-hidden mb-6">
             {profile.image && (
               <Image
                 src={profile.image}
@@ -81,54 +81,60 @@ export default async function NpubPage({
               />
             )}
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">{profile.name || 'Anonymous'}</h1>
+          <h1 className="text-4xl font-bold text-white mb-4 drop-shadow-lg tracking-tight">{profile.name || 'Anonymous'}</h1>
           {profile.about && (
-            <p className="text-gray-200 text-lg max-w-2xl drop-shadow-lg">{profile.about}</p>
+            <p className="text-gray-100 text-lg max-w-2xl drop-shadow-lg leading-relaxed">{profile.about}</p>
           )}
         </div>
 
         {/* Podcast Feed Link */}
-        <div className="mb-12 text-center">
+        <div className="mb-16 text-center">
           <a
             href={`/${npub}/rss.xml`}
-            className="inline-flex items-center text-sm text-gray-400 hover:text-white transition-colors"
+            className="inline-flex items-center px-4 py-2 text-sm text-gray-100 hover:text-white transition-colors rounded-full bg-gray-900/40 hover:bg-gray-900/60 backdrop-blur-sm"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
             </svg>
-            RSS Feed
+            Subscribe to RSS Feed
           </a>
         </div>
 
         {/* Audio Posts */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {audioEvents.map((event: NDKEvent) => {
             const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
             const cleanContent = event.content.replace(audioUrl || '', '').trim()
             return (
-              <div key={event.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-gray-900 font-medium">{cleanContent}</p>
-                    <span className="text-sm text-gray-500">
-                      {new Date(event.created_at * 1000).toLocaleDateString()}
-                    </span>
+                  <div className="flex items-start justify-between mb-4 gap-4">
+                    <h2 className="text-xl font-semibold text-gray-900 leading-tight">{cleanContent}</h2>
+                    <time className="text-sm text-gray-500 whitespace-nowrap">
+                      {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </time>
                   </div>
                   {audioUrl && (
-                    <audio
-                      controls
-                      className="w-full h-10"
-                      src={audioUrl}
-                    >
-                      Your browser does not support the audio element.
-                    </audio>
+                    <div className="mt-4">
+                      <audio
+                        controls
+                        className="w-full h-12 [&::-webkit-media-controls-panel]:bg-gray-50"
+                        src={audioUrl}
+                      >
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
                   )}
                 </div>
               </div>
             )
           })}
           {audioEvents.length === 0 && (
-            <div className="text-center py-12">
+            <div className="text-center py-16">
               <p className="text-gray-500">No audio posts found.</p>
             </div>
           )}
