@@ -1,24 +1,23 @@
 # Dependencies
-node_modules/
-.pnp/
+/node_modules/
+/.pnp
 .pnp.js
 
 # Build outputs
-dist/
-build/
+/dist/
+/build/
 *.tsbuildinfo
 
 # Testing
-coverage/
+/coverage/
 .nyc_output/
 
 # Environment variables
 .env
 .env.local
-.env.*.local
-.env.development
-.env.test
-.env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE and editor files
 .idea/
@@ -63,4 +62,22 @@ pids/
 .yarn-integrity
 
 # Cursor-specific
-.cursor/ 
+.cursor/
+
+# Next.js
+/.next/
+/out/
+/build
+.next
+
+# vercel
+.vercel
+
+# misc
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+next-env.d.ts 
