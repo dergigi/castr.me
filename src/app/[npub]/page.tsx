@@ -104,11 +104,12 @@ export default async function NpubPage({
         <div className="space-y-8">
           {audioEvents.map((event: NDKEvent) => {
             const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
+            const cleanContent = event.content.replace(audioUrl || '', '').trim()
             return (
               <div key={event.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-gray-900 font-medium">{event.content.replace(audioUrl || '', '').trim()}</p>
+                    <p className="text-gray-900 font-medium">{cleanContent}</p>
                     <span className="text-sm text-gray-500">
                       {new Date(event.created_at * 1000).toLocaleDateString()}
                     </span>
