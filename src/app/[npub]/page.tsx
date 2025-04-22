@@ -153,11 +153,27 @@ export default async function NpubPage({
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4 gap-4">
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900 leading-tight mb-2">{headline}</h2>
-                      {bodyContent && (
-                        <p className="text-gray-600 whitespace-pre-line">{bodyContent}</p>
-                      )}
+                    <div className="flex gap-4 items-start flex-1">
+                      {/* Cover Image */}
+                      {longFormEvent && (() => {
+                        const coverImage = nostrService.extractImage(longFormEvent);
+                        return coverImage ? (
+                          <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden relative">
+                            <Image
+                              src={coverImage}
+                              alt={headline}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : null;
+                      })()}
+                      <div>
+                        <h2 className="text-xl font-semibold text-gray-900 leading-tight mb-2">{headline}</h2>
+                        {bodyContent && (
+                          <p className="text-gray-600 whitespace-pre-line">{bodyContent}</p>
+                        )}
+                      </div>
                     </div>
                     <a 
                       href={`${process.env.HTTP_NOSTR_GATEWAY}/${event.id}`}
@@ -170,20 +186,6 @@ export default async function NpubPage({
                       })}
                     </a>
                   </div>
-                  {/* Cover Image */}
-                  {longFormEvent && (() => {
-                    const coverImage = nostrService.extractImage(longFormEvent);
-                    return coverImage ? (
-                      <div className="mt-4 mb-6 rounded-lg overflow-hidden aspect-video relative">
-                        <Image
-                          src={coverImage}
-                          alt={headline}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : null;
-                  })()}
                   {audioUrl && (
                     <div className="mt-4">
                       <audio
