@@ -162,4 +162,96 @@ export class NostrService {
     const firstLine = event.content.split('\n')[0];
     return firstLine.length > 100 ? `${firstLine.substring(0, 97)}...` : firstLine;
   }
+
+  /**
+   * Finds a long-form content (NIP-23) event that matches the title of a kind1 event
+   * @param kind1Event The kind1 event to find matching long-form content for
+   * @returns The matching long-form content event or null if not found
+   */
+  async findMatchingLongFormContent(kind1Event: NDKEvent): Promise<NDKEvent | null> {
+    try {
+      // Get the title from the kind1 event
+      const title = this.extractTitle(kind1Event);
+      
+      // Get the pubkey from the kind1 event
+      const pubkey = kind1Event.pubkey;
+      
+      // Fetch long-form content events (kind 30023) from the same author
+      const events = await this.ndk?.fetchEvents({
+        kinds: [30023], // NIP-23 long-form content
+        authors: [pubkey],
+        limit: 100, // Limit to avoid too many results
+      });
+      
+      if (!events || events.size === 0) {
+        return null;
+      }
+      
+      // Find an event with a matching title
+      const eventsArray = Array.from(events);
+      for (const event of eventsArray) {
+        const eventTitle = this.extractTitle(event);
+        if (eventTitle === title) {
+          return event;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding matching long-form content:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetches an event by its ID
+   * @param eventId The ID of the event to fetch
+   * @returns The event or null if not found
+   */
+  async getEventById(eventId: string): Promise<NDKEvent | null> {
+    try {
+      // Handle both nevent and naddr formats
+      let pubkey: string | null = null;
+      let identifier: string | null = null;
+      
+      if (eventId.startsWith('nevent1')) {
+        // For nevent format, we need to extract the event ID
+        const decoded = decode(eventId);
+        if (decoded.type !== 'nevent') return null;
+        return await this.ndk?.fetchEvent(decoded.data.id) || null;
+      } else if (eventId.startsWith('naddr1')) {
+        // For naddr format, we need to extract the pubkey and identifier
+        const decoded = decode(eventId);
+        if (decoded.type !== 'naddr') return null;
+        pubkey = decoded.data.pubkey;
+        identifier = decoded.data.identifier;
+        
+        // Fetch events with the matching pubkey and identifier
+        const events = await this.ndk?.fetchEvents({
+          kinds: [30023], // NIP-23 long-form content
+          authors: [pubkey],
+          limit: 1,
+        });
+        
+        if (!events || events.size === 0) return null;
+        
+        // Find the event with the matching identifier
+        for (const event of Array.from(events)) {
+          // Check if the event has a d tag with the identifier
+          const dTag = event.tags.find(tag => tag[0] === 'd');
+          if (dTag && dTag[1] === identifier) {
+            return event;
+          }
+        }
+        
+        return null;
+      } else {
+        // Assume it's a raw event ID
+        return await this.ndk?.fetchEvent(eventId) || null;
+      }
+    } catch (error) {
+      console.error('Error fetching event by ID:', error);
+      return null;
+    }
+  }
 } 

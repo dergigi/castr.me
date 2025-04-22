@@ -1,11 +1,11 @@
 import { NostrService } from '../src/services/nostr/NostrService';
 import { NDKEvent } from '@nostr-dev-kit/ndk';
-import { AudioEvent } from '../src/types';
+import { MediaEvent } from '../src/types';
 
 // Create a test class that extends NostrService to access protected methods
 class TestNostrService extends NostrService {
-  public testTransformToAudioEvent(event: NDKEvent): AudioEvent {
-    return this.transformToAudioEvent(event);
+  public testTransformToMediaEvent(event: NDKEvent): MediaEvent {
+    return this.transformToMediaEvent(event);
   }
 }
 
@@ -14,6 +14,8 @@ describe('NostrService', () => {
 
   beforeEach(() => {
     nostrService = new TestNostrService();
+    // Initialize the NDK instance for testing
+    nostrService.initialize();
   });
 
   describe('defaultNpub', () => {
@@ -77,8 +79,8 @@ describe('NostrService', () => {
     });
   });
 
-  describe('transformToAudioEvent', () => {
-    it('should transform NDKEvent to AudioEvent', () => {
+  describe('transformToMediaEvent', () => {
+    it('should transform NDKEvent to MediaEvent', () => {
       const mockNDKEvent: NDKEvent = {
         id: 'test-id',
         pubkey: 'test-pubkey',
@@ -88,7 +90,7 @@ describe('NostrService', () => {
         sig: 'test-sig'
       } as NDKEvent;
 
-      const result = nostrService.testTransformToAudioEvent(mockNDKEvent);
+      const result = nostrService.testTransformToMediaEvent(mockNDKEvent);
 
       expect(result).toEqual({
         id: 'test-id',
@@ -98,8 +100,86 @@ describe('NostrService', () => {
         tags: [['title', 'Test Title']],
         sig: 'test-sig',
         audioUrl: 'https://example.com/audio.mp3',
+        videoUrl: undefined,
+        mediaType: 'audio',
         title: 'Test Title'
       });
     });
+  });
+
+  describe('findMatchingLongFormContent', () => {
+    it('should find a long-form content event that matches the title of a kind1 event', async () => {
+      // Initialize the NDK instance for testing
+      await nostrService.initialize();
+      
+      // Use real event IDs
+      const kind1EventId = 'nevent1qqszlf337y0lkg4sz5ax9ath4y5vk6rpqn9tfewaln2989zavvqrg4czyzdauss5j8e745dvyx736qtx024egl6vr39wmpmzfnezwwcxegzjkj3qfzd';
+      const longFormEventId = 'naddr1qvzqqqr4gupzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftqqvnqd3d235x2t2hd9hxgueddanz6s2f94jnye3kve4sh9v6es';
+      
+      // Fetch the real events
+      const kind1Event = await nostrService.getEventById(kind1EventId);
+      const longFormEvent = await nostrService.getEventById(longFormEventId);
+      
+      // Verify that both events were found
+      expect(kind1Event).not.toBeNull();
+      expect(longFormEvent).not.toBeNull();
+      
+      if (kind1Event && longFormEvent) {
+        // Call the method with the real kind1 event
+        const result = await nostrService.findMatchingLongFormContent(kind1Event);
+        
+        // Verify the result
+        expect(result).not.toBeNull();
+        if (result) {
+          // Check that the result has the same title as the kind1 event
+          const kind1Title = nostrService['extractTitle'](kind1Event);
+          const resultTitle = nostrService['extractTitle'](result);
+          expect(resultTitle).toBe(kind1Title);
+          
+          // Check that the result is a kind 30023 event
+          expect(result.kind).toBe(30023);
+        }
+      }
+    }, 30000); // Increase timeout for this test since it's making real network requests
+    
+    it('should return null if no matching long-form content is found', async () => {
+      // Initialize the NDK instance for testing
+      await nostrService.initialize();
+      
+      // Create a kind1 event with a unique title that won't have a matching long-form content
+      const mockKind1Event = new NDKEvent();
+      mockKind1Event.content = 'This is a unique title that should not have a matching long-form content\nThis is a podcast episode.';
+      mockKind1Event.pubkey = 'test-pubkey';
+      
+      // Call the method
+      const result = await nostrService.findMatchingLongFormContent(mockKind1Event);
+      
+      // Verify the result
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getEventById', () => {
+    it('should fetch a long-form content event by its naddr ID', async () => {
+      // Initialize the NDK instance for testing
+      await nostrService.initialize();
+      
+      // Use a real naddr event ID
+      const longFormEventId = 'naddr1qvzqqqr4gupzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftqqvnqd3d235x2t2hd9hxgueddanz6s2f94jnye3kve4sh9v6es';
+      
+      // Fetch the event
+      const event = await nostrService.getEventById(longFormEventId);
+      
+      // Verify that the event was found
+      expect(event).not.toBeNull();
+      if (event) {
+        // Verify that it's a kind 30023 event (long-form content)
+        expect(event.kind).toBe(30023);
+        
+        // Verify that it has a title
+        const title = nostrService['extractTitle'](event);
+        expect(title).toBe('06: The Winds of AI');
+      }
+    }, 30000); // Increase timeout for this test since it's making real network requests
   });
 }); 
