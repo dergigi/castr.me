@@ -20,6 +20,16 @@ const Footer: React.FC = () => {
           <p className="mt-1 text-xs text-gray-400">
             Birthed during SEC-04
           </p>
+          <p className="mt-2 text-xs text-gray-400">
+            <a 
+              href="https://github.com/dergigi/pubcaster" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-gray-700 hover:underline"
+            >
+              GitHub
+            </a>
+          </p>
         </div>
       </div>
     </footer>
