@@ -5,7 +5,7 @@
   "main": "dist/server/index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/set-env.js && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
