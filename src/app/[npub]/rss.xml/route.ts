@@ -35,19 +35,37 @@ export async function GET(
     // Fetch long-form content for show notes
     const longFormEvents = await nostrService.getLongFormEvents(npub)
     
-    // Create a map of titles to long-form content
+    // Create a map of kind1 event titles to long-form events for quick lookup
     const longFormMap = new Map()
-    for (const event of longFormEvents) {
-      const title = nostrService.extractTitle(event)
-      if (title) {
-        longFormMap.set(title, event)
+    for (const event of mediaEvents) {
+      const kind1Title = event.content.split('\n')[0].trim()
+      // First try to find a matching long-form event by title
+      let matchingLongForm = longFormEvents.find(longFormEvent => {
+        const longFormTitle = nostrService.extractTitle(longFormEvent)
+        return longFormTitle.toLowerCase().includes(kind1Title.toLowerCase())
+      })
+
+      // If no match found, try matching by episode number
+      if (!matchingLongForm) {
+        const episodeNumber = nostrService.extractEpisodeNumber(kind1Title)
+        if (episodeNumber) {
+          matchingLongForm = longFormEvents.find(longFormEvent => {
+            const longFormTitle = nostrService.extractTitle(longFormEvent)
+            const longFormEpisodeNumber = nostrService.extractEpisodeNumber(longFormTitle)
+            return longFormEpisodeNumber === episodeNumber
+          })
+        }
+      }
+
+      if (matchingLongForm) {
+        longFormMap.set(kind1Title, matchingLongForm)
       }
     }
     
     // Add long-form content to media events
-    const eventsWithShowNotes = await Promise.all(mediaEvents.map(async (event) => {
-      const title = nostrService.extractTitle(event)
-      const longFormEvent = longFormMap.get(title)
+    const eventsWithShowNotes = mediaEvents.map(event => {
+      const kind1Title = event.content.split('\n')[0].trim()
+      const longFormEvent = longFormMap.get(kind1Title)
       
       if (longFormEvent) {
         // Add show notes tag to the event
@@ -55,7 +73,7 @@ export async function GET(
       }
       
       return event
-    }))
+    })
     
     if (!profile) {
       return NextResponse.json(
