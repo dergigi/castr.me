@@ -81,9 +81,9 @@ export default async function NpubPage({
               />
             )}
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4 drop-shadow-lg tracking-tight">{profile.name || 'Anonymous'}</h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4 tracking-tight">{profile.name || 'Anonymous'}</h1>
           {profile.about && (
-            <p className="text-gray-100 text-lg max-w-2xl drop-shadow-lg leading-relaxed">{profile.about}</p>
+            <p className="text-gray-600 text-lg max-w-2xl leading-relaxed">{profile.about}</p>
           )}
         </div>
 
