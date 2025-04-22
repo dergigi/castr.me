@@ -223,9 +223,12 @@ export default async function NpubPage({
                             {zapProfiles && zapProfiles.size > 0 && (
                               <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
                                 {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
-                                  <div 
+                                  <a 
                                     key={pubkey}
-                                    className="w-6 h-6 rounded-full ring-2 ring-white overflow-hidden relative"
+                                    href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-6 h-6 rounded-full ring-2 ring-white overflow-hidden relative hover:ring-blue-300 transition-all"
                                     title={profile.name || pubkey.slice(0, 8)}
                                   >
                                     {profile.picture ? (
@@ -240,7 +243,7 @@ export default async function NpubPage({
                                         {(profile.name || pubkey).slice(0, 2)}
                                       </div>
                                     )}
-                                  </div>
+                                  </a>
                                 ))}
                               </div>
                             )}
