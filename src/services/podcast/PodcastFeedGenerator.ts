@@ -1,5 +1,5 @@
 import { NDKUser } from "@nostr-dev-kit/ndk";
-import { AudioEvent } from "../../types";
+import { MediaEvent } from "../../types";
 
 export class PodcastFeedGenerator {
   private escapeXml(unsafe: string): string {
@@ -15,7 +15,7 @@ export class PodcastFeedGenerator {
     });
   }
 
-  generateFeed(profile: NDKUser, events: AudioEvent[]): string {
+  generateFeed(profile: NDKUser, events: MediaEvent[]): string {
     const name = profile.profile?.name ?? 'Unknown Podcast';
     const about = profile.profile?.about ?? 'No description available';
     const title = this.escapeXml(name);

@@ -7,6 +7,8 @@ export interface NostrProfile {
   name?: string
   about?: string
   picture?: string
+  banner?: string
+  image?: string
   nip05?: string
   lud16?: string
   lud06?: string
