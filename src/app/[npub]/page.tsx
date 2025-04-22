@@ -205,7 +205,7 @@ export default async function NpubPage({
                               <>
                                 <div className="text-xs text-gray-500 mb-3 text-right">
                                   <a 
-                                    href={`https://yakihonne.com/${longFormEvent.id}`}
+                                    href={`${process.env.HTTP_NOSTR_GATEWAY}/${longFormEvent.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="hover:text-gray-700"
