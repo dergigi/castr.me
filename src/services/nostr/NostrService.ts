@@ -236,6 +236,17 @@ export class NostrService {
     return firstLine.length > 100 ? `${firstLine.substring(0, 97)}...` : firstLine;
   }
 
+  extractImage(event: NDKEvent): string | undefined {
+    // Try to find an image tag
+    const imageTag = event.tags.find(tag => tag[0] === 'image');
+    if (imageTag) return imageTag[1];
+
+    // Try to find an image URL in the content
+    const imageRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/i;
+    const match = event.content.match(imageRegex);
+    return match ? match[0] : undefined;
+  }
+
   /**
    * Fetches an event by its ID
    * @param eventId The ID of the event to fetch

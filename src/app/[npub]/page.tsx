@@ -170,6 +170,20 @@ export default async function NpubPage({
                       })}
                     </a>
                   </div>
+                  {/* Cover Image */}
+                  {longFormEvent && (() => {
+                    const coverImage = nostrService.extractImage(longFormEvent);
+                    return coverImage ? (
+                      <div className="mt-4 mb-6 rounded-lg overflow-hidden aspect-video relative">
+                        <Image
+                          src={coverImage}
+                          alt={headline}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : null;
+                  })()}
                   {audioUrl && (
                     <div className="mt-4">
                       <audio
