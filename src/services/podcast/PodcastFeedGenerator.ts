@@ -1,6 +1,11 @@
 import { NDKUser } from "@nostr-dev-kit/ndk";
 import { MediaEvent } from "../../types";
 
+/**
+ * Generates an RSS feed for audio podcasts.
+ * Note: This generator only includes audio content as it follows the podcast RSS specification.
+ * Video content is not included in the feed as it's meant for web viewing only.
+ */
 export class PodcastFeedGenerator {
   private escapeXml(unsafe: string): string {
     return unsafe.replace(/[<>&'"]/g, c => {
