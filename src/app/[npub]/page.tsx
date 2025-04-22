@@ -191,23 +191,27 @@ export default async function NpubPage({
                     <div className="mt-6 border-t border-gray-100 pt-4">
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-                          <span>
-                            {(() => {
-                              // Count words and links
-                              const wordCount = countWords(longFormEvent.content);
-                              const parsedHtml = marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false });
-                              const linkCount = countLinks(parsedHtml);
-                              return `Show Notes (${wordCount.toLocaleString()} words, ${linkCount} links)`;
-                            })()}
-                          </span>
+                          <span>Show Notes</span>
                           <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </summary>
                         <div className="mt-3 prose prose-sm max-w-none text-gray-600 [&_li]:my-1 [&_li>p]:my-0">
-                          <div 
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false })) }} 
-                          />
+                          {(() => {
+                            const wordCount = countWords(longFormEvent.content);
+                            const parsedHtml = marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false });
+                            const linkCount = countLinks(parsedHtml);
+                            return (
+                              <>
+                                <div className="text-xs text-gray-500 mb-3">
+                                  {wordCount.toLocaleString()} words · {linkCount} links
+                                </div>
+                                <div 
+                                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parsedHtml) }} 
+                                />
+                              </>
+                            );
+                          })()}
                         </div>
                       </details>
                     </div>
