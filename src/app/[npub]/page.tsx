@@ -234,12 +234,51 @@ export default async function NpubPage({
                     </div>
                   )}
                   
-                  {/* Value Recipients Section */}
+                  {/* Show Notes (Long-form Content) */}
+                  {longFormEvent && (
+                    <div className="mt-6 border-t border-gray-100 pt-4">
+                      <details className="group">
+                        <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                          <span>Show Notes</span>
+                          <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </summary>
+                        <div className="mt-3 prose prose-sm max-w-none text-gray-600 [&_li]:my-1 [&_li>p]:my-0">
+                          {function renderShowNotes(): JSX.Element {
+                            const wordCount = countWords(longFormEvent.content);
+                            const parsedHtml = marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false });
+                            const linkCount = countLinks(parsedHtml);
+                            return (
+                              <>
+                                <div className="text-xs text-gray-500 mb-3 text-right">
+                                  <a 
+                                    href={`${process.env.HTTP_NOSTR_GATEWAY}/${longFormEvent.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-gray-700"
+                                  >
+                                    {wordCount.toLocaleString()} words
+                                  </a>
+                                  {' · '}{linkCount} links
+                                </div>
+                                <div 
+                                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parsedHtml) }} 
+                                />
+                              </>
+                            );
+                          }()}
+                        </div>
+                      </details>
+                    </div>
+                  )}
+                  
+                  {/* Zap Splits Section */}
                   {longFormEvent && zapProfiles && zapProfiles.size > 0 && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-                          <span>Value Recipients</span>
+                          <span>Zap Splits</span>
                           <div className="flex items-center">
                             <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
                               {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
@@ -306,45 +345,6 @@ export default async function NpubPage({
                               );
                             })}
                           </div>
-                        </div>
-                      </details>
-                    </div>
-                  )}
-                  
-                  {/* Show Notes (Long-form Content) */}
-                  {longFormEvent && (
-                    <div className="mt-6 border-t border-gray-100 pt-4">
-                      <details className="group">
-                        <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-                          <span>Show Notes</span>
-                          <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </summary>
-                        <div className="mt-3 prose prose-sm max-w-none text-gray-600 [&_li]:my-1 [&_li>p]:my-0">
-                          {function renderShowNotes(): JSX.Element {
-                            const wordCount = countWords(longFormEvent.content);
-                            const parsedHtml = marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false });
-                            const linkCount = countLinks(parsedHtml);
-                            return (
-                              <>
-                                <div className="text-xs text-gray-500 mb-3 text-right">
-                                  <a 
-                                    href={`${process.env.HTTP_NOSTR_GATEWAY}/${longFormEvent.id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:text-gray-700"
-                                  >
-                                    {wordCount.toLocaleString()} words
-                                  </a>
-                                  {' · '}{linkCount} links
-                                </div>
-                                <div 
-                                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parsedHtml) }} 
-                                />
-                              </>
-                            );
-                          }()}
                         </div>
                       </details>
                     </div>
