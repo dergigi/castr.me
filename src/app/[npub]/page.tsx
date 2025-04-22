@@ -40,6 +40,16 @@ export default async function NpubPage({
   const events = await nostrService.getKind1Events(npub)
   const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
   
+  // Fetch all long-form posts for the user
+  const longFormEvents = await nostrService.getLongFormEvents(npub)
+  
+  // Create a map of kind1 event titles to long-form events for quick lookup
+  const longFormMap = new Map<string, NDKEvent>()
+  for (const longFormEvent of longFormEvents) {
+    const title = nostrService.extractTitle(longFormEvent)
+    longFormMap.set(title, longFormEvent)
+  }
+  
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -109,6 +119,9 @@ export default async function NpubPage({
             const [headline, ...rest] = cleanContent.split('\n')
             const bodyContent = rest.join('\n').trim()
             
+            // Find matching long-form content
+            const longFormEvent = longFormMap.get(headline)
+            
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
@@ -150,6 +163,23 @@ export default async function NpubPage({
                       >
                         Your browser does not support the video element.
                       </video>
+                    </div>
+                  )}
+                  
+                  {/* Show Notes (Long-form Content) */}
+                  {longFormEvent && (
+                    <div className="mt-6 border-t border-gray-100 pt-4">
+                      <details className="group">
+                        <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                          <span>Show Notes</span>
+                          <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </summary>
+                        <div className="mt-3 prose prose-sm max-w-none text-gray-600">
+                          <div dangerouslySetInnerHTML={{ __html: longFormEvent.content }} />
+                        </div>
+                      </details>
                     </div>
                   )}
                 </div>

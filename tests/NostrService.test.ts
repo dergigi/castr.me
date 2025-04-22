@@ -182,4 +182,29 @@ describe('NostrService', () => {
       }
     }, 30000); // Increase timeout for this test since it's making real network requests
   });
+
+  describe('getLongFormEvents', () => {
+    it('should fetch all long-form content events for a user', async () => {
+      // Initialize the NDK instance for testing
+      await nostrService.initialize();
+      
+      // Use the default npub
+      const npub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n';
+      
+      // Fetch all long-form events
+      const events = await nostrService.getLongFormEvents(npub);
+      
+      // Verify that events were found
+      expect(events.length).toBeGreaterThan(0);
+      
+      // Verify that all events are kind 30023 (long-form content)
+      for (const event of events) {
+        expect(event.kind).toBe(30023);
+      }
+      
+      // Verify that at least one event has the expected title
+      const titles = events.map(event => nostrService['extractTitle'](event));
+      expect(titles).toContain('06: The Winds of AI');
+    }, 30000); // Increase timeout for this test since it's making real network requests
+  });
 }); 

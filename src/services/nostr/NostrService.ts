@@ -99,6 +99,79 @@ export class NostrService {
     }
   }
 
+  /**
+   * Fetches all long-form content (NIP-23) events for a user
+   * @param npub The npub of the user
+   * @returns An array of long-form content events
+   */
+  async getLongFormEvents(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
+    try {
+      const pubkey = this.getPubkeyFromNpub(npub)
+      if (!pubkey) return []
+      const events = await this.ndk?.fetchEvents({
+        kinds: [30023], // NIP-23 long-form content
+        authors: [pubkey],
+        limit: 100, // Limit to avoid too many results
+      })
+      return events ? Array.from(events) : []
+    } catch (error) {
+      console.error('Error fetching long-form events:', error)
+      return []
+    }
+  }
+
+  /**
+   * Finds a long-form content event that matches the title of a kind1 event
+   * @param kind1Event The kind1 event to find matching long-form content for
+   * @param longFormEvents Optional array of long-form events to search through
+   * @returns The matching long-form content event or null if not found
+   */
+  async findMatchingLongFormContent(kind1Event: NDKEvent, longFormEvents?: NDKEvent[]): Promise<NDKEvent | null> {
+    try {
+      // Get the title from the kind1 event
+      const title = this.extractTitle(kind1Event);
+      
+      // If longFormEvents is provided, search through them
+      if (longFormEvents && longFormEvents.length > 0) {
+        for (const event of longFormEvents) {
+          const eventTitle = this.extractTitle(event);
+          if (eventTitle === title) {
+            return event;
+          }
+        }
+        return null;
+      }
+      
+      // Otherwise, fetch long-form content events from the same author
+      const pubkey = kind1Event.pubkey;
+      
+      // Fetch long-form content events (kind 30023) from the same author
+      const events = await this.ndk?.fetchEvents({
+        kinds: [30023], // NIP-23 long-form content
+        authors: [pubkey],
+        limit: 100, // Limit to avoid too many results
+      });
+      
+      if (!events || events.size === 0) {
+        return null;
+      }
+      
+      // Find an event with a matching title
+      const eventsArray = Array.from(events);
+      for (const event of eventsArray) {
+        const eventTitle = this.extractTitle(event);
+        if (eventTitle === title) {
+          return event;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding matching long-form content:', error);
+      return null;
+    }
+  }
+
   isAudioEvent(event: NDKEvent): boolean {
     const content = event.content;
     return (
@@ -161,46 +234,6 @@ export class NostrService {
     // Otherwise, use the first line of content or a truncated version
     const firstLine = event.content.split('\n')[0];
     return firstLine.length > 100 ? `${firstLine.substring(0, 97)}...` : firstLine;
-  }
-
-  /**
-   * Finds a long-form content (NIP-23) event that matches the title of a kind1 event
-   * @param kind1Event The kind1 event to find matching long-form content for
-   * @returns The matching long-form content event or null if not found
-   */
-  async findMatchingLongFormContent(kind1Event: NDKEvent): Promise<NDKEvent | null> {
-    try {
-      // Get the title from the kind1 event
-      const title = this.extractTitle(kind1Event);
-      
-      // Get the pubkey from the kind1 event
-      const pubkey = kind1Event.pubkey;
-      
-      // Fetch long-form content events (kind 30023) from the same author
-      const events = await this.ndk?.fetchEvents({
-        kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey],
-        limit: 100, // Limit to avoid too many results
-      });
-      
-      if (!events || events.size === 0) {
-        return null;
-      }
-      
-      // Find an event with a matching title
-      const eventsArray = Array.from(events);
-      for (const event of eventsArray) {
-        const eventTitle = this.extractTitle(event);
-        if (eventTitle === title) {
-          return event;
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error finding matching long-form content:', error);
-      return null;
-    }
   }
 
   /**
