@@ -185,6 +185,16 @@ export default async function NpubPage({
                           </svg>
                         </summary>
                         <div className="mt-3 prose prose-sm max-w-none text-gray-600">
+                          <style jsx global>{`
+                            .prose-sm li {
+                              margin-top: 0.25em;
+                              margin-bottom: 0.25em;
+                            }
+                            .prose-sm li > p {
+                              margin-top: 0;
+                              margin-bottom: 0;
+                            }
+                          `}</style>
                           <div 
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false })) }} 
                           />
