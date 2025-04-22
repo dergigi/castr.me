@@ -6,7 +6,19 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center text-center">
           <p className="text-sm text-gray-500">
-            made with vibes and love
+            Made with vibes and love by{' '}
+            <a 
+              href="https://sovereignengineering.io/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              #SovEng
+            </a>{' '}
+            people
+          </p>
+          <p className="mt-1 text-xs text-gray-400">
+            Birthed during SEC-04
           </p>
         </div>
       </div>
