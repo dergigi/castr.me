@@ -28,8 +28,18 @@ export class NostrService {
 
   private getPubkeyFromNpub(npub: string): string | null {
     try {
+      // Remove any potential URL encoding or invalid characters
+      const cleanNpub = decodeURIComponent(npub).replace(/[^a-zA-Z0-9]/g, '')
+      
       // Ensure npub has the correct prefix
-      const normalizedNpub = npub.startsWith('npub1') ? npub : `npub1${npub}`
+      const normalizedNpub = cleanNpub.startsWith('npub1') ? cleanNpub : `npub1${cleanNpub}`
+      
+      // Validate the npub format
+      if (!/^npub1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(normalizedNpub)) {
+        console.error('Invalid npub format:', normalizedNpub)
+        return null
+      }
+
       const decoded = decode(normalizedNpub)
       if (decoded.type !== 'npub') return null
       return decoded.data
@@ -82,6 +92,16 @@ export class NostrService {
       console.error('Error fetching kind1 events:', error)
       return []
     }
+  }
+
+  isAudioEvent(event: NDKEvent): boolean {
+    const content = event.content;
+    return (
+      content.includes('.mp3') ||
+      content.includes('.m4a') ||
+      content.includes('.wav') ||
+      content.includes('.ogg')
+    );
   }
 
   isMediaEvent(event: NDKEvent): boolean {
