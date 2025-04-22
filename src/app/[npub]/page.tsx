@@ -64,10 +64,17 @@ export default async function NpubPage({
   const longFormEvents = await nostrService.getLongFormEvents(npub)
   
   // Create a map of kind1 event titles to long-form events for quick lookup
-  const longFormMap = new Map<string, NDKEvent>()
-  for (const longFormEvent of longFormEvents) {
-    const title = nostrService.extractTitle(longFormEvent)
-    longFormMap.set(title, longFormEvent)
+  const longFormMap = new Map<string, NDKEvent>();
+  for (const event of mediaEvents) {
+    const kind1Title = event.content.split('\n')[0].trim();
+    // Find a matching long-form event
+    const matchingLongForm = longFormEvents.find(longFormEvent => {
+      const longFormTitle = nostrService.extractTitle(longFormEvent);
+      return longFormTitle.toLowerCase().includes(kind1Title.toLowerCase());
+    });
+    if (matchingLongForm) {
+      longFormMap.set(kind1Title, matchingLongForm);
+    }
   }
   
   if (!profile) {

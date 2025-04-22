@@ -135,7 +135,7 @@ export class NostrService {
       if (longFormEvents && longFormEvents.length > 0) {
         for (const event of longFormEvents) {
           const eventTitle = this.extractTitle(event);
-          if (eventTitle === title) {
+          if (eventTitle.toLowerCase().includes(title.toLowerCase())) {
             return event;
           }
         }
@@ -160,7 +160,7 @@ export class NostrService {
       const eventsArray = Array.from(events);
       for (const event of eventsArray) {
         const eventTitle = this.extractTitle(event);
-        if (eventTitle === title) {
+        if (eventTitle.toLowerCase().includes(title.toLowerCase())) {
           return event;
         }
       }
