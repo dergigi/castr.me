@@ -111,13 +111,16 @@ export default async function NpubPage({
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4 gap-4">
                     <h2 className="text-xl font-semibold text-gray-900 leading-tight">{cleanContent}</h2>
-                    <time className="text-sm text-gray-500 whitespace-nowrap">
+                    <a 
+                      href={`https://njump.me/nevent1qqs${event.id}`}
+                      className="text-sm text-gray-500 whitespace-nowrap hover:text-gray-700 hover:underline"
+                    >
                       {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
                       })}
-                    </time>
+                    </a>
                   </div>
                   {audioUrl && (
                     <div className="mt-4">
