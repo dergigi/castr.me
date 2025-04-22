@@ -25,6 +25,15 @@ Effortlessly turn your npub into a podcast feed.
 - Show notes support via long-form content
 - Markdown rendering for show notes
 
+## Still TODO
+
+- [ ] Create `<value>` tags based on zap splits
+- [ ] Somehow link to transcripts file (and add it to the RSS feed)
+- [ ] Implement content negotiation, i.e. render RSS/HTML based on request
+- [ ] Properly query relays, the way it's done now is stupid
+- [ ] Make stuff configurable, especially what relays to use
+- [ ] ...lots of other stuff...
+
 ## Show Notes
 
 Show notes are implemented using Nostr's long-form content (`kind:30023`) events. The system links show notes to audio episodes by matching their titles on a best effort basis:
