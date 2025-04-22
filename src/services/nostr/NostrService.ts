@@ -30,15 +30,18 @@ export class NostrService {
 
   private getPubkeyFromNpub(npub: string): string | null {
     try {
+      // Ignore favicon.ico requests
+      if (npub === 'favicon.ico') return null;
+      
       // Remove any potential URL encoding or invalid characters
       const cleanNpub = decodeURIComponent(npub).replace(/[^a-zA-Z0-9]/g, '')
       
-      // Ensure npub has the correct prefix
+      // Ensure npub has the correct prefix and length
       const normalizedNpub = cleanNpub.startsWith('npub1') ? cleanNpub : `npub1${cleanNpub}`
       
-      // Validate the npub format
-      if (!/^npub1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(normalizedNpub)) {
-        console.error('Invalid npub format:', normalizedNpub)
+      // Validate the npub format (must be exactly 63 characters: 'npub1' + 58 chars)
+      if (normalizedNpub.length !== 63 || !/^npub1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(normalizedNpub)) {
+        console.error('Invalid npub format:', npub)
         return null
       }
 
