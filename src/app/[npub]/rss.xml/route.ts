@@ -30,7 +30,7 @@ export async function GET(
     const npub = resolvedParams.npub
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
-    const audioEvents = events.filter(event => nostrService.isAudioEvent(event))
+    const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
     
     if (!profile) {
       return NextResponse.json(
@@ -39,7 +39,7 @@ export async function GET(
       )
     }
 
-    const feed = feedGenerator.generateFeed(profile, audioEvents, npub)
+    const feed = feedGenerator.generateFeed(profile, mediaEvents, npub)
     
     return new NextResponse(feed, {
       headers: {

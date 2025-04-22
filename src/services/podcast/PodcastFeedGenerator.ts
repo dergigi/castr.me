@@ -20,6 +20,17 @@ export class PodcastFeedGenerator {
     });
   }
 
+  private getMimeType(url: string): string {
+    if (url.endsWith('.mp3')) return 'audio/mpeg';
+    if (url.endsWith('.m4a')) return 'audio/mp4';
+    if (url.endsWith('.wav')) return 'audio/wav';
+    if (url.endsWith('.ogg')) return 'audio/ogg';
+    if (url.endsWith('.mp4')) return 'video/mp4';
+    if (url.endsWith('.webm')) return 'video/webm';
+    if (url.endsWith('.mov')) return 'video/quicktime';
+    return 'application/octet-stream';
+  }
+
   generateFeed(profile: NDKUser, events: MediaEvent[]): string {
     const name = profile.profile?.name ?? 'Unknown Podcast';
     const about = profile.profile?.about ?? 'No description available';
@@ -31,13 +42,14 @@ export class PodcastFeedGenerator {
     const items = events.map(event => {
       const eventTitle = event.title || 'Untitled Episode';
       const eventContent = event.content || '';
-      const audioUrl = event.audioUrl || '';
+      const mediaUrl = event.audioUrl || event.videoUrl || '';
+      const mimeType = this.getMimeType(mediaUrl);
       
       return `
       <item>
         <title>${this.escapeXml(eventTitle)}</title>
         <description>${this.escapeXml(eventContent)}</description>
-        <enclosure url="${this.escapeXml(audioUrl)}" type="audio/mpeg" length="0"/>
+        <enclosure url="${this.escapeXml(mediaUrl)}" type="${mimeType}" length="0"/>
         <guid>${event.id}</guid>
         <pubDate>${new Date(event.created_at * 1000).toUTCString()}</pubDate>
       </item>
