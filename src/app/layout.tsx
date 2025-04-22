@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import type { ReactElement } from 'react'
 import { Inter } from 'next/font/google'
 import Footer from '@/components/Footer'
-import { getVersionInfo } from '@/utils/version'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,8 +16,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }): ReactElement {
-  const { version, commitHash } = getVersionInfo();
-  
   return (
     <html lang="en" className="h-full antialiased">
       <body className={inter.className}>
@@ -26,7 +23,7 @@ export default function RootLayout({
           <main className="flex-grow">
             {children}
           </main>
-          <Footer version={version} commitHash={commitHash} />
+          <Footer />
         </div>
       </body>
     </html>
