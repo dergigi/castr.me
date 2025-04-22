@@ -120,6 +120,63 @@ export class NostrService {
     }
   }
 
+  /**
+   * Matches media events with their corresponding long-form content for show notes
+   * @param mediaEvents Array of media events (usually kind:1 events with audio/video)
+   * @param longFormEvents Array of long-form content events (kind:30023)
+   * @returns A Map with media event titles as keys and matching long-form events as values
+   */
+  matchLongFormShowNotes(mediaEvents: NDKEvent[], longFormEvents: NDKEvent[]): Map<string, NDKEvent> {
+    const longFormMap = new Map<string, NDKEvent>()
+    
+    for (const event of mediaEvents) {
+      const kind1Title = event.content.split('\n')[0].trim()
+      // First try to find a matching long-form event by title
+      let matchingLongForm = longFormEvents.find(longFormEvent => {
+        const longFormTitle = this.extractTitle(longFormEvent)
+        return longFormTitle.toLowerCase().includes(kind1Title.toLowerCase())
+      })
+
+      // If no match found, try matching by episode number
+      if (!matchingLongForm) {
+        const episodeNumber = this.extractEpisodeNumber(kind1Title)
+        if (episodeNumber) {
+          matchingLongForm = longFormEvents.find(longFormEvent => {
+            const longFormTitle = this.extractTitle(longFormEvent)
+            const longFormEpisodeNumber = this.extractEpisodeNumber(longFormTitle)
+            return longFormEpisodeNumber === episodeNumber
+          })
+        }
+      }
+
+      if (matchingLongForm) {
+        longFormMap.set(kind1Title, matchingLongForm)
+      }
+    }
+    
+    return longFormMap
+  }
+
+  /**
+   * Adds show notes from long-form content to media events
+   * @param mediaEvents Array of media events to enhance with show notes
+   * @param longFormMap Map of media event titles to their matching long-form events
+   * @returns The enhanced media events with show notes added as tags
+   */
+  addShowNotesToEvents(mediaEvents: NDKEvent[], longFormMap: Map<string, NDKEvent>): NDKEvent[] {
+    return mediaEvents.map(event => {
+      const kind1Title = event.content.split('\n')[0].trim()
+      const longFormEvent = longFormMap.get(kind1Title)
+      
+      if (longFormEvent) {
+        // Add show notes tag to the event
+        event.tags.push(['show_notes', longFormEvent.content])
+      }
+      
+      return event
+    })
+  }
+
   extractTitle(event: NDKEvent): string {
     // Try to find a title tag
     const titleTag = event.tags.find(tag => tag[0] === 'title');
