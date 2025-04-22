@@ -70,7 +70,7 @@ export default async function NpubPage({
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-40">
         {/* Profile Info */}
         <div className="relative flex flex-col items-center text-center mb-16">
-          <a href={`https://njump.me/${npub}`} className="relative w-40 h-40 rounded-full ring-4 ring-white bg-white shadow-xl overflow-hidden mb-6">
+          <a href={`${process.env.HTTP_NOSTR_GATEWAY}/${npub}`} className="relative w-40 h-40 rounded-full ring-4 ring-white bg-white shadow-xl overflow-hidden mb-6">
             {profile.image && (
               <Image
                 src={profile.image}
@@ -112,7 +112,7 @@ export default async function NpubPage({
                   <div className="flex items-start justify-between mb-4 gap-4">
                     <h2 className="text-xl font-semibold text-gray-900 leading-tight">{cleanContent}</h2>
                     <a 
-                      href={`https://njump.me/${event.id}`}
+                      href={`${process.env.HTTP_NOSTR_GATEWAY}/${event.id}`}
                       className="text-sm text-gray-500 whitespace-nowrap hover:text-gray-700 hover:underline"
                     >
                       {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
