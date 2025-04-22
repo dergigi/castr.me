@@ -6,6 +6,14 @@ Effortlessly turn your Npub profile into a podcast feed.
 
 (Pub)Castr is a service that automatically generates podcast feeds from Nostr profiles. It converts kind1 events containing audio file links into a valid Podcasting 2.0 feed.
 
+## Examples
+
+- [No Solutions](https://castr.me/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n)
+- [ODELL](https://castr.me/npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx)
+- [Marty Bent](https://castr.me/npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy)
+- [Gigi](https://castr.me/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc)
+- [Ryan](https://castr.me/npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks)
+
 ## Features
 
 - Automatic feed generation from Npub profiles
