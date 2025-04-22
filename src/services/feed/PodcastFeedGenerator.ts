@@ -3,7 +3,7 @@ import { NDKEvent } from '@nostr-dev-kit/ndk'
 
 export class PodcastFeedGenerator {
   generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string): string {
-    const title = profile.name || 'Anonymous Podcast'
+    const title = profile.name || npub
     const description = profile.about || 'A media feed generated from Nostr posts'
     const link = `https://castr.me/${npub}`
     const language = 'en-us'
@@ -33,7 +33,7 @@ export class PodcastFeedGenerator {
       <link>${this.escapeXml(link)}</link>
     </image>
     <itunes:image href="${this.escapeXml(image)}"/>
-    <itunes:author>${this.escapeXml(profile.name || 'Anonymous')}</itunes:author>
+    <itunes:author>${this.escapeXml(profile.name || npub)}</itunes:author>
     <itunes:summary>${this.escapeXml(description)}</itunes:summary>
     <itunes:type>episodic</itunes:type>
     <itunes:explicit>false</itunes:explicit>
