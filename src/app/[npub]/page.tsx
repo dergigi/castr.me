@@ -112,7 +112,7 @@ export default async function NpubPage({
                   <div className="flex items-start justify-between mb-4 gap-4">
                     <h2 className="text-xl font-semibold text-gray-900 leading-tight">{cleanContent}</h2>
                     <a 
-                      href={`https://njump.me/nevent1qqs${event.id}`}
+                      href={`https://njump.me/${event.id}`}
                       className="text-sm text-gray-500 whitespace-nowrap hover:text-gray-700 hover:underline"
                     >
                       {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
