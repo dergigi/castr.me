@@ -66,6 +66,17 @@ export default async function NpubPage({
   // Create a map of kind1 event titles to long-form events for quick lookup
   const longFormMap = nostrService.matchLongFormShowNotes(mediaEvents, longFormEvents)
   
+  // Create a map to store zap profiles for each long-form event
+  const zapProfilesMap = new Map<string, Map<string, any>>()
+  
+  // Fetch zap profiles for each long-form event
+  for (const [title, longFormEvent] of Array.from(longFormMap.entries())) {
+    const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
+    if (zapProfiles.size > 0) {
+      zapProfilesMap.set(longFormEvent.id, zapProfiles)
+    }
+  }
+  
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -138,6 +149,9 @@ export default async function NpubPage({
             // Find matching long-form content
             const longFormEvent = longFormMap.get(headline)
             
+            // Get zap profiles for this long-form event if it exists
+            const zapProfiles = longFormEvent ? zapProfilesMap.get(longFormEvent.id) : undefined
+            
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
@@ -161,6 +175,37 @@ export default async function NpubPage({
                         <h2 className="text-xl font-semibold text-gray-900 leading-tight mb-2">{headline}</h2>
                         {bodyContent && (
                           <p className="text-gray-600 whitespace-pre-line">{bodyContent}</p>
+                        )}
+                        
+                        {/* Display zap profiles if they exist */}
+                        {zapProfiles && zapProfiles.size > 0 && (
+                          <div className="flex items-center mt-3 -space-x-2 overflow-hidden">
+                            {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
+                              <div 
+                                key={pubkey}
+                                className="w-8 h-8 rounded-full ring-2 ring-white overflow-hidden relative"
+                                title={profile.name || pubkey.slice(0, 8)}
+                              >
+                                {profile.picture ? (
+                                  <Image
+                                    src={profile.picture}
+                                    alt={profile.name || pubkey.slice(0, 8)}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                                    {(profile.name || pubkey).slice(0, 2)}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {zapProfiles.size > 0 && (
+                              <span className="text-xs text-gray-500 ml-2">
+                                Zapped by {zapProfiles.size} {zapProfiles.size === 1 ? 'user' : 'users'}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

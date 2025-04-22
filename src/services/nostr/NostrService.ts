@@ -400,4 +400,45 @@ export class NostrService {
       return null;
     }
   }
+
+  /**
+   * Extracts pubkeys from zap tags in an event
+   * @param event The event to extract zap tags from
+   * @returns An array of pubkeys from zap tags
+   */
+  extractZapPubkeysFromEvent(event: NDKEvent): string[] {
+    // Zap tags typically have the format ['zap', pubkey, ...]
+    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length > 1);
+    const pubkeys = zapTags.map(tag => tag[1]);
+    
+    // Remove duplicates
+    return Array.from(new Set(pubkeys));
+  }
+  
+  /**
+   * Fetches user profiles for pubkeys from zap tags
+   * @param event The event containing zap tags
+   * @returns A map of pubkeys to user profiles
+   */
+  async fetchZapProfiles(event: NDKEvent): Promise<Map<string, NostrProfile>> {
+    try {
+      const pubkeys = this.extractZapPubkeysFromEvent(event);
+      const profileMap = new Map<string, NostrProfile>();
+      
+      for (const pubkey of pubkeys) {
+        if (this.ndk) {
+          const user = this.ndk.getUser({ pubkey });
+          const profile = await user.fetchProfile();
+          if (profile) {
+            profileMap.set(pubkey, profile);
+          }
+        }
+      }
+      
+      return profileMap;
+    } catch (error) {
+      console.error('Error fetching zap profiles:', error);
+      return new Map();
+    }
+  }
 } 
