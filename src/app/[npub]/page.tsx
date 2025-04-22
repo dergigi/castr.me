@@ -2,6 +2,14 @@ import { NostrService } from '@/services/nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
 import Image from 'next/image'
 import type { ReactElement } from 'react'
+import { marked } from 'marked'
+import DOMPurify from 'isomorphic-dompurify'
+
+// Configure marked to use GitHub Flavored Markdown
+marked.setOptions({
+  gfm: true, // GitHub Flavored Markdown
+  breaks: true, // Convert line breaks to <br>
+})
 
 // Create service instance
 const nostrService = new NostrService()
@@ -177,7 +185,9 @@ export default async function NpubPage({
                           </svg>
                         </summary>
                         <div className="mt-3 prose prose-sm max-w-none text-gray-600">
-                          <div dangerouslySetInnerHTML={{ __html: longFormEvent.content }} />
+                          <div 
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parseInline(longFormEvent.content, { gfm: true, breaks: true, async: false })) }} 
+                          />
                         </div>
                       </details>
                     </div>
