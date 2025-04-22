@@ -120,6 +120,36 @@ export class NostrService {
     }
   }
 
+  extractTitle(event: NDKEvent): string {
+    // Try to find a title tag
+    const titleTag = event.tags.find(tag => tag[0] === 'title');
+    if (titleTag) return titleTag[1];
+
+    // Otherwise, use the first line of content or a truncated version
+    const firstLine = event.content.split('\n')[0];
+    return firstLine.length > 100 ? `${firstLine.substring(0, 97)}...` : firstLine;
+  }
+
+  extractEpisodeNumber(title: string): string | null {
+    // Try different episode number formats
+    const patterns = [
+      /\[(\d+)\]/, // [21]
+      /^(\d+):/, // 21:
+      /^(\d+)\s*[-–—]\s*/, // 21 - or 21-
+      /Episode\s*(\d+)\s*[-:]/i, // Episode 21: or Episode 21 -
+      /E(\d+)\s*[-:]/i, // E21: or E21 -
+      /#(\d+)\s*[-:]/i, // #21: or #21 -
+    ];
+
+    for (const pattern of patterns) {
+      const match = title.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return null;
+  }
+
   /**
    * Finds a long-form content event that matches the title of a kind1 event
    * @param kind1Event The kind1 event to find matching long-form content for
@@ -133,10 +163,23 @@ export class NostrService {
       
       // If longFormEvents is provided, search through them
       if (longFormEvents && longFormEvents.length > 0) {
+        // First try exact title match
         for (const event of longFormEvents) {
           const eventTitle = this.extractTitle(event);
           if (eventTitle.toLowerCase().includes(title.toLowerCase())) {
             return event;
+          }
+        }
+
+        // If no match found, try matching by episode number
+        const episodeNumber = this.extractEpisodeNumber(title);
+        if (episodeNumber) {
+          for (const event of longFormEvents) {
+            const eventTitle = this.extractTitle(event);
+            const eventEpisodeNumber = this.extractEpisodeNumber(eventTitle);
+            if (eventEpisodeNumber === episodeNumber) {
+              return event;
+            }
           }
         }
         return null;
@@ -162,6 +205,18 @@ export class NostrService {
         const eventTitle = this.extractTitle(event);
         if (eventTitle.toLowerCase().includes(title.toLowerCase())) {
           return event;
+        }
+      }
+
+      // If no match found, try matching by episode number
+      const episodeNumber = this.extractEpisodeNumber(title);
+      if (episodeNumber) {
+        for (const event of eventsArray) {
+          const eventTitle = this.extractTitle(event);
+          const eventEpisodeNumber = this.extractEpisodeNumber(eventTitle);
+          if (eventEpisodeNumber === episodeNumber) {
+            return event;
+          }
         }
       }
       
@@ -224,16 +279,6 @@ export class NostrService {
     const urlRegex = /(https?:\/\/[^\s]+\.(?:mp4|webm|mov))/i;
     const match = content.match(urlRegex);
     return match ? match[0] : undefined;
-  }
-
-  extractTitle(event: NDKEvent): string {
-    // Try to find a title tag
-    const titleTag = event.tags.find(tag => tag[0] === 'title');
-    if (titleTag) return titleTag[1];
-
-    // Otherwise, use the first line of content or a truncated version
-    const firstLine = event.content.split('\n')[0];
-    return firstLine.length > 100 ? `${firstLine.substring(0, 97)}...` : firstLine;
   }
 
   extractImage(event: NDKEvent): string | undefined {
