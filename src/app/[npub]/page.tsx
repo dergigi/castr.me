@@ -184,17 +184,7 @@ export default async function NpubPage({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </summary>
-                        <div className="mt-3 prose prose-sm max-w-none text-gray-600">
-                          <style jsx global>{`
-                            .prose-sm li {
-                              margin-top: 0.25em;
-                              margin-bottom: 0.25em;
-                            }
-                            .prose-sm li > p {
-                              margin-top: 0;
-                              margin-bottom: 0;
-                            }
-                          `}</style>
+                        <div className="mt-3 prose prose-sm max-w-none text-gray-600 [&_li]:my-1 [&_li>p]:my-0">
                           <div 
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false })) }} 
                           />
