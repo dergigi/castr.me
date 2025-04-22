@@ -111,4 +111,4 @@ Generates a podcast feed for the specified Npub.
 
 ## License
 
-ISC 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
