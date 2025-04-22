@@ -1,5 +1,13 @@
 import { NostrProfile } from '../nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
+import { marked } from 'marked'
+import DOMPurify from 'isomorphic-dompurify'
+
+// Configure marked to use GitHub Flavored Markdown
+marked.setOptions({
+  gfm: true, // GitHub Flavored Markdown
+  breaks: true, // Convert line breaks to <br>
+})
 
 export class PodcastFeedGenerator {
   generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string): string {
@@ -70,16 +78,24 @@ export class PodcastFeedGenerator {
     const mediaType = videoUrl ? 'video' : 'audio'
     const mediaUrl = videoUrl || audioUrl || ''
     
+    // Extract show notes from long-form content if available
+    const showNotes = this.extractShowNotes(event)
+    const content = showNotes || event.content
+    
+    // Convert markdown to HTML and sanitize
+    const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
+    
     return `    <item>
       <title>${this.escapeXml(title)}</title>
       <link>${this.escapeXml(mediaUrl)}</link>
       <guid>${guid}</guid>
       <pubDate>${pubDate}</pubDate>
+      <description><![CDATA[${htmlContent}]]></description>
       <enclosure url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
       <media:content url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
       <itunes:title>${this.escapeXml(title)}</itunes:title>
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
-      <itunes:summary>${this.escapeXml(event.content)}</itunes:summary>
+      <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
       <itunes:duration>00:00:00</itunes:duration>
       <itunes:explicit>false</itunes:explicit>
     </item>`
@@ -105,6 +121,22 @@ export class PodcastFeedGenerator {
     // Otherwise, use the first line of content or a truncated version
     const firstLine = event.content.split('\n')[0]
     return firstLine.length > 100 ? `${firstLine.substring(0, 97)}...` : firstLine
+  }
+
+  private extractShowNotes(event: NDKEvent): string | null {
+    // Try to find a show notes tag
+    const showNotesTag = event.tags.find(tag => tag[0] === 'show_notes')
+    if (showNotesTag) return showNotesTag[1]
+
+    // Try to find a d tag (identifier) that might link to long-form content
+    const dTag = event.tags.find(tag => tag[0] === 'd')
+    if (dTag) {
+      // If we have a d tag, it might be a reference to long-form content
+      // We'll need to fetch the long-form content separately
+      return null
+    }
+
+    return null
   }
   
   private escapeXml(unsafe: string): string {
