@@ -70,7 +70,7 @@ export default async function NpubPage({
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-40">
         {/* Profile Info */}
         <div className="relative flex flex-col items-center text-center mb-16">
-          <div className="relative w-40 h-40 rounded-full ring-4 ring-white bg-white shadow-xl overflow-hidden mb-6">
+          <a href={`https://njump.me/${npub}`} className="relative w-40 h-40 rounded-full ring-4 ring-white bg-white shadow-xl overflow-hidden mb-6">
             {profile.image && (
               <Image
                 src={profile.image}
@@ -80,7 +80,7 @@ export default async function NpubPage({
                 priority
               />
             )}
-          </div>
+          </a>
           <h1 className="text-4xl font-bold text-gray-800 mb-4 tracking-tight">{profile.name || npub}</h1>
           {profile.about && (
             <p className="text-gray-600 text-lg max-w-2xl leading-relaxed">{profile.about}</p>
