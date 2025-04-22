@@ -203,7 +203,7 @@ export default async function NpubPage({
                             const linkCount = countLinks(parsedHtml);
                             return (
                               <>
-                                <div className="text-xs text-gray-500 mb-3">
+                                <div className="text-xs text-gray-500 mb-3 text-right">
                                   {wordCount.toLocaleString()} words · {linkCount} links
                                 </div>
                                 <div 
