@@ -15,6 +15,23 @@ Effortlessly turn your Npub profile into a podcast feed.
 - Simple and clean HTML interface
 - Zero configuration required
 - Default profile support
+- Show notes support with word and link counts
+- Markdown rendering for show notes
+
+## Show Notes
+
+Show notes are implemented using Nostr's long-form content (kind:30023) events. The system links show notes to audio episodes by matching their titles:
+
+1. When a kind:1 event contains an audio file, its first line is treated as the episode title
+2. The system searches for a kind:30023 event with a matching title
+3. If found, the long-form content is displayed as expandable show notes under the episode
+4. Show notes are rendered with:
+   - GitHub Flavored Markdown support
+   - Word and link count display
+   - Compact list styling
+   - Links to the full article on your configured Nostr gateway
+
+This allows podcasters to maintain detailed show notes separate from the audio post while keeping them properly linked.
 
 ## Installation
 
