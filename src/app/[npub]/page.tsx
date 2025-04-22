@@ -67,11 +67,24 @@ export default async function NpubPage({
   const longFormMap = new Map<string, NDKEvent>();
   for (const event of mediaEvents) {
     const kind1Title = event.content.split('\n')[0].trim();
-    // Find a matching long-form event
-    const matchingLongForm = longFormEvents.find(longFormEvent => {
+    // First try to find a matching long-form event by title
+    let matchingLongForm = longFormEvents.find(longFormEvent => {
       const longFormTitle = nostrService.extractTitle(longFormEvent);
       return longFormTitle.toLowerCase().includes(kind1Title.toLowerCase());
     });
+
+    // If no match found, try matching by episode number
+    if (!matchingLongForm) {
+      const episodeNumber = nostrService.extractEpisodeNumber(kind1Title);
+      if (episodeNumber) {
+        matchingLongForm = longFormEvents.find(longFormEvent => {
+          const longFormTitle = nostrService.extractTitle(longFormEvent);
+          const longFormEpisodeNumber = nostrService.extractEpisodeNumber(longFormTitle);
+          return longFormEpisodeNumber === episodeNumber;
+        });
+      }
+    }
+
     if (matchingLongForm) {
       longFormMap.set(kind1Title, matchingLongForm);
     }
