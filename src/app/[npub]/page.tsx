@@ -106,11 +106,19 @@ export default async function NpubPage({
             const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
             const videoUrl = event.content.match(/https?:\/\/[^\s]+\.(mp4|webm|mov)/)?.[0]
             const cleanContent = event.content.replace(audioUrl || videoUrl || '', '').trim()
+            const [headline, ...rest] = cleanContent.split('\n')
+            const bodyContent = rest.join('\n').trim()
+            
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4 gap-4">
-                    <h2 className="text-xl font-semibold text-gray-900 leading-tight">{cleanContent}</h2>
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900 leading-tight mb-2">{headline}</h2>
+                      {bodyContent && (
+                        <p className="text-gray-600 whitespace-pre-line">{bodyContent}</p>
+                      )}
+                    </div>
                     <a 
                       href={`${process.env.HTTP_NOSTR_GATEWAY}/${event.id}`}
                       className="text-sm text-gray-500 whitespace-nowrap hover:text-gray-700 hover:underline"
