@@ -31,8 +31,8 @@ export class PodcastFeedGenerator {
     return 'application/octet-stream';
   }
 
-  generateFeed(profile: NDKUser, events: MediaEvent[]): string {
-    const name = profile.profile?.name ?? 'Unknown Podcast';
+  generateFeed(profile: NDKUser, events: MediaEvent[], npub: string): string {
+    const name = profile.profile?.name ?? npub;
     const about = profile.profile?.about ?? 'No description available';
     const title = this.escapeXml(name);
     const description = this.escapeXml(about);

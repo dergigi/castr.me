@@ -74,14 +74,14 @@ export default async function NpubPage({
             {profile.image && (
               <Image
                 src={profile.image}
-                alt={profile.name || 'Profile picture'}
+                alt={profile.name || npub}
                 fill
                 className="object-cover"
                 priority
               />
             )}
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-4 tracking-tight">{profile.name || 'Anonymous'}</h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4 tracking-tight">{profile.name || npub}</h1>
           {profile.about && (
             <p className="text-gray-600 text-lg max-w-2xl leading-relaxed">{profile.about}</p>
           )}
