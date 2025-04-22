@@ -140,7 +140,47 @@ describe('NostrService', () => {
           expect(result.kind).toBe(30023);
         }
       }
-    }, 30000); // Increase timeout for this test since it's making real network requests
+    }, 30000);
+
+    it('should find a long-form content event by matching episode number', async () => {
+      // Initialize the NDK instance for testing
+      await nostrService.initialize();
+      
+      // Use real event IDs for episode number matching test
+      const kind1EventId = 'nevent1qqsq92p3qgyjnqn9rm7k87fdaq4aqqhwpdteuaam2q0s7dqjsf9lpgqpz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dspzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftnp2759';
+      const longFormEventId = 'naddr1qvzqqqr4gupzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftqq24qjmxf5m525zyg3gygemv94q5232rxf9xvdz74hz';
+      
+      // Fetch the real events
+      const kind1Event = await nostrService.getEventById(kind1EventId);
+      const longFormEvent = await nostrService.getEventById(longFormEventId);
+      
+      // Verify that both events were found
+      expect(kind1Event).not.toBeNull();
+      expect(longFormEvent).not.toBeNull();
+      
+      if (kind1Event && longFormEvent) {
+        // Call the method with the real kind1 event
+        const result = await nostrService.findMatchingLongFormContent(kind1Event);
+        
+        // Verify the result
+        expect(result).not.toBeNull();
+        if (result) {
+          // Extract episode numbers from both events
+          const kind1Title = nostrService['extractTitle'](kind1Event);
+          const resultTitle = nostrService['extractTitle'](result);
+          const kind1EpisodeNumber = nostrService['extractEpisodeNumber'](kind1Title);
+          const resultEpisodeNumber = nostrService['extractEpisodeNumber'](resultTitle);
+          
+          // Verify that both events have matching episode numbers
+          expect(kind1EpisodeNumber).not.toBeNull();
+          expect(resultEpisodeNumber).not.toBeNull();
+          expect(kind1EpisodeNumber).toBe(resultEpisodeNumber);
+          
+          // Check that the result is a kind 30023 event
+          expect(result.kind).toBe(30023);
+        }
+      }
+    }, 30000);
     
     it('should return null if no matching long-form content is found', async () => {
       // Initialize the NDK instance for testing
