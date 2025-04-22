@@ -204,7 +204,15 @@ export default async function NpubPage({
                             return (
                               <>
                                 <div className="text-xs text-gray-500 mb-3 text-right">
-                                  {wordCount.toLocaleString()} words · {linkCount} links
+                                  <a 
+                                    href={`https://yakihonne.com/${longFormEvent.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-gray-700"
+                                  >
+                                    {wordCount.toLocaleString()} words
+                                  </a>
+                                  {' · '}{linkCount} links
                                 </div>
                                 <div 
                                   dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parsedHtml) }} 
