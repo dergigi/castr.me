@@ -5,6 +5,18 @@ import type { ReactElement } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 
+// Function to count words in a string
+function countWords(str: string): number {
+  return str.split(/\s+/).filter(word => word.length > 0).length;
+}
+
+// Function to count links in HTML content
+function countLinks(html: string): number {
+  const linkRegex = /<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>/g;
+  const matches = html.match(linkRegex);
+  return matches ? matches.length : 0;
+}
+
 // Configure marked to use GitHub Flavored Markdown
 marked.setOptions({
   gfm: true, // GitHub Flavored Markdown
@@ -179,7 +191,15 @@ export default async function NpubPage({
                     <div className="mt-6 border-t border-gray-100 pt-4">
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-                          <span>Show Notes</span>
+                          <span>
+                            {(() => {
+                              // Count words and links
+                              const wordCount = countWords(longFormEvent.content);
+                              const parsedHtml = marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false });
+                              const linkCount = countLinks(parsedHtml);
+                              return `Show Notes (${wordCount.toLocaleString()} words, ${linkCount} links)`;
+                            })()}
+                          </span>
                           <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
