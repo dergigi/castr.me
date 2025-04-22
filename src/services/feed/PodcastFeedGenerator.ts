@@ -5,7 +5,7 @@ export class PodcastFeedGenerator {
   generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string): string {
     const title = profile.name || 'Anonymous Podcast'
     const description = profile.about || 'A media feed generated from Nostr posts'
-    const link = `https://pubcaster.vercel.app/${npub}`
+    const link = `https://castr.me/${npub}`
     const language = 'en-us'
     const pubDate = new Date().toUTCString()
     const image = profile.picture || `https://robohash.org/${npub}.png?set=set3&size=500x500`
