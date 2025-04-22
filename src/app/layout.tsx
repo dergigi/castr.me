@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import type { ReactElement } from 'react'
 
 export const metadata: Metadata = {
-  title: 'Castr - Nostr Podcast Feed Generator',
+  title: '(Pub)Castr - Nostr Podcast Feed Generator',
   description: 'Automatically generate podcast feeds from Nostr profiles',
 }
 

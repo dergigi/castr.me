@@ -21,7 +21,7 @@ export class PodcastFeedGenerator {
     const title = this.escapeXml(name);
     const description = this.escapeXml(about);
     const image = profile.profile?.image || 'https://via.placeholder.com/150';
-    const link = `https://castr.app/${profile.npub}`;
+    const link = `https://castr.me/${profile.npub}`;
 
     const items = events.map(event => {
       const eventTitle = event.title || 'Untitled Episode';
