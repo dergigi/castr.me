@@ -32,6 +32,31 @@ export async function GET(
     const events = await nostrService.getKind1Events(npub)
     const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
     
+    // Fetch long-form content for show notes
+    const longFormEvents = await nostrService.getLongFormEvents(npub)
+    
+    // Create a map of titles to long-form content
+    const longFormMap = new Map()
+    for (const event of longFormEvents) {
+      const title = nostrService.extractTitle(event)
+      if (title) {
+        longFormMap.set(title, event)
+      }
+    }
+    
+    // Add long-form content to media events
+    const eventsWithShowNotes = await Promise.all(mediaEvents.map(async (event) => {
+      const title = nostrService.extractTitle(event)
+      const longFormEvent = longFormMap.get(title)
+      
+      if (longFormEvent) {
+        // Add show notes tag to the event
+        event.tags.push(['show_notes', longFormEvent.content])
+      }
+      
+      return event
+    }))
+    
     if (!profile) {
       return NextResponse.json(
         { error: 'Profile not found' },
@@ -39,7 +64,7 @@ export async function GET(
       )
     }
 
-    const feed = feedGenerator.generateFeed(profile, mediaEvents, npub)
+    const feed = feedGenerator.generateFeed(profile, eventsWithShowNotes, npub)
     
     return new NextResponse(feed, {
       headers: {
