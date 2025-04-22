@@ -168,7 +168,7 @@ export default async function NpubPage({
                   <div className="flex items-start justify-between mb-4 gap-4">
                     <div className="flex gap-4 items-start flex-1">
                       {/* Cover Image */}
-                      {longFormEvent && (() => {
+                      {longFormEvent && ((): JSX.Element | null => {
                         const coverImage = nostrService.extractImage(longFormEvent);
                         return coverImage ? (
                           <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden relative">
@@ -233,7 +233,7 @@ export default async function NpubPage({
                           </svg>
                         </summary>
                         <div className="mt-3 prose prose-sm max-w-none text-gray-600 [&_li]:my-1 [&_li>p]:my-0">
-                          {(() => {
+                          {function renderShowNotes(): JSX.Element {
                             const wordCount = countWords(longFormEvent.content);
                             const parsedHtml = marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false });
                             const linkCount = countLinks(parsedHtml);
@@ -255,7 +255,7 @@ export default async function NpubPage({
                                 />
                               </>
                             );
-                          })()}
+                          }()}
                         </div>
                       </details>
                     </div>
