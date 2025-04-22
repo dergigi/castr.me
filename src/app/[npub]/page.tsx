@@ -5,6 +5,16 @@ import type { ReactElement } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 
+// Define the profile interface
+interface NostrProfile {
+  name?: string;
+  picture?: string;
+  about?: string;
+  nip05?: string;
+  lud16?: string;
+  lud06?: string;
+}
+
 // Function to count words in a string
 function countWords(str: string): number {
   return str.split(/\s+/).filter(word => word.length > 0).length;
@@ -67,13 +77,13 @@ export default async function NpubPage({
   const longFormMap = nostrService.matchLongFormShowNotes(mediaEvents, longFormEvents)
   
   // Create a map to store zap profiles for each long-form event
-  const zapProfilesMap = new Map<string, Map<string, any>>()
+  const zapProfilesMap = new Map<string, Map<string, NostrProfile>>()
   
   // Create a map to store value split information for each long-form event
   const valueSplitMap = new Map<string, Map<string, number>>()
   
   // Fetch zap profiles for each long-form event
-  for (const [title, longFormEvent] of Array.from(longFormMap.entries())) {
+  for (const longFormEvent of Array.from(longFormMap.values())) {
     const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
     if (zapProfiles.size > 0) {
       zapProfilesMap.set(longFormEvent.id, zapProfiles)
