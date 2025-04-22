@@ -17,7 +17,7 @@ export class NostrService {
   private readonly defaultRelay = 'wss://relay.nostr.band'
   private readonly defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
-  async initialize() {
+  async initialize(): Promise<void> {
     if (!this.ndk) {
       this.ndk = new NDK({
         explicitRelayUrls: [this.defaultRelay],
@@ -39,7 +39,7 @@ export class NostrService {
     }
   }
 
-  async getUserProfile(npub: string = this.defaultNpub) {
+  async getUserProfile(npub: string = this.defaultNpub): Promise<NostrProfile | null> {
     try {
       const pubkey = this.getPubkeyFromNpub(npub)
       if (!pubkey) return null
@@ -53,7 +53,7 @@ export class NostrService {
     }
   }
 
-  async getMediaEvents(npub: string = this.defaultNpub) {
+  async getMediaEvents(npub: string = this.defaultNpub): Promise<MediaEvent[]> {
     try {
       const pubkey = this.getPubkeyFromNpub(npub)
       if (!pubkey) return []
@@ -61,14 +61,14 @@ export class NostrService {
         kinds: [31990],
         authors: [pubkey],
       })
-      return events ? Array.from(events) : []
+      return events ? Array.from(events).map(event => this.transformToMediaEvent(event)) : []
     } catch (error) {
       console.error('Error fetching media events:', error)
       return []
     }
   }
 
-  async getKind1Events(npub: string = this.defaultNpub) {
+  async getKind1Events(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
     try {
       const pubkey = this.getPubkeyFromNpub(npub)
       if (!pubkey) return []
