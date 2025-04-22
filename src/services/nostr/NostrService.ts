@@ -441,4 +441,40 @@ export class NostrService {
       return new Map();
     }
   }
+
+  /**
+   * Extracts value split information from zap tags in an event
+   * @param event The event containing zap tags
+   * @returns A map of pubkeys to their percentage of the value split
+   */
+  extractValueSplitFromEvent(event: NDKEvent): Map<string, number> {
+    const valueSplitMap = new Map<string, number>();
+    
+    // Zap tags typically have the format ['zap', pubkey, '', share_value, ...]
+    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length > 3);
+    
+    // First, extract share values
+    const shareValues: { pubkey: string; share: number }[] = [];
+    let totalShares = 0;
+    
+    for (const tag of zapTags) {
+      const pubkey = tag[1];
+      const shareValue = parseFloat(tag[3]);
+      
+      if (!isNaN(shareValue)) {
+        shareValues.push({ pubkey, share: shareValue });
+        totalShares += shareValue;
+      }
+    }
+    
+    // Now calculate the percentage for each pubkey
+    if (totalShares > 0) {
+      shareValues.forEach(({ pubkey, share }) => {
+        const percentage = Math.round((share / totalShares) * 100);
+        valueSplitMap.set(pubkey, percentage);
+      });
+    }
+    
+    return valueSplitMap;
+  }
 } 
