@@ -200,11 +200,6 @@ export default async function NpubPage({
                                 )}
                               </div>
                             ))}
-                            {zapProfiles.size > 0 && (
-                              <span className="text-xs text-gray-500 ml-2">
-                                Zapped by {zapProfiles.size} {zapProfiles.size === 1 ? 'user' : 'users'}
-                              </span>
-                            )}
                           </div>
                         )}
                       </div>
