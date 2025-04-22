@@ -176,32 +176,6 @@ export default async function NpubPage({
                         {bodyContent && (
                           <p className="text-gray-600 whitespace-pre-line">{bodyContent}</p>
                         )}
-                        
-                        {/* Display zap profiles if they exist */}
-                        {zapProfiles && zapProfiles.size > 0 && (
-                          <div className="flex items-center mt-3 -space-x-2 overflow-hidden">
-                            {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
-                              <div 
-                                key={pubkey}
-                                className="w-8 h-8 rounded-full ring-2 ring-white overflow-hidden relative"
-                                title={profile.name || pubkey.slice(0, 8)}
-                              >
-                                {profile.picture ? (
-                                  <Image
-                                    src={profile.picture}
-                                    alt={profile.name || pubkey.slice(0, 8)}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                                    {(profile.name || pubkey).slice(0, 2)}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
                     <a 
@@ -244,9 +218,36 @@ export default async function NpubPage({
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
                           <span>Show Notes</span>
-                          <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                          <div className="flex items-center">
+                            {/* Display zap profiles if they exist */}
+                            {zapProfiles && zapProfiles.size > 0 && (
+                              <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
+                                {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
+                                  <div 
+                                    key={pubkey}
+                                    className="w-6 h-6 rounded-full ring-2 ring-white overflow-hidden relative"
+                                    title={profile.name || pubkey.slice(0, 8)}
+                                  >
+                                    {profile.picture ? (
+                                      <Image
+                                        src={profile.picture}
+                                        alt={profile.name || pubkey.slice(0, 8)}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                                        {(profile.name || pubkey).slice(0, 2)}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
                         </summary>
                         <div className="mt-3 prose prose-sm max-w-none text-gray-600 [&_li]:my-1 [&_li>p]:my-0">
                           {function renderShowNotes(): JSX.Element {
