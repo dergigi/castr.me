@@ -1,10 +1,10 @@
 # (Pub)Castr
 
-Effortlessly turn your Npub profile into a podcast feed.
+Effortlessly turn your npub into a podcast feed.
 
 ## Overview
 
-(Pub)Castr is a service that automatically generates podcast feeds from Nostr profiles. It converts kind1 events containing audio file links into a valid Podcasting 2.0 feed.
+(Pub)Castr is a service that automatically generates podcast feeds from Nostr profiles. It converts `kind1` events containing audio (and video) file links into a valid Podcasting 2.0 feed.
 
 ## Examples
 
@@ -16,30 +16,29 @@ Effortlessly turn your Npub profile into a podcast feed.
 
 ## Features
 
-- Automatic feed generation from Npub profiles
-- Content negotiation (HTML/RSS)
+- Automatic feed generation from npubs
 - Audio file detection and filtering
 - Podcast 2.0 namespace support
 - Simple and clean HTML interface
 - Zero configuration required
 - Default profile support
-- Show notes support with word and link counts
+- Show notes support via long-form content
 - Markdown rendering for show notes
 
 ## Show Notes
 
-Show notes are implemented using Nostr's long-form content (kind:30023) events. The system links show notes to audio episodes by matching their titles:
+Show notes are implemented using Nostr's long-form content (`kind:30023`) events. The system links show notes to audio episodes by matching their titles on a best effort basis:
 
-1. When a kind:1 event contains an audio file, its first line is treated as the episode title
-2. The system searches for a kind:30023 event with a matching title
+1. When a `kind:1` event contains an audio file, its first line is treated as the episode title
+2. The system searches for a `kind:30023` event with a matching title
 3. If found, the long-form content is displayed as expandable show notes under the episode
-4. Show notes are rendered with:
-   - GitHub Flavored Markdown support
-   - Word and link count display
-   - Compact list styling
-   - Links to the full article on your configured Nostr gateway
+4. Show notes are rendered as GitHub-flavored markdown
 
 This allows podcasters to maintain detailed show notes separate from the audio post while keeping them properly linked.
+
+## Zap Splits & Value Splits
+
+Whatever is defined in the associated long-form `kind:30023` is taken as gospel, and will be used as the basis for the `<value>` splits.
 
 ## Installation
 
