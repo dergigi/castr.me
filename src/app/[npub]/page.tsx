@@ -69,11 +69,20 @@ export default async function NpubPage({
   // Create a map to store zap profiles for each long-form event
   const zapProfilesMap = new Map<string, Map<string, any>>()
   
+  // Create a map to store value split information for each long-form event
+  const valueSplitMap = new Map<string, Map<string, number>>()
+  
   // Fetch zap profiles for each long-form event
   for (const [title, longFormEvent] of Array.from(longFormMap.entries())) {
     const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
     if (zapProfiles.size > 0) {
       zapProfilesMap.set(longFormEvent.id, zapProfiles)
+    }
+    
+    // Extract value split information
+    const valueSplit = nostrService.extractValueSplitFromEvent(longFormEvent)
+    if (valueSplit.size > 0) {
+      valueSplitMap.set(longFormEvent.id, valueSplit)
     }
   }
   
@@ -152,6 +161,9 @@ export default async function NpubPage({
             // Get zap profiles for this long-form event if it exists
             const zapProfiles = longFormEvent ? zapProfilesMap.get(longFormEvent.id) : undefined
             
+            // Get value split information for this long-form event if it exists
+            const valueSplit = longFormEvent ? valueSplitMap.get(longFormEvent.id) : undefined
+            
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
@@ -212,45 +224,92 @@ export default async function NpubPage({
                     </div>
                   )}
                   
+                  {/* Value Recipients Section */}
+                  {longFormEvent && zapProfiles && zapProfiles.size > 0 && (
+                    <div className="mt-6 border-t border-gray-100 pt-4">
+                      <details className="group">
+                        <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                          <span>Value Recipients</span>
+                          <div className="flex items-center">
+                            <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
+                              {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
+                                <a 
+                                  key={pubkey}
+                                  href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-6 h-6 rounded-full ring-2 ring-white overflow-hidden relative hover:ring-blue-300 transition-all"
+                                  title={profile.name || pubkey.slice(0, 8)}
+                                >
+                                  {profile.picture ? (
+                                    <Image
+                                      src={profile.picture}
+                                      alt={profile.name || pubkey.slice(0, 8)}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                                      {(profile.name || pubkey).slice(0, 2)}
+                                    </div>
+                                  )}
+                                </a>
+                              ))}
+                            </div>
+                            <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </summary>
+                        <div className="mt-3">
+                          <div className="text-sm text-gray-600">
+                            {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => {
+                              const percentage = valueSplit?.get(pubkey) || 0;
+                              return (
+                                <div key={pubkey} className="flex items-center justify-between py-1">
+                                  <div className="flex items-center">
+                                    <a 
+                                      href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center hover:text-blue-600"
+                                    >
+                                      <div className="w-6 h-6 rounded-full overflow-hidden relative mr-2">
+                                        {profile.picture ? (
+                                          <Image
+                                            src={profile.picture}
+                                            alt={profile.name || pubkey.slice(0, 8)}
+                                            fill
+                                            className="object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                                            {(profile.name || pubkey).slice(0, 2)}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <span>{profile.name || pubkey.slice(0, 8)}</span>
+                                    </a>
+                                  </div>
+                                  <span className="text-gray-500">{percentage}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </details>
+                    </div>
+                  )}
+                  
                   {/* Show Notes (Long-form Content) */}
                   {longFormEvent && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
                           <span>Show Notes</span>
-                          <div className="flex items-center">
-                            {/* Display zap profiles if they exist */}
-                            {zapProfiles && zapProfiles.size > 0 && (
-                              <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
-                                {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
-                                  <a 
-                                    key={pubkey}
-                                    href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-6 h-6 rounded-full ring-2 ring-white overflow-hidden relative hover:ring-blue-300 transition-all"
-                                    title={profile.name || pubkey.slice(0, 8)}
-                                  >
-                                    {profile.picture ? (
-                                      <Image
-                                        src={profile.picture}
-                                        alt={profile.name || pubkey.slice(0, 8)}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                                        {(profile.name || pubkey).slice(0, 2)}
-                                      </div>
-                                    )}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                            <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
+                          <svg className="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
                         </summary>
                         <div className="mt-3 prose prose-sm max-w-none text-gray-600 [&_li]:my-1 [&_li>p]:my-0">
                           {function renderShowNotes(): JSX.Element {
