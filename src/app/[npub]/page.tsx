@@ -186,7 +186,7 @@ export default async function NpubPage({
                         </summary>
                         <div className="mt-3 prose prose-sm max-w-none text-gray-600">
                           <div 
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parseInline(longFormEvent.content, { gfm: true, breaks: true, async: false })) }} 
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(longFormEvent.content, { gfm: true, breaks: true, async: false })) }} 
                           />
                         </div>
                       </details>
