@@ -181,6 +181,29 @@ describe('NostrService', () => {
         }
       }
     }, 30000);
+
+    it('should have episode number "01" for the kind1 event', async () => {
+      // Initialize the NDK instance for testing
+      await nostrService.initialize();
+      
+      // Use the real kind1 event ID
+      const kind1EventId = 'nevent1qqsq92p3qgyjnqn9rm7k87fdaq4aqqhwpdteuaam2q0s7dqjsf9lpgqpz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dspzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftnp2759';
+      
+      // Fetch the real event
+      const kind1Event = await nostrService.getEventById(kind1EventId);
+      
+      // Verify that the event was found
+      expect(kind1Event).not.toBeNull();
+      
+      if (kind1Event) {
+        // Extract the title and episode number
+        const kind1Title = nostrService['extractTitle'](kind1Event);
+        const kind1EpisodeNumber = nostrService['extractEpisodeNumber'](kind1Title);
+        
+        // Verify that the episode number is "01"
+        expect(kind1EpisodeNumber).toBe("01");
+      }
+    }, 30000);
     
     it('should return null if no matching long-form content is found', async () => {
       // Initialize the NDK instance for testing
