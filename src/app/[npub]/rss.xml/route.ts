@@ -34,7 +34,7 @@ export async function GET(
       )
     }
 
-    const feed = feedGenerator.generateFeed(profile, audioEvents)
+    const feed = feedGenerator.generateFeed(profile, audioEvents, npub)
     
     return new NextResponse(feed, {
       headers: {

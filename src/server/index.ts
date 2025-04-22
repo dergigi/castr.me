@@ -34,7 +34,8 @@ app.get('/:npub', async (req, res) => {
     return res.status(404).send('Profile not found');
   }
 
-  const events = await nostrService.getAudioEvents(npub);
+  const events = await nostrService.getKind1Events(npub);
+  const audioEvents = events.filter(event => nostrService.isMediaEvent(event));
   
   res.send(`
     <!DOCTYPE html>
@@ -61,7 +62,7 @@ app.get('/:npub', async (req, res) => {
           </div>
         </div>
         <h2>Episodes</h2>
-        ${events.map((event: NDKEvent) => {
+        ${audioEvents.map((event: NDKEvent) => {
           const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0];
           const title = nostrService.extractTitle(event);
           return `
@@ -86,8 +87,9 @@ app.get('/feed/:npub', async (req, res) => {
     return res.status(404).send('Profile not found');
   }
 
-  const events = await nostrService.getAudioEvents(npub);
-  const feed = feedGenerator.generateFeed(profile, events);
+  const events = await nostrService.getKind1Events(npub);
+  const audioEvents = events.filter(event => nostrService.isMediaEvent(event));
+  const feed = feedGenerator.generateFeed(profile, audioEvents, npub);
   
   res.set('Content-Type', 'application/xml');
   res.send(feed);

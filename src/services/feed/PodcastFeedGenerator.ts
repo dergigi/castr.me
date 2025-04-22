@@ -2,12 +2,13 @@ import { NostrProfile } from '../nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
 
 export class PodcastFeedGenerator {
-  generateFeed(profile: NostrProfile, events: NDKEvent[]): string {
+  generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string): string {
     const title = profile.name || 'Anonymous Podcast'
     const description = profile.about || 'A media feed generated from Nostr posts'
-    const link = `https://pubcaster.vercel.app/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n`
+    const link = `https://pubcaster.vercel.app/${npub}`
     const language = 'en-us'
     const pubDate = new Date().toUTCString()
+    const image = profile.picture || `https://robohash.org/${npub}.png?set=set3&size=500x500`
     
     // Filter for media events and sort by date
     const mediaEvents = this.filterMediaEvents(events)
@@ -26,6 +27,12 @@ export class PodcastFeedGenerator {
     <language>${language}</language>
     <pubDate>${pubDate}</pubDate>
     <lastBuildDate>${pubDate}</lastBuildDate>
+    <image>
+      <url>${this.escapeXml(image)}</url>
+      <title>${this.escapeXml(title)}</title>
+      <link>${this.escapeXml(link)}</link>
+    </image>
+    <itunes:image href="${this.escapeXml(image)}"/>
     <itunes:author>${this.escapeXml(profile.name || 'Anonymous')}</itunes:author>
     <itunes:summary>${this.escapeXml(description)}</itunes:summary>
     <itunes:type>episodic</itunes:type>
