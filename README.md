@@ -1,10 +1,10 @@
-# (Pub)Castr
+# Castr.me
 
 Effortlessly turn your npub into a podcast feed.
 
 ## Overview
 
-(Pub)Castr is a service that automatically generates podcast feeds from Nostr profiles. It converts `kind1` events containing audio (and video) file links into a valid Podcasting 2.0 feed.
+Castr.me is a service that automatically generates podcast feeds from Nostr profiles. It converts `kind1` events containing audio (and video) file links into a valid Podcasting 2.0 feed.
 
 ## Examples
 
@@ -52,9 +52,6 @@ Whatever is defined in the associated long-form `kind:30023` is taken as gospel,
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/pubcaster.git
-cd pubcaster
 
 # Install dependencies
 npm install
