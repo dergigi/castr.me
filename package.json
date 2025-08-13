@@ -21,6 +21,7 @@
   "author": "Gigi",
   "license": "MIT",
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@nostr-dev-kit/ndk": "^2.5.0",
     "express": "^4.18.2",
     "isomorphic-dompurify": "^2.24.0",
