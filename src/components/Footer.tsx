@@ -30,16 +30,6 @@ const Footer: React.FC = () => {
             </a> - okay... vibed with love.
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            Birthed during{' '}
-            <a 
-              href="https://sovereignengineering.io/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-gray-500 hover:text-gray-700 hover:underline"
-            >
-              SEC-04
-            </a>{' '}
-            &middot;{' '}
             <a 
               href="https://github.com/dergigi/pubcaster" 
               target="_blank" 
@@ -56,6 +46,16 @@ const Footer: React.FC = () => {
               className="text-gray-500 hover:text-gray-700 hover:underline"
             >
               Nostr
+            </a>{' '}
+            &middot;{' '}
+            Birthed during{' '}
+            <a 
+              href="https://sovereignengineering.io/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-gray-700 hover:underline"
+            >
+              SEC-04
             </a>
           </p>
         </div>
