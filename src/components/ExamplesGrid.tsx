@@ -17,56 +17,56 @@ const examples = [
   {
     npub: 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n',
     name: 'No Solutions',
-    description: 'Demo Feed',
+    fallbackDescription: 'Demo Feed',
     fallbackInitials: 'NS',
     fallbackColor: 'bg-indigo-600'
   },
   {
     npub: 'npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx',
     name: 'ODELL',
-    description: 'Bitcoin Podcast',
+    fallbackDescription: 'Bitcoin Podcast',
     fallbackInitials: 'OD',
     fallbackColor: 'bg-blue-600'
   },
   {
     npub: 'npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy',
     name: 'Marty Bent',
-    description: 'Bitcoin Content',
+    fallbackDescription: 'Bitcoin Content',
     fallbackInitials: 'MB',
     fallbackColor: 'bg-green-600'
   },
   {
     npub: 'npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc',
     name: 'Gigi',
-    description: 'Bitcoin Educator',
+    fallbackDescription: 'Bitcoin Educator',
     fallbackInitials: 'GG',
     fallbackColor: 'bg-purple-600'
   },
   {
     npub: 'npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks',
     name: 'Ryan',
-    description: 'Bitcoin Content',
+    fallbackDescription: 'Bitcoin Content',
     fallbackInitials: 'RY',
     fallbackColor: 'bg-orange-600'
   },
   {
     npub: 'npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs',
     name: 'HODL',
-    description: 'Bitcoin Podcast',
+    fallbackDescription: 'Bitcoin Podcast',
     fallbackInitials: 'HD',
     fallbackColor: 'bg-yellow-600'
   },
   {
     npub: 'npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn',
     name: 'yellow',
-    description: 'Bitcoin Content',
+    fallbackDescription: 'Bitcoin Content',
     fallbackInitials: 'YL',
     fallbackColor: 'bg-pink-600'
   },
   {
     npub: 'npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw',
     name: 'TFTC',
-    description: 'Bitcoin Podcast',
+    fallbackDescription: 'Bitcoin Podcast',
     fallbackInitials: 'TF',
     fallbackColor: 'bg-red-600'
   }
@@ -105,6 +105,7 @@ export default async function ExamplesGrid() {
         const profile = profiles[index]
         const displayName = profile?.name || example.name
         const profileImage = profile?.picture
+        const displayDescription = profile?.about || example.fallbackDescription
         
         return (
           <Link
@@ -132,7 +133,7 @@ export default async function ExamplesGrid() {
                 <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
                   {displayName}
                 </h3>
-                <p className="text-xs text-gray-500">{example.description}</p>
+                <p className="text-xs text-gray-500">{displayDescription}</p>
               </div>
             </div>
           </Link>
