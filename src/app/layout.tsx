@@ -7,8 +7,56 @@ import Footer from '@/components/Footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'castr.me',
-  description: 'Transform Nostr feeds into beautiful podcast feeds',
+  title: 'castr.me - Transform Nostr feeds into beautiful podcast feeds',
+  description: 'Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me. Generate RSS feeds from any Nostr npub.',
+  keywords: ['nostr', 'podcast', 'rss', 'feed', 'decentralized', 'audio', 'content'],
+  authors: [{ name: 'castr.me' }],
+  creator: 'castr.me',
+  publisher: 'castr.me',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://castr.me'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: '/',
+    siteName: 'castr.me',
+    title: 'castr.me - Transform Nostr feeds into beautiful podcast feeds',
+    description: 'Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.',
+    images: [
+      {
+        url: '/api/og?title=castr.me&subtitle=Transform%20Nostr%20feeds%20into%20beautiful%20podcast%20feeds&type=homepage',
+        width: 1200,
+        height: 630,
+        alt: 'castr.me - Transform Nostr feeds into beautiful podcast feeds',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'castr.me - Transform Nostr feeds into beautiful podcast feeds',
+    description: 'Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.',
+    images: ['/api/og?title=castr.me&subtitle=Transform%20Nostr%20feeds%20into%20beautiful%20podcast%20feeds&type=homepage'],
+    creator: '@castr_me',
+    site: '@castr_me',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
@@ -18,6 +66,10 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   manifest: '/site.webmanifest',
+  other: {
+    'theme-color': '#6366f1',
+    'msapplication-TileColor': '#6366f1',
+  },
 }
 
 export default function RootLayout({
