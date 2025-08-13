@@ -48,14 +48,13 @@ const Footer: React.FC = () => {
               Nostr
             </a>{' '}
             &middot;{' '}
-            Birthed during{' '}
             <a 
               href="https://sovereignengineering.io/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-gray-500 hover:text-gray-700 hover:underline"
             >
-              SEC-04
+              Birthed during SEC-04
             </a>
           </p>
         </div>
