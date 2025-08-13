@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRightIcon, RssIcon, GlobeAltIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import ExamplesGrid from '@/components/ExamplesGrid'
 
@@ -16,7 +17,14 @@ export default function Home() {
             <div className="flex justify-center mb-8">
               <div className="relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25"></div>
-                <div className="relative bg-white px-4 py-2 rounded-lg border border-gray-200">
+                <div className="relative bg-white px-6 py-4 rounded-lg border border-gray-200 flex items-center gap-3">
+                  <Image
+                    src="/favicon-32x32.png"
+                    alt="castr.me logo"
+                    width={32}
+                    height={32}
+                    className="flex-shrink-0"
+                  />
                   <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
                     castr.me
                   </h1>

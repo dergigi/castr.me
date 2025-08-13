@@ -1,10 +1,21 @@
 import React from 'react';
+import Image from 'next/image';
 
 const Footer: React.FC = () => {
   return (
     <footer className="py-6 bg-gray-50 border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center text-center">
+          <div className="flex items-center gap-2 mb-3">
+            <Image
+              src="/favicon-32x32.png"
+              alt="castr.me logo"
+              width={24}
+              height={24}
+              className="flex-shrink-0"
+            />
+            <span className="text-sm font-semibold text-gray-700">castr.me</span>
+          </div>
           <p className="text-sm text-gray-500">
             Made with vibes and love by{' '}
             <a 
