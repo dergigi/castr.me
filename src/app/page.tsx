@@ -175,8 +175,14 @@ export default function Home(): React.JSX.Element {
                 href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
                 className="rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200"
               >
-                Explore Demo Feed
+                Open Demo Feed
               </Link>
+              <a
+                href="#examples"
+                className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
+              >
+                Learn more <span aria-hidden="true">→</span>
+              </a>
             </div>
           </div>
         </div>
