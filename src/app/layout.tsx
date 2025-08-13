@@ -7,8 +7,8 @@ import Footer from '@/components/Footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Pubcaster',
-  description: 'A podcast platform for Nostr',
+  title: 'castr.me',
+  description: 'Transform Nostr feeds into beautiful podcast feeds',
 }
 
 export default function RootLayout({

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import type { ReactElement } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
+import CopyButton from '@/components/CopyButton'
 
 // Define the profile interface
 interface NostrProfile {
@@ -145,15 +146,18 @@ export default async function NpubPage({
 
         {/* Podcast Feed Link */}
         <div className="mb-16 text-center">
-          <a
-            href={`/${npub}/rss.xml`}
-            className="inline-flex items-center px-4 py-2 text-sm text-gray-100 hover:text-white transition-colors rounded-full bg-gray-900/40 hover:bg-gray-900/60 backdrop-blur-sm"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
-            </svg>
-            Subscribe to RSS Feed
-          </a>
+          <div className="inline-flex items-center">
+            <a
+              href={`/${npub}/rss.xml`}
+              className="inline-flex items-center px-4 py-2 text-sm text-gray-100 hover:text-white transition-colors rounded-full bg-gray-900/40 hover:bg-gray-900/60 backdrop-blur-sm"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+              </svg>
+              Subscribe to RSS Feed
+            </a>
+            <CopyButton url={`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/${npub}/rss.xml`} />
+          </div>
         </div>
 
         {/* Media Posts */}
