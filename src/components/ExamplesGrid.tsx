@@ -36,10 +36,10 @@ const examples = [
     fallbackColor: 'bg-green-600'
   },
   {
-    npub: 'npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc',
-    name: 'Gigi',
-    fallbackDescription: 'Bitcoin Educator',
-    fallbackInitials: 'GG',
+    npub: 'npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407',
+    name: 'FLASH',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'FL',
     fallbackColor: 'bg-purple-600'
   },
   {
