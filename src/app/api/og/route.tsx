@@ -134,7 +134,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       }
     )
   } catch (e) {
-    console.log(`${e.message}`)
+    console.log(`Error generating OG image: ${e instanceof Error ? e.message : String(e)}`)
     return new Response(`Failed to generate the image`, {
       status: 500,
     })
