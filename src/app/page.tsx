@@ -37,12 +37,12 @@ export default function Home(): React.JSX.Element {
                 <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               
-              <Link
-                href="https://github.com/dergigi/pubcaster"
+              <a
+                href="#examples"
                 className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
               >
                 Learn more <span aria-hidden="true">→</span>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function Home(): React.JSX.Element {
       </div>
 
       {/* Examples Section */}
-      <div className="py-24 sm:py-32">
+      <div id="examples" className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
             <h2 className="text-base font-semibold leading-7 text-indigo-600">Live Examples</h2>
