@@ -178,7 +178,7 @@ export default function Home(): React.JSX.Element {
                 Open Demo Feed
               </Link>
               <a
-                href="#examples"
+                href="https://github.com/dergigi/castr.me#overview"
                 className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
               >
                 Learn more <span aria-hidden="true">→</span>
