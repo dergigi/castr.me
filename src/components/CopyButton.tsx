@@ -7,10 +7,10 @@ interface CopyButtonProps {
   url: string
 }
 
-export default function CopyButton({ url }: CopyButtonProps) {
+export default function CopyButton({ url }: CopyButtonProps): React.JSX.Element {
   const [copied, setCopied] = useState(false)
 
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)

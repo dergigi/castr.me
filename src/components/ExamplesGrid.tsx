@@ -117,7 +117,7 @@ async function getProfileData(npub: string): Promise<NostrProfile | null> {
   }
 }
 
-export default async function ExamplesGrid() {
+export default async function ExamplesGrid(): Promise<React.JSX.Element> {
   // Fetch all profile data
   const profilePromises = examples.map(example => getProfileData(example.npub))
   const profiles = await Promise.all(profilePromises)

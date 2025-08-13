@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowRightIcon, RssIcon, GlobeAltIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import ExamplesGrid from '@/components/ExamplesGrid'
 
-export default function Home() {
+export default function Home(): React.JSX.Element {
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -49,6 +49,25 @@ export default function Home() {
         
         <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
           <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
+        </div>
+      </div>
+
+      {/* Examples Section */}
+      <div className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center">
+            <h2 className="text-base font-semibold leading-7 text-indigo-600">Live Examples</h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Discover Nostr content creators
+            </p>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              These creators regularly share media on Nostr. Subscribe to their RSS feeds and listen anywhere.
+            </p>
+          </div>
+          
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+            <ExamplesGrid />
+          </div>
         </div>
       </div>
 
@@ -103,25 +122,6 @@ export default function Home() {
                 </dd>
               </div>
             </dl>
-          </div>
-        </div>
-      </div>
-
-      {/* Examples Section */}
-      <div className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-600">Live Examples</h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Discover Nostr content creators
-            </p>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              These creators regularly share media on Nostr. Subscribe to their RSS feeds and listen anywhere.
-            </p>
-          </div>
-          
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <ExamplesGrid />
           </div>
         </div>
       </div>
