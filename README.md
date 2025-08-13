@@ -6,6 +6,14 @@ Effortlessly turn your npub into a podcast feed.
 
 Castr.me is a service that automatically generates podcast feeds from Nostr profiles. It converts `kind1` events containing audio (and video) file links into a valid Podcasting 2.0 feed.
 
+**🌐 Live at: [https://castr.me/](https://castr.me/)**
+
+## How It Works
+
+Castr.me scans a Nostr profile's posts and looks for `kind1` events that contain links to audio or video files. When it finds media content, it automatically generates a podcast RSS feed that you can subscribe to in any podcast app.
+
+**Important:** Castr.me only works for npubs who have actually posted audio or video content to Nostr. If a profile hasn't shared any media files, there won't be anything to convert into a podcast feed. The service will show an empty feed or "No media posts found" message for profiles without media content.
+
 ## Examples
 
 - [No Solutions](https://castr.me/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n)
@@ -16,6 +24,13 @@ Castr.me is a service that automatically generates podcast feeds from Nostr prof
 - [HODL](https://castr.me/npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs)
 - [yellow](https://castr.me/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn)
 - [TFTC](https://castr.me/npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw)
+
+## Finding Content
+
+You can discover profiles that post media using search queries on Nostr search engines. For example:
+- `https://nostr.band/?q=.mp4` - Find profiles posting video files
+- `https://nostr.band/?q=.mp3` - Find profiles posting audio files
+- `https://nostr.band/?q=.m4a` - Find profiles posting podcast audio
 
 ## Features
 

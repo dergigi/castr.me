@@ -37,12 +37,12 @@ export default function Home(): React.JSX.Element {
                 <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               
-              <Link
-                href="https://github.com/dergigi/pubcaster"
+              <a
+                href="#examples"
                 className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
               >
                 Learn more <span aria-hidden="true">→</span>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -53,15 +53,15 @@ export default function Home(): React.JSX.Element {
       </div>
 
       {/* Examples Section */}
-      <div className="py-24 sm:py-32">
+      <div id="examples" className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
             <h2 className="text-base font-semibold leading-7 text-indigo-600">Live Examples</h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Discover Nostr content creators
+              Discover Audio and Video Content
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              These creators regularly share media on Nostr. Subscribe to their RSS feeds and listen anywhere.
+              These npubs regularly share media on Nostr. Subscribe to their RSS feeds and listen using your favorite podcast app.
             </p>
           </div>
           
@@ -134,7 +134,7 @@ export default function Home(): React.JSX.Element {
               Open Source & Community Driven
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
-              castr.me is completely open source and built by the community. We welcome contributions, bug reports, and feature requests. Tag us on Nostr for quick feedback!
+              castr.me is completely open source and built for the nostr community. We welcome contributions, bug reports, and feature requests. Tag us on Nostr for quick feedback!
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
@@ -175,8 +175,14 @@ export default function Home(): React.JSX.Element {
                 href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
                 className="rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200"
               >
-                Explore Demo Feed
+                Open Demo Feed
               </Link>
+              <a
+                href="https://github.com/dergigi/castr.me#overview"
+                className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
+              >
+                Learn more <span aria-hidden="true">→</span>
+              </a>
             </div>
           </div>
         </div>

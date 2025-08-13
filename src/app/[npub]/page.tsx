@@ -233,6 +233,21 @@ export default async function NpubPage({
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/10 via-gray-900/50 to-gray-900/80" />
+        
+        {/* Back Button */}
+        <div className="absolute top-4 left-4">
+          <a
+            href="/"
+            className="group inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-lg transition-all duration-200 hover:scale-105"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              Back
+            </span>
+          </a>
+        </div>
       </div>
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-40">
