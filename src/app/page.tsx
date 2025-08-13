@@ -115,7 +115,7 @@ export default function Home() {
               Many people use nostr to share media. RSS makes it easy to consume
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Discover how creators are transforming their Nostr content into podcast feeds.
+              Here are some npubs that are regularly posting media content on nostr. Give them a try!
             </p>
           </div>
           
