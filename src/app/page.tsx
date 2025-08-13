@@ -61,7 +61,7 @@ export default function Home(): React.JSX.Element {
               Discover Audio and Video Content
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              These npubs regularly share media on Nostr. Subscribe to their RSS feeds and listen anywhere.
+              These npubs regularly share media on Nostr. Subscribe to their RSS feeds and listen using your favorite podcast app.
             </p>
           </div>
           
