@@ -137,7 +137,7 @@ export default async function ExamplesGrid() {
             className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
           >
             <div className="flex items-center gap-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden relative">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden relative aspect-square">
                 {profileImage ? (
                   <Image
                     src={profileImage}
@@ -145,6 +145,7 @@ export default async function ExamplesGrid() {
                     fill
                     className="object-cover"
                     sizes="40px"
+                    style={{ objectFit: 'cover' }}
                   />
                 ) : (
                   <div className={`w-full h-full flex items-center justify-center ${example.fallbackColor} group-hover:opacity-80 transition-opacity`}>
