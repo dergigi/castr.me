@@ -134,7 +134,7 @@ export default function Home(): React.JSX.Element {
               Open Source & Community Driven
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
-              castr.me is completely open source and built by the community. We welcome contributions, bug reports, and feature requests. Tag us on Nostr for quick feedback!
+              castr.me is completely open source and built for the nostr community. We welcome contributions, bug reports, and feature requests. Tag us on Nostr for quick feedback!
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
