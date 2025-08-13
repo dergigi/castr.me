@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     description: 'Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.',
     images: [
       {
-        url: '/api/og?title=castr.me&subtitle=Transform%20Nostr%20feeds%20into%20beautiful%20podcast%20feeds&type=homepage',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'castr.me - Transform Nostr feeds into beautiful podcast feeds',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'castr.me - Transform Nostr feeds into beautiful podcast feeds',
     description: 'Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.',
-    images: ['/api/og?title=castr.me&subtitle=Transform%20Nostr%20feeds%20into%20beautiful%20podcast%20feeds&type=homepage'],
+    images: ['/og-image.png'],
     creator: '@castr_me',
     site: '@castr_me',
   },
