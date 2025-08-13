@@ -5,6 +5,7 @@ import type { ReactElement } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 import CopyButton from '@/components/CopyButton'
+import type { Metadata } from 'next'
 
 // Define the profile interface
 interface NostrProfile {
@@ -39,6 +40,116 @@ const nostrService = new NostrService()
 
 // Initialize NDK connection
 let initialized = false
+
+// Generate metadata for the page
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ npub: string }>
+}): Promise<Metadata> {
+  const resolvedParams = await params
+  const npub = resolvedParams.npub
+  
+  // Initialize NDK if not already initialized
+  if (!initialized) {
+    await nostrService.initialize()
+    initialized = true
+  }
+  
+  try {
+    const profile = await nostrService.getUserProfile(npub)
+    const events = await nostrService.getKind1Events(npub)
+    const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
+    
+    if (!profile) {
+      return {
+        title: `Profile Not Found - castr.me`,
+        description: 'The requested Nostr profile could not be found.',
+        openGraph: {
+          title: `Profile Not Found - castr.me`,
+          description: 'The requested Nostr profile could not be found.',
+          images: ['/android-chrome-512x512.png'],
+        },
+        twitter: {
+          card: 'summary',
+          title: `Profile Not Found - castr.me`,
+          description: 'The requested Nostr profile could not be found.',
+        },
+      }
+    }
+    
+    const profileName = profile.name || npub.slice(0, 16) + '...'
+    const profileDescription = profile.about || `Listen to ${profileName}'s Nostr content as a podcast feed`
+    const mediaCount = mediaEvents.length
+    
+    const title = `${profileName} - Podcast Feed | castr.me`
+    const description = `${profileDescription}${mediaCount > 0 ? ` (${mediaCount} episodes available)` : ''}`
+    
+    const ogImages = []
+    if (profile.image) {
+      ogImages.push({
+        url: profile.image,
+        width: 400,
+        height: 400,
+        alt: `${profileName}'s profile picture`,
+      })
+    }
+    
+    // Add dynamic OG image
+    const ogImageUrl = `/api/og?title=${encodeURIComponent(profileName)}&subtitle=${encodeURIComponent(profileDescription)}&type=profile`
+    ogImages.push({
+      url: ogImageUrl,
+      width: 1200,
+      height: 630,
+      alt: `${profileName} - Podcast Feed | castr.me`,
+    })
+    
+    return {
+      title,
+      description,
+      keywords: ['nostr', 'podcast', 'rss', 'feed', profileName.toLowerCase()],
+      openGraph: {
+        type: 'profile',
+        title,
+        description,
+        url: `/${npub}`,
+        siteName: 'castr.me',
+        images: ogImages,
+        locale: 'en_US',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: profile.image ? [profile.image, ogImageUrl] : [ogImageUrl],
+        creator: '@castr_me',
+        site: '@castr_me',
+      },
+      alternates: {
+        canonical: `/${npub}`,
+      },
+      other: {
+        'rss-feed': `/${npub}/rss.xml`,
+      },
+    }
+  } catch (error) {
+    console.error('Error generating metadata:', error)
+    return {
+      title: `Error Loading Profile - castr.me`,
+      description: 'There was an error loading this Nostr profile.',
+      openGraph: {
+        title: `Error Loading Profile - castr.me`,
+        description: 'There was an error loading this Nostr profile.',
+        images: ['/android-chrome-512x512.png'],
+      },
+      twitter: {
+        card: 'summary',
+        title: `Error Loading Profile - castr.me`,
+        description: 'There was an error loading this Nostr profile.',
+      },
+    }
+  }
+}
 
 export default async function NpubPage({
   params,
