@@ -1,0 +1,143 @@
+import Link from 'next/link'
+import Image from 'next/image'
+import { NostrService } from '@/services/nostr/NostrService'
+
+// Define the profile interface
+interface NostrProfile {
+  name?: string;
+  picture?: string;
+  about?: string;
+  nip05?: string;
+  lud16?: string;
+  lud06?: string;
+}
+
+// Define the example data
+const examples = [
+  {
+    npub: 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n',
+    name: 'No Solutions',
+    description: 'Demo Feed',
+    fallbackInitials: 'NS',
+    fallbackColor: 'bg-indigo-600'
+  },
+  {
+    npub: 'npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx',
+    name: 'ODELL',
+    description: 'Bitcoin Podcast',
+    fallbackInitials: 'OD',
+    fallbackColor: 'bg-blue-600'
+  },
+  {
+    npub: 'npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy',
+    name: 'Marty Bent',
+    description: 'Bitcoin Content',
+    fallbackInitials: 'MB',
+    fallbackColor: 'bg-green-600'
+  },
+  {
+    npub: 'npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc',
+    name: 'Gigi',
+    description: 'Bitcoin Educator',
+    fallbackInitials: 'GG',
+    fallbackColor: 'bg-purple-600'
+  },
+  {
+    npub: 'npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks',
+    name: 'Ryan',
+    description: 'Bitcoin Content',
+    fallbackInitials: 'RY',
+    fallbackColor: 'bg-orange-600'
+  },
+  {
+    npub: 'npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs',
+    name: 'HODL',
+    description: 'Bitcoin Podcast',
+    fallbackInitials: 'HD',
+    fallbackColor: 'bg-yellow-600'
+  },
+  {
+    npub: 'npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn',
+    name: 'yellow',
+    description: 'Bitcoin Content',
+    fallbackInitials: 'YL',
+    fallbackColor: 'bg-pink-600'
+  },
+  {
+    npub: 'npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw',
+    name: 'TFTC',
+    description: 'Bitcoin Podcast',
+    fallbackInitials: 'TF',
+    fallbackColor: 'bg-red-600'
+  }
+]
+
+// Create service instance
+const nostrService = new NostrService()
+
+// Initialize NDK connection
+let initialized = false
+
+async function getProfileData(npub: string): Promise<NostrProfile | null> {
+  try {
+    // Initialize NDK if not already initialized
+    if (!initialized) {
+      await nostrService.initialize()
+      initialized = true
+    }
+    
+    const profile = await nostrService.getUserProfile(npub)
+    return profile
+  } catch (error) {
+    console.error(`Error fetching profile for ${npub}:`, error)
+    return null
+  }
+}
+
+export default async function ExamplesGrid() {
+  // Fetch all profile data
+  const profilePromises = examples.map(example => getProfileData(example.npub))
+  const profiles = await Promise.all(profilePromises)
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {examples.map((example, index) => {
+        const profile = profiles[index]
+        const displayName = profile?.name || example.name
+        const profileImage = profile?.picture
+        
+        return (
+          <Link
+            key={example.npub}
+            href={`/${example.npub}`}
+            className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+          >
+            <div className="flex items-center gap-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden relative">
+                {profileImage ? (
+                  <Image
+                    src={profileImage}
+                    alt={displayName}
+                    fill
+                    className="object-cover"
+                    sizes="40px"
+                  />
+                ) : (
+                  <div className={`w-full h-full flex items-center justify-center ${example.fallbackColor} group-hover:opacity-80 transition-opacity`}>
+                    <span className="text-sm font-semibold text-white">{example.fallbackInitials}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                  {displayName}
+                </h3>
+                <p className="text-xs text-gray-500">{example.description}</p>
+              </div>
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
