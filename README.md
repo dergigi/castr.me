@@ -8,6 +8,12 @@ Castr.me is a service that automatically generates podcast feeds from Nostr prof
 
 **🌐 Live at: [https://castr.me/](https://castr.me/)**
 
+## How It Works
+
+Castr.me scans a Nostr profile's posts and looks for `kind1` events that contain links to audio or video files. When it finds media content, it automatically generates a podcast RSS feed that you can subscribe to in any podcast app.
+
+**Important:** Castr.me only works for npubs who have actually posted audio or video content to Nostr. If a profile hasn't shared any media files, there won't be anything to convert into a podcast feed. The service will show an empty feed or "No media posts found" message for profiles without media content.
+
 ## Examples
 
 - [No Solutions](https://castr.me/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n)
