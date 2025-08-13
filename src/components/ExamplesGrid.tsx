@@ -78,6 +78,29 @@ const nostrService = new NostrService()
 // Initialize NDK connection
 let initialized = false
 
+// Function to truncate description to one sentence or ~6 words
+function truncateDescription(description: string): string {
+  if (!description) return ''
+  
+  // Remove extra whitespace and newlines
+  const cleanDescription = description.trim().replace(/\s+/g, ' ')
+  
+  // If it's already short (6 words or less), return as is
+  const words = cleanDescription.split(' ')
+  if (words.length <= 6) return cleanDescription
+  
+  // Find the first sentence (ending with . ! ?)
+  const sentenceMatch = cleanDescription.match(/^[^.!?]+[.!?]/)
+  if (sentenceMatch) {
+    const sentence = sentenceMatch[0].trim()
+    // If the sentence is reasonable length, use it
+    if (sentence.length <= 80) return sentence
+  }
+  
+  // Otherwise, take first 6 words and add ellipsis
+  return words.slice(0, 6).join(' ') + '...'
+}
+
 async function getProfileData(npub: string): Promise<NostrProfile | null> {
   try {
     // Initialize NDK if not already initialized
@@ -105,7 +128,7 @@ export default async function ExamplesGrid() {
         const profile = profiles[index]
         const displayName = profile?.name || example.name
         const profileImage = profile?.picture
-        const displayDescription = profile?.about || example.fallbackDescription
+        const displayDescription = truncateDescription(profile?.about || example.fallbackDescription)
         
         return (
           <Link
