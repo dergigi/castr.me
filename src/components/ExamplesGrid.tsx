@@ -78,27 +78,27 @@ const nostrService = new NostrService()
 // Initialize NDK connection
 let initialized = false
 
-// Function to truncate description to one sentence or ~6 words
+// Function to truncate description to keep it very short
 function truncateDescription(description: string): string {
   if (!description) return ''
   
   // Remove extra whitespace and newlines
   const cleanDescription = description.trim().replace(/\s+/g, ' ')
   
-  // If it's already short (6 words or less), return as is
+  // If it's already short (4 words or less), return as is
   const words = cleanDescription.split(' ')
-  if (words.length <= 6) return cleanDescription
+  if (words.length <= 4) return cleanDescription
   
   // Find the first sentence (ending with . ! ?)
   const sentenceMatch = cleanDescription.match(/^[^.!?]+[.!?]/)
   if (sentenceMatch) {
     const sentence = sentenceMatch[0].trim()
-    // If the sentence is reasonable length, use it
-    if (sentence.length <= 80) return sentence
+    // If the sentence is very short, use it
+    if (sentence.length <= 50) return sentence
   }
   
-  // Otherwise, take first 6 words and add ellipsis
-  return words.slice(0, 6).join(' ') + '...'
+  // Otherwise, take first 4 words and add ellipsis
+  return words.slice(0, 4).join(' ') + '...'
 }
 
 async function getProfileData(npub: string): Promise<NostrProfile | null> {
