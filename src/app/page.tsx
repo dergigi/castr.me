@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { ArrowRightIcon, RssIcon, GlobeAltIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import ExamplesGrid from '@/components/ExamplesGrid'
 
-export default function Home() {
+export default function Home(): React.JSX.Element {
   return (
     <div className="bg-white">
       {/* Hero Section */}
