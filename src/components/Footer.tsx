@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
             </a>
           </div>
           <p className="text-sm text-gray-500">
-            Vibed with love by{' '}
+            Made with love by{' '}
             <a 
               href="https://npub.world/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc" 
               target="_blank" 
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
               className="text-blue-600 hover:text-blue-800 hover:underline"
             >
               Gigi
-            </a> 🧡
+            </a> - okay... vibed with love.
           </p>
           <p className="mt-1 text-xs text-gray-400">
             Birthed during{' '}
