@@ -82,6 +82,9 @@ export default function Home(): React.JSX.Element {
             <p className="mt-6 text-lg leading-8 text-gray-600">
               castr.me bridges the gap between Nostr and traditional podcast platforms, making decentralized content accessible everywhere.
             </p>
+            <p className="mt-4 text-sm leading-6 text-gray-500">
+              Note: This only works for npubs who have posted audio or video content to Nostr. If a profile hasn't shared any media files, there won't be anything to convert into a podcast feed.
+            </p>
           </div>
           
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
