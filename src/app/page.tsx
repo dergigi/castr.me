@@ -19,8 +19,8 @@ export default function Home() {
                 <Image
                   src="/android-chrome-192x192.png"
                   alt="castr.me logo"
-                  width={64}
-                  height={64}
+                  width={80}
+                  height={80}
                   className="flex-shrink-0"
                 />
                 <div className="relative">
