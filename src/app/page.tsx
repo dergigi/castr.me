@@ -106,6 +106,145 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Examples Section */}
+      <div className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center">
+            <h2 className="text-base font-semibold leading-7 text-indigo-600">Live Examples</h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Popular podcasts already using castr.me
+            </p>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              Discover how creators are transforming their Nostr content into podcast feeds.
+            </p>
+          </div>
+          
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Link
+                href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 group-hover:bg-indigo-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">NS</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">No Solutions</h3>
+                    <p className="text-xs text-gray-500">Demo Feed</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link
+                href="/npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 group-hover:bg-blue-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">OD</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">ODELL</h3>
+                    <p className="text-xs text-gray-500">Bitcoin Podcast</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link
+                href="/npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 group-hover:bg-green-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">MB</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">Marty Bent</h3>
+                    <p className="text-xs text-gray-500">Bitcoin Content</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link
+                href="/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-600 group-hover:bg-purple-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">GG</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">Gigi</h3>
+                    <p className="text-xs text-gray-500">Bitcoin Educator</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link
+                href="/npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-600 group-hover:bg-orange-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">RY</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">Ryan</h3>
+                    <p className="text-xs text-gray-500">Bitcoin Content</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link
+                href="/npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-600 group-hover:bg-yellow-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">HD</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">HODL</h3>
+                    <p className="text-xs text-gray-500">Bitcoin Podcast</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link
+                href="/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-600 group-hover:bg-pink-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">YL</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">yellow</h3>
+                    <p className="text-xs text-gray-500">Bitcoin Content</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link
+                href="/npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw"
+                className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
+              >
+                <div className="flex items-center gap-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-600 group-hover:bg-red-700 transition-colors">
+                    <span className="text-sm font-semibold text-white">TF</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">TFTC</h3>
+                    <p className="text-xs text-gray-500">Bitcoin Podcast</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* CTA Section */}
       <div className="bg-gray-50 py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
