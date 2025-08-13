@@ -267,7 +267,7 @@ export default async function NpubPage({
               </svg>
               Subscribe to RSS Feed
             </a>
-            <CopyButton url={`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/${npub}/rss.xml`} />
+            <CopyButton url={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://castr.me'}/${npub}/rss.xml`} />
           </div>
         </div>
 
