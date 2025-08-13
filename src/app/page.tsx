@@ -112,7 +112,7 @@ export default function Home() {
           <div className="mx-auto max-w-2xl lg:text-center">
             <h2 className="text-base font-semibold leading-7 text-indigo-600">Live Examples</h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Popular podcasts already using castr.me
+              Many people use nostr to share media. RSS makes it easy to consume
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
               Discover how creators are transforming their Nostr content into podcast feeds.
