@@ -15,21 +15,12 @@ export default function Home() {
         <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
           <div className="text-center">
             <div className="flex justify-center mb-8">
-              <div className="relative flex items-center gap-4">
-                <Image
-                  src="/android-chrome-192x192.png"
-                  alt="castr.me logo"
-                  width={80}
-                  height={80}
-                  className="flex-shrink-0"
-                />
-                <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25"></div>
-                  <div className="relative bg-white px-4 py-2 rounded-lg border border-gray-200">
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                      castr.me
-                    </h1>
-                  </div>
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25"></div>
+                <div className="relative bg-white px-4 py-2 rounded-lg border border-gray-200">
+                  <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                    castr.me
+                  </h1>
                 </div>
               </div>
             </div>
