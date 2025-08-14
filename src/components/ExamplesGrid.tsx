@@ -78,22 +78,6 @@ const examples: Example[] = [
     localImage: '/profiles/npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy.jpg'
   },
   {
-    npub: 'npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407',
-    name: 'FLASH',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'FL',
-    fallbackColor: 'bg-purple-600',
-    localImage: '/profiles/npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407.jpg'
-  },
-  {
-    npub: 'npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks',
-    name: 'Ryan',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'RY',
-    fallbackColor: 'bg-orange-600',
-    localImage: '/profiles/npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks.jpg'
-  },
-  {
     npub: 'npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs',
     name: 'HODL',
     fallbackDescription: 'Bitcoin Podcast',
@@ -110,28 +94,12 @@ const examples: Example[] = [
     localImage: '/profiles/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn.jpg'
   },
   {
-    npub: 'npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3',
-    name: 'Movie Archive',
-    fallbackDescription: 'Movie Content',
-    fallbackInitials: 'MA',
-    fallbackColor: 'bg-teal-600',
-    localImage: '/profiles/npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3.jpg'
-  },
-  {
-    npub: 'npub1spdnfacgsd7lk0nlqkq443tkq4jx9z6c6ksvaquuewmw7d3qltpslcq6j7',
-    name: 'Paul Keating',
-    fallbackDescription: 'Political Content',
-    fallbackInitials: 'PK',
-    fallbackColor: 'bg-cyan-600',
-    localImage: '/profiles/npub1spdnfacgsd7lk0nlqkq443tkq4jx9z6c6ksvaquuewmw7d3qltpslcq6j7.jpg'
-  },
-  {
-    npub: 'npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv',
-    name: 'New Music Nudge Unit',
-    fallbackDescription: 'Music Content',
-    fallbackInitials: 'NM',
-    fallbackColor: 'bg-emerald-600',
-    localImage: '/profiles/npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv.jpg'
+    npub: 'npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle',
+    name: 'Jack Mallers',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'JM',
+    fallbackColor: 'bg-rose-600',
+    localImage: '/profiles/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle.jpg'
   },
   {
     npub: 'npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev',
@@ -142,20 +110,44 @@ const examples: Example[] = [
     localImage: '/profiles/npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev.jpg'
   },
   {
-    npub: 'npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle',
-    name: 'Jack Mallers',
+    npub: 'npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc',
+    name: 'Gigi',
     fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'JM',
-    fallbackColor: 'bg-rose-600',
-    localImage: '/profiles/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle.jpg'
+    fallbackInitials: 'GI',
+    fallbackColor: 'bg-indigo-600',
+    localImage: '/profiles/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc.jpg'
   },
   {
-    npub: 'npub1z204rz2az24ne8xuym9j90dmnh533e03elucjslnsc802wjyrqps6vmxwn',
-    name: 'Bitman',
+    npub: 'npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks',
+    name: 'Ryan',
     fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'BM',
-    fallbackColor: 'bg-lime-600',
-    localImage: '/profiles/npub1z204rz2az24ne8xuym9j90dmnh533e03elucjslnsc802wjyrqps6vmxwn.jpg'
+    fallbackInitials: 'RY',
+    fallbackColor: 'bg-orange-600',
+    localImage: '/profiles/npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks.jpg'
+  },
+  {
+    npub: 'npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407',
+    name: 'FLASH',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'FL',
+    fallbackColor: 'bg-purple-600',
+    localImage: '/profiles/npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407.jpg'
+  },
+  {
+    npub: 'npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3',
+    name: 'Movie Archive',
+    fallbackDescription: 'Movie Content',
+    fallbackInitials: 'MA',
+    fallbackColor: 'bg-teal-600',
+    localImage: '/profiles/npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3.jpg'
+  },
+  {
+    npub: 'npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv',
+    name: 'New Music Nudge Unit',
+    fallbackDescription: 'Music Content',
+    fallbackInitials: 'NM',
+    fallbackColor: 'bg-emerald-600',
+    localImage: '/profiles/npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv.jpg'
   }
 ]
 
