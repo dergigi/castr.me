@@ -140,6 +140,22 @@ const examples: Example[] = [
     fallbackInitials: 'GS',
     fallbackColor: 'bg-slate-600',
     localImage: '/profiles/npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx.jpg'
+  },
+  {
+    npub: 'npub1z204rz2az24ne8xuym9j90dmnh533e03elucjslnsc802wjyrqps6vmxwn',
+    name: 'Bitman',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'BM',
+    fallbackColor: 'bg-lime-600',
+    localImage: '/profiles/npub1z204rz2az24ne8xuym9j90dmnh533e03elucjslnsc802wjyrqps6vmxwn.jpg'
+  },
+  {
+    npub: 'npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3',
+    name: 'Citadel Dispatch',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'CD',
+    fallbackColor: 'bg-amber-600',
+    localImage: '/profiles/npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3.jpg'
   }
 ]
 
