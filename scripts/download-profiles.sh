@@ -40,6 +40,5 @@ download_and_resize "npub1spdnfacgsd7lk0nlqkq443tkq4jx9z6c6ksvaquuewmw7d3qltpslc
 download_and_resize "npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv" "https://image.nostr.build/8b5334beac3710b9433371ffd95cc4a7b6829868b218861c8ec48631cb9bece6.jpg"
 download_and_resize "npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev" "https://i.nostr.build/GZd3CdZZ7kR1SNS1.png"
 download_and_resize "npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle" "https://nostr.build/i/f39c206af543e32d45de9b23395c96aad2ec0821653a53f3c5e186083318e315.jpg"
-download_and_resize "npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx" "https://placeholder.com/80x80.jpg"
 
 echo "Done!"
