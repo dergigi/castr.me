@@ -22,11 +22,6 @@ interface Example {
   localImage: string;
 }
 
-// Function to create safe filename from npub
-function createSafeFilename(npub: string): string {
-  return npub.replace(/[^a-zA-Z0-9]/g, '_')
-}
-
 // Define the example data
 const examples: Example[] = [
   {
