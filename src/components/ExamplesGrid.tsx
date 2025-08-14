@@ -86,12 +86,12 @@ const examples: Example[] = [
     localImage: '/profiles/npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs.jpg'
   },
   {
-    npub: 'npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn',
-    name: 'yellow',
+    npub: 'npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev',
+    name: 'Guy Swann',
     fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'YL',
-    fallbackColor: 'bg-pink-600',
-    localImage: '/profiles/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn.jpg'
+    fallbackInitials: 'GS',
+    fallbackColor: 'bg-violet-600',
+    localImage: '/profiles/npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev.jpg'
   },
   {
     npub: 'npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle',
@@ -102,28 +102,12 @@ const examples: Example[] = [
     localImage: '/profiles/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle.jpg'
   },
   {
-    npub: 'npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev',
-    name: 'Guy Swann',
+    npub: 'npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn',
+    name: 'yellow',
     fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'GS',
-    fallbackColor: 'bg-violet-600',
-    localImage: '/profiles/npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev.jpg'
-  },
-  {
-    npub: 'npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc',
-    name: 'Gigi',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'GI',
-    fallbackColor: 'bg-indigo-600',
-    localImage: '/profiles/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc.jpg'
-  },
-  {
-    npub: 'npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks',
-    name: 'Ryan',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'RY',
-    fallbackColor: 'bg-orange-600',
-    localImage: '/profiles/npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks.jpg'
+    fallbackInitials: 'YL',
+    fallbackColor: 'bg-pink-600',
+    localImage: '/profiles/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn.jpg'
   },
   {
     npub: 'npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407',
@@ -140,14 +124,6 @@ const examples: Example[] = [
     fallbackInitials: 'MA',
     fallbackColor: 'bg-teal-600',
     localImage: '/profiles/npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3.jpg'
-  },
-  {
-    npub: 'npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv',
-    name: 'New Music Nudge Unit',
-    fallbackDescription: 'Music Content',
-    fallbackInitials: 'NM',
-    fallbackColor: 'bg-emerald-600',
-    localImage: '/profiles/npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv.jpg'
   }
 ]
 
