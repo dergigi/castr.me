@@ -41,4 +41,9 @@ download_and_resize "npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d
 download_and_resize "npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev" "https://i.nostr.build/GZd3CdZZ7kR1SNS1.png"
 download_and_resize "npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle" "https://nostr.build/i/f39c206af543e32d45de9b23395c96aad2ec0821653a53f3c5e186083318e315.jpg"
 
+# TODO: Add URLs for these profiles when available
+# download_and_resize "npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx" "URL_FOR_THE_GOOD_STUFF"
+# download_and_resize "npub1z204rz2az24ne8xuym9j90dmnh533e03elucjslnsc802wjyrqps6vmxwn" "URL_FOR_BITMAN"
+# download_and_resize "npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3" "URL_FOR_CITADEL_DISPATCH"
+
 echo "Done!"
