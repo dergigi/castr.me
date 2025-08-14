@@ -25,9 +25,20 @@ export class PodcastFeedGenerator {
     // Generate items XML
     const items = mediaEvents.map(event => this.generateItem(event)).join('\n')
     
+    // Generate value tag if Lightning address exists
+    const valueTag = profile.lud16 ? `
+    <podcast:value type="lightning" method="lnaddress">
+      <podcast:valueRecipient 
+        name="${this.escapeXml(title)}"
+        type="lnaddress"
+        address="${this.escapeXml(profile.lud16)}"
+        split="100"
+      />
+    </podcast:value>` : ''
+    
     // Generate the complete RSS feed
     return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:media="http://search.yahoo.com/mrss/">
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:media="http://search.yahoo.com/mrss/" xmlns:podcast="https://podcastindex.org/namespace/1.0">
   <channel>
     <title>${this.escapeXml(title)}</title>
     <link>${this.escapeXml(link)}</link>
@@ -44,7 +55,7 @@ export class PodcastFeedGenerator {
     <itunes:author>${this.escapeXml(profile.name || npub)}</itunes:author>
     <itunes:summary>${this.escapeXml(description)}</itunes:summary>
     <itunes:type>episodic</itunes:type>
-    <itunes:explicit>false</itunes:explicit>
+    <itunes:explicit>false</itunes:explicit>${valueTag}
     ${items}
   </channel>
 </rss>`
