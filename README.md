@@ -24,6 +24,11 @@ Castr.me scans a Nostr profile's posts and looks for `kind1` events that contain
 - [HODL](https://castr.me/npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs)
 - [yellow](https://castr.me/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn)
 - [TFTC](https://castr.me/npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw)
+- [Movie Archive](https://castr.me/npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3)
+- [Paul Keating](https://castr.me/npub1spdnfacgsd7lk0nlqkq443tkq4jx9z6c6ksvaquuewmw7d3qltpslcq6j7)
+- [New Music Nudge Unit](https://castr.me/npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv)
+- [Guy Swann](https://castr.me/npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev)
+- [Jack Mallers](https://castr.me/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle)
 
 ## Finding Content
 

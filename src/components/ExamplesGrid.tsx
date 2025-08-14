@@ -69,6 +69,41 @@ const examples = [
     fallbackDescription: 'Bitcoin Podcast',
     fallbackInitials: 'TF',
     fallbackColor: 'bg-red-600'
+  },
+  {
+    npub: 'npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3',
+    name: 'Movie Archive',
+    fallbackDescription: 'Movie Content',
+    fallbackInitials: 'MA',
+    fallbackColor: 'bg-teal-600'
+  },
+  {
+    npub: 'npub1spdnfacgsd7lk0nlqkq443tkq4jx9z6c6ksvaquuewmw7d3qltpslcq6j7',
+    name: 'Paul Keating',
+    fallbackDescription: 'Political Content',
+    fallbackInitials: 'PK',
+    fallbackColor: 'bg-cyan-600'
+  },
+  {
+    npub: 'npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv',
+    name: 'New Music Nudge Unit',
+    fallbackDescription: 'Music Content',
+    fallbackInitials: 'NM',
+    fallbackColor: 'bg-emerald-600'
+  },
+  {
+    npub: 'npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev',
+    name: 'Guy Swann',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'GS',
+    fallbackColor: 'bg-violet-600'
+  },
+  {
+    npub: 'npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle',
+    name: 'Jack Mallers',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'JM',
+    fallbackColor: 'bg-rose-600'
   }
 ]
 
