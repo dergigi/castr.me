@@ -29,6 +29,7 @@ Castr.me scans a Nostr profile's posts and looks for `kind1` events that contain
 - [New Music Nudge Unit](https://castr.me/npub1ztzpz9xepmxsry7jqdhjc32dh5wtktpnn9kjq5eupdwdq06gdn6s0d7zxv)
 - [Guy Swann](https://castr.me/npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev)
 - [Jack Mallers](https://castr.me/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle)
+- [The Good Stuff](https://castr.me/npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx)
 
 ## Finding Content
 

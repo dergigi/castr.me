@@ -132,6 +132,14 @@ const examples: Example[] = [
     fallbackInitials: 'JM',
     fallbackColor: 'bg-rose-600',
     localImage: '/profiles/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle.jpg'
+  },
+  {
+    npub: 'npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx',
+    name: 'The Good Stuff',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'GS',
+    fallbackColor: 'bg-slate-600',
+    localImage: '/profiles/npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx.jpg'
   }
 ]
 
