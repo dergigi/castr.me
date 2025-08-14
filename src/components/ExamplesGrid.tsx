@@ -38,6 +38,30 @@ const examples: Example[] = [
     localImage: '/profiles/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n.jpg'
   },
   {
+    npub: 'npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3',
+    name: 'Citadel Dispatch',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'CD',
+    fallbackColor: 'bg-amber-600',
+    localImage: '/profiles/npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3.jpg'
+  },
+  {
+    npub: 'npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw',
+    name: 'TFTC',
+    fallbackDescription: 'Bitcoin Podcast',
+    fallbackInitials: 'TF',
+    fallbackColor: 'bg-red-600',
+    localImage: '/profiles/npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw.jpg'
+  },
+  {
+    npub: 'npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx',
+    name: 'The Good Stuff',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'GS',
+    fallbackColor: 'bg-slate-600',
+    localImage: '/profiles/npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx.jpg'
+  },
+  {
     npub: 'npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx',
     name: 'ODELL',
     fallbackDescription: 'Bitcoin Podcast',
@@ -86,14 +110,6 @@ const examples: Example[] = [
     localImage: '/profiles/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn.jpg'
   },
   {
-    npub: 'npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw',
-    name: 'TFTC',
-    fallbackDescription: 'Bitcoin Podcast',
-    fallbackInitials: 'TF',
-    fallbackColor: 'bg-red-600',
-    localImage: '/profiles/npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw.jpg'
-  },
-  {
     npub: 'npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3',
     name: 'Movie Archive',
     fallbackDescription: 'Movie Content',
@@ -134,28 +150,12 @@ const examples: Example[] = [
     localImage: '/profiles/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle.jpg'
   },
   {
-    npub: 'npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx',
-    name: 'The Good Stuff',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'GS',
-    fallbackColor: 'bg-slate-600',
-    localImage: '/profiles/npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx.jpg'
-  },
-  {
     npub: 'npub1z204rz2az24ne8xuym9j90dmnh533e03elucjslnsc802wjyrqps6vmxwn',
     name: 'Bitman',
     fallbackDescription: 'Bitcoin Content',
     fallbackInitials: 'BM',
     fallbackColor: 'bg-lime-600',
     localImage: '/profiles/npub1z204rz2az24ne8xuym9j90dmnh533e03elucjslnsc802wjyrqps6vmxwn.jpg'
-  },
-  {
-    npub: 'npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3',
-    name: 'Citadel Dispatch',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'CD',
-    fallbackColor: 'bg-amber-600',
-    localImage: '/profiles/npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3.jpg'
   }
 ]
 
