@@ -12,63 +12,113 @@ interface NostrProfile {
   lud06?: string;
 }
 
+// Define the example interface
+interface Example {
+  npub: string;
+  name: string;
+  fallbackDescription: string;
+  fallbackInitials: string;
+  fallbackColor: string;
+  localImage: string;
+}
+
 // Define the example data
-const examples = [
+const examples: Example[] = [
   {
     npub: 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n',
     name: 'No Solutions',
     fallbackDescription: 'Demo Feed',
     fallbackInitials: 'NS',
-    fallbackColor: 'bg-indigo-600'
+    fallbackColor: 'bg-indigo-600',
+    localImage: '/profiles/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n.jpg'
   },
   {
-    npub: 'npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx',
-    name: 'ODELL',
-    fallbackDescription: 'Bitcoin Podcast',
-    fallbackInitials: 'OD',
-    fallbackColor: 'bg-blue-600'
-  },
-  {
-    npub: 'npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy',
-    name: 'Marty Bent',
+    npub: 'npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3',
+    name: 'Citadel Dispatch',
     fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'MB',
-    fallbackColor: 'bg-green-600'
-  },
-  {
-    npub: 'npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407',
-    name: 'FLASH',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'FL',
-    fallbackColor: 'bg-purple-600'
-  },
-  {
-    npub: 'npub1m64hnkh6rs47fd9x6wk2zdtmdj4qkazt734d22d94ery9zzhne5qw9uaks',
-    name: 'Ryan',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'RY',
-    fallbackColor: 'bg-orange-600'
-  },
-  {
-    npub: 'npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs',
-    name: 'HODL',
-    fallbackDescription: 'Bitcoin Podcast',
-    fallbackInitials: 'HD',
-    fallbackColor: 'bg-yellow-600'
-  },
-  {
-    npub: 'npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn',
-    name: 'yellow',
-    fallbackDescription: 'Bitcoin Content',
-    fallbackInitials: 'YL',
-    fallbackColor: 'bg-pink-600'
+    fallbackInitials: 'CD',
+    fallbackColor: 'bg-amber-600',
+    localImage: '/profiles/npub10atn74wcwh8gahzj3m0cy22fl54tn7wxtkg55spz2e3mpf5hhcrs4602w3.jpg'
   },
   {
     npub: 'npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw',
     name: 'TFTC',
     fallbackDescription: 'Bitcoin Podcast',
     fallbackInitials: 'TF',
-    fallbackColor: 'bg-red-600'
+    fallbackColor: 'bg-red-600',
+    localImage: '/profiles/npub1sk7mtp67zy7uex2f3dr5vdjynzpwu9dpc7q4f2c8cpjmguee6eeq56jraw.jpg'
+  },
+  {
+    npub: 'npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx',
+    name: 'The Good Stuff',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'GS',
+    fallbackColor: 'bg-slate-600',
+    localImage: '/profiles/npub1wtx46rfjvevydmp8espegmw2tz93ujyg4es3eqwzle2jjft0p23qdu0rjx.jpg'
+  },
+  {
+    npub: 'npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx',
+    name: 'ODELL',
+    fallbackDescription: 'Bitcoin Podcast',
+    fallbackInitials: 'OD',
+    fallbackColor: 'bg-blue-600',
+    localImage: '/profiles/npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx.jpg'
+  },
+  {
+    npub: 'npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy',
+    name: 'Marty Bent',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'MB',
+    fallbackColor: 'bg-green-600',
+    localImage: '/profiles/npub1guh5grefa7vkay4ps6udxg8lrqxg2kgr3qh9n4gduxut64nfxq0q9y6hjy.jpg'
+  },
+  {
+    npub: 'npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs',
+    name: 'HODL',
+    fallbackDescription: 'Bitcoin Podcast',
+    fallbackInitials: 'HD',
+    fallbackColor: 'bg-yellow-600',
+    localImage: '/profiles/npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs.jpg'
+  },
+  {
+    npub: 'npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev',
+    name: 'Guy Swann',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'GS',
+    fallbackColor: 'bg-violet-600',
+    localImage: '/profiles/npub1h8nk2346qezka5cpm8jjh3yl5j88pf4ly2ptu7s6uu55wcfqy0wq36rpev.jpg'
+  },
+  {
+    npub: 'npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle',
+    name: 'Jack Mallers',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'JM',
+    fallbackColor: 'bg-rose-600',
+    localImage: '/profiles/npub1cn4t4cd78nm900qc2hhqte5aa8c9njm6qkfzw95tszufwcwtcnsq7g3vle.jpg'
+  },
+  {
+    npub: 'npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn',
+    name: 'yellow',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'YL',
+    fallbackColor: 'bg-pink-600',
+    localImage: '/profiles/npub1nw5vdz8sj89y3h3tp7dunx8rhsm2qzfpf8ujq9m8mfvjsjth0uwqs9n2gn.jpg'
+  },
+  {
+    npub: 'npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407',
+    name: 'FLASH',
+    fallbackDescription: 'Bitcoin Content',
+    fallbackInitials: 'FL',
+    fallbackColor: 'bg-purple-600',
+    localImage: '/profiles/npub1f4uyypghstsd8l4sxng4ptwzk6awfm3mf9ux0yallfrgkm6mj6es50r407.jpg'
+  },
+  {
+    npub: 'npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3',
+    name: 'Movie Archive',
+    fallbackDescription: 'Movie Content',
+    fallbackInitials: 'MA',
+    fallbackColor: 'bg-teal-600',
+    localImage: '/profiles/npub1tn2lspfvv7g7fpulpexmjy6xt4c36h6lurq2hxgyn3sxf3drjk3qrchmc3.jpg'
   }
 ]
 
@@ -137,22 +187,31 @@ export default async function ExamplesGrid(): Promise<React.JSX.Element> {
             className="group relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 hover:shadow-md transition-all duration-200 hover:ring-indigo-200"
           >
             <div className="flex items-center gap-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden relative aspect-square">
-                {profileImage ? (
-                  <Image
-                    src={profileImage}
-                    alt={displayName}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                    style={{ objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div className={`w-full h-full flex items-center justify-center ${example.fallbackColor} group-hover:opacity-80 transition-opacity`}>
-                    <span className="text-sm font-semibold text-white">{example.fallbackInitials}</span>
-                  </div>
-                )}
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden relative aspect-square">
+              {profileImage ? (
+                <Image
+                  src={profileImage}
+                  alt={displayName}
+                  fill
+                  className="object-cover"
+                  sizes="40px"
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <Image
+                  src={example.localImage}
+                  alt={displayName}
+                  fill
+                  className="object-cover"
+                  sizes="40px"
+                  style={{ objectFit: 'cover' }}
+                />
+              )}
+              {/* Fallback colored initials - will show if image fails to load */}
+              <div className={`absolute inset-0 flex items-center justify-center ${example.fallbackColor} group-hover:opacity-80 transition-opacity`} style={{ zIndex: -1 }}>
+                <span className="text-sm font-semibold text-white">{example.fallbackInitials}</span>
               </div>
+            </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
                   {displayName}
