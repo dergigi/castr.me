@@ -201,14 +201,14 @@ export default async function NpubPage({
   const kind1ValueSplitMap = new Map<string, Map<string, number>>()
   
   // Helper function to get zap splits for an event (long-form takes priority)
-  const getZapSplitsForEvent = (event: NDKEvent, longFormEvent?: NDKEvent): { zapProfiles: Map<string, NostrProfile>; valueSplit: Map<string, number> } | null => {
+  const getZapSplitsForEvent = (event: NDKEvent, longFormEvent?: NDKEvent): { zapProfiles: Map<string, NostrProfile>; valueSplit: Map<string, number>; lightningAddresses: Map<string, string> } | null => {
     // Priority 1: Check long-form content first
     if (longFormEvent) {
       const longFormZapProfiles = zapProfilesMap.get(longFormEvent.id)
       const longFormValueSplit = valueSplitMap.get(longFormEvent.id)
       if (longFormZapProfiles && longFormValueSplit) {
         console.log(`Using long-form zap splits for event ${event.id}`)
-        return { zapProfiles: longFormZapProfiles, valueSplit: longFormValueSplit }
+        return { zapProfiles: longFormZapProfiles, valueSplit: longFormValueSplit, lightningAddresses }
       }
     }
     
@@ -217,7 +217,7 @@ export default async function NpubPage({
     const kind1ValueSplit = kind1ValueSplitMap.get(event.id)
     if (kind1ZapProfiles && kind1ValueSplit) {
       console.log(`Using kind:1 zap splits for event ${event.id}`)
-      return { zapProfiles: kind1ZapProfiles, valueSplit: kind1ValueSplit }
+      return { zapProfiles: kind1ZapProfiles, valueSplit: kind1ValueSplit, lightningAddresses }
     }
     
     console.log(`No zap splits found for event ${event.id}`)
@@ -255,6 +255,25 @@ export default async function NpubPage({
       console.log(`Found value split in kind:1 event ${event.id}:`, Array.from(valueSplit.entries()))
     }
   }
+  
+  // Fetch lightning addresses for all recipients to ensure we have them as fallback
+  const allPubkeys = new Set<string>()
+  
+  // Collect all pubkeys from zap splits
+  for (const valueSplit of Array.from(valueSplitMap.values())) {
+    for (const pubkey of Array.from(valueSplit.keys())) {
+      allPubkeys.add(pubkey)
+    }
+  }
+  for (const valueSplit of Array.from(kind1ValueSplitMap.values())) {
+    for (const pubkey of Array.from(valueSplit.keys())) {
+      allPubkeys.add(pubkey)
+    }
+  }
+  
+  // Fetch lightning addresses for all pubkeys
+  const lightningAddresses = await nostrService.fetchLightningAddresses(Array.from(allPubkeys))
+  console.log(`Fetched lightning addresses for ${lightningAddresses.size} pubkeys`)
   
   if (!profile) {
     return (
@@ -516,6 +535,9 @@ export default async function NpubPage({
                                         <span>{profile.name || pubkey.slice(0, 8)}</span>
                                         {profile.lud16 && (
                                           <span className="text-xs text-gray-500 font-mono">{profile.lud16}</span>
+                                        )}
+                                        {!profile.lud16 && zapSplitsData.lightningAddresses.get(pubkey) && (
+                                          <span className="text-xs text-gray-500 font-mono">{zapSplitsData.lightningAddresses.get(pubkey)}</span>
                                         )}
                                       </div>
                                     </a>
