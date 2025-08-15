@@ -86,7 +86,7 @@ export class PodcastFeedGenerator {
       .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
     
     // Generate items XML with async recipient fetching
-    const itemsPromises = mediaEvents.map(event => this.generateItemAsync(event, longFormMap))
+    const itemsPromises = mediaEvents.map(event => this.generateItemAsync(event, longFormMap, profile, npub))
     const items = await Promise.all(itemsPromises)
     const itemsXml = items.join('\n')
     
@@ -217,8 +217,6 @@ export class PodcastFeedGenerator {
     return []
   }
   
-
-  
   /**
    * Generates the Podcast 2.0 value tag XML for value splits
    */
@@ -299,7 +297,7 @@ ${recipients}
   /**
    * Async version of generateItem that fetches recipient information
    */
-  private async generateItemAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): Promise<string> {
+  private async generateItemAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>, profile?: NostrProfile, npub?: string): Promise<string> {
     const audioUrl = this.extractAudioUrl(event.content)
     const videoUrl = this.extractVideoUrl(event.content)
     if (!audioUrl && !videoUrl) return ''
@@ -318,7 +316,7 @@ ${recipients}
     const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
     
     // Generate value splits for this item with recipient information
-    const valueSplits = await this.generateValueSplitsForEventAsync(event, longFormMap)
+    const valueSplits = await this.generateValueSplitsForEventAsync(event, longFormMap, profile, npub)
     const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
     
     return `    <item>
@@ -340,7 +338,7 @@ ${recipients}
   /**
    * Async version that fetches recipient lightning addresses and names
    */
-  private async generateValueSplitsForEventAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): Promise<ValueSplit[]> {
+  private async generateValueSplitsForEventAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>, profile?: NostrProfile, npub?: string): Promise<ValueSplit[]> {
     const title = this.extractTitle(event)
     
     // Priority 1: Check associated long-form content (kind:30023) for zap splits
@@ -360,7 +358,17 @@ ${recipients}
       return kind1Splits
     }
     
-    // Priority 3: Return empty array (will fall back to channel-level default)
+    // Priority 3: Use profile's lightning address as default (100% to profile owner)
+    if (profile && profile.lud16 && npub) {
+      return [{
+        pubkey: npub,
+        percentage: 100,
+        lightningAddress: profile.lud16,
+        name: profile.name || npub
+      }]
+    }
+    
+    // Priority 4: Return empty array (will fall back to channel-level default)
     return []
   }
 } 

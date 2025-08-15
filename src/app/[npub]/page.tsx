@@ -220,7 +220,22 @@ export default async function NpubPage({
       return { zapProfiles: kind1ZapProfiles, valueSplit: kind1ValueSplit, lightningAddresses }
     }
     
-    console.log(`No zap splits found for event ${event.id}`)
+    // Priority 3: Use profile's lightning address as default (100% to profile owner)
+    if (profile && profile.lud16) {
+      console.log(`Using profile lightning address as default zap split for event ${event.id}`)
+      const defaultZapProfiles = new Map<string, NostrProfile>()
+      const defaultValueSplit = new Map<string, number>()
+      const defaultLightningAddresses = new Map<string, string>()
+      
+      // Add the profile owner as the default recipient
+      defaultZapProfiles.set(npub, profile)
+      defaultValueSplit.set(npub, 100)
+      defaultLightningAddresses.set(npub, profile.lud16)
+      
+      return { zapProfiles: defaultZapProfiles, valueSplit: defaultValueSplit, lightningAddresses: defaultLightningAddresses }
+    }
+    
+    console.log(`No zap splits found for event ${event.id} and no profile lightning address`)
     return null
   }
   
