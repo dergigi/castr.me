@@ -83,6 +83,8 @@ If no show notes exist, the system looks for zap splits defined directly in the 
 
 If no zap splits are found anywhere, payments in the form of zaps or boosts go to the lightning address in your Nostr profile.
 
+For detailed technical information about how value splits work, see [VALUE_SPLITS.md](docs/VALUE_SPLITS.md).
+
 ### Technical Implementation
 
 **Nostr Integration:**
