@@ -36,7 +36,7 @@ export class PodcastFeedGenerator {
     
     // Generate value tag if Lightning address exists (default fallback)
     const valueTag = profile.lud16 ? `
-    <podcast:value type="lightning" method="lnaddress" suggested="0.000021">
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
         type="lnaddress"
@@ -92,7 +92,7 @@ export class PodcastFeedGenerator {
     
     // Generate value tag if Lightning address exists (default fallback)
     const valueTag = profile.lud16 ? `
-    <podcast:value type="lightning" method="lnaddress" suggested="0.000021">
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
         type="lnaddress"
@@ -238,7 +238,7 @@ export class PodcastFeedGenerator {
     }).join('\n')
     
     return `
-      <podcast:value type="lightning" method="lnaddress" suggested="0.000021">
+      <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
 ${recipients}
       </podcast:value>`
   }
