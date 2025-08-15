@@ -53,7 +53,7 @@ You can discover profiles that post media using search queries on Nostr search e
 
 ## Still TODO
 
-- [ ] Create `<value>` tags based on zap splits
+- [x] Create `<value>` tags based on zap splits
 - [ ] Somehow link to transcripts file (and add it to the RSS feed)
 - [ ] Implement content negotiation, i.e. render RSS/HTML based on request
 - [ ] Properly query relays, the way it's done now is stupid
@@ -73,7 +73,17 @@ This allows podcasters to maintain detailed show notes separate from the audio p
 
 ## Zap Splits & Value Splits
 
-Whatever is defined in the associated long-form `kind:30023` is taken as gospel, and will be used as the basis for the `<value>` splits.
+TL;DR: Whatever is defined in the associated long-form `kind:30023` is taken as gospel, and will be used as the basis for the <value> splits. Fallback is the `kind:1`. Ultimate fallback is the `lud06` lightning address set in your nostr profile.
+
+We use zap splits to automatically create Podcasting 2.0 value splits so that Lightning payments can be distributed among multiple recipients when users boost podcast episodes.
+
+If you've created detailed show notes (long-form content, see above) for an episode, any zap splits defined in the long-form post will be used. This allows you to set (and update!) specific payment arrangements for each episode, like splitting revenue with guests or co-hosts.
+
+If no show notes exist, the system looks for zap splits defined directly in the `kind1` (read: "tweet") that you used to post the episode. This makes sure that zap splits work for episodes where you haven't created separate show notes.
+
+If no zap splits are found anywhere, payments in the form of zaps or boosts go to the lightning address in your Nostr profile.
+
+See [VALUE_SPLITS.md](docs/VALUE_SPLITS.md) for details.
 
 ## Installation
 

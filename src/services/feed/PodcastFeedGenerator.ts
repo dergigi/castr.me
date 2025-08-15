@@ -1,4 +1,4 @@
-import { NostrProfile } from '../nostr/NostrService'
+import { NostrProfile, NostrService } from '../nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
@@ -9,8 +9,17 @@ marked.setOptions({
   breaks: true, // Convert line breaks to <br>
 })
 
+interface ValueSplit {
+  pubkey: string
+  percentage: number
+  lightningAddress?: string
+  name?: string
+}
+
 export class PodcastFeedGenerator {
-  generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string): string {
+  constructor(private nostrService?: NostrService) {}
+
+  generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>): string {
     const title = profile.name || npub
     const description = profile.about || 'A media feed generated from Nostr posts'
     const link = `https://castr.me/${npub}`
@@ -22,12 +31,12 @@ export class PodcastFeedGenerator {
     const mediaEvents = this.filterMediaEvents(events)
       .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
     
-    // Generate items XML
-    const items = mediaEvents.map(event => this.generateItem(event)).join('\n')
+    // Generate items XML (synchronous for now, will enhance with async later)
+    const items = mediaEvents.map(event => this.generateItem(event, longFormMap)).join('\n')
     
-    // Generate value tag if Lightning address exists
+    // Generate value tag if Lightning address exists (default fallback)
     const valueTag = profile.lud16 ? `
-    <podcast:value type="lightning" method="lnaddress">
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
         type="lnaddress"
@@ -61,6 +70,62 @@ export class PodcastFeedGenerator {
 </rss>`
   }
   
+  /**
+   * Async version of generateFeed that fetches recipient information
+   */
+  async generateFeedAsync(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>): Promise<string> {
+    const title = profile.name || npub
+    const description = profile.about || 'A media feed generated from Nostr posts'
+    const link = `https://castr.me/${npub}`
+    const language = 'en-us'
+    const pubDate = new Date().toUTCString()
+    const image = profile.picture || `https://robohash.org/${npub}.png?set=set3&size=500x500`
+    
+    // Filter for media events and sort by date
+    const mediaEvents = this.filterMediaEvents(events)
+      .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+    
+    // Generate items XML with async recipient fetching
+    const itemsPromises = mediaEvents.map(event => this.generateItemAsync(event, longFormMap, profile, npub))
+    const items = await Promise.all(itemsPromises)
+    const itemsXml = items.join('\n')
+    
+    // Generate value tag if Lightning address exists (default fallback)
+    const valueTag = profile.lud16 ? `
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
+      <podcast:valueRecipient 
+        name="${this.escapeXml(title)}"
+        type="lnaddress"
+        address="${this.escapeXml(profile.lud16)}"
+        split="100"
+      />
+    </podcast:value>` : ''
+    
+    // Generate the complete RSS feed
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:media="http://search.yahoo.com/mrss/" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+  <channel>
+    <title>${this.escapeXml(title)}</title>
+    <link>${this.escapeXml(link)}</link>
+    <description>${this.escapeXml(description)}</description>
+    <language>${language}</language>
+    <pubDate>${pubDate}</pubDate>
+    <lastBuildDate>${pubDate}</lastBuildDate>
+    <image>
+      <url>${this.escapeXml(image)}</url>
+      <title>${this.escapeXml(title)}</title>
+      <link>${this.escapeXml(link)}</link>
+    </image>
+    <itunes:image href="${this.escapeXml(image)}"/>
+    <itunes:author>${this.escapeXml(profile.name || npub)}</itunes:author>
+    <itunes:summary>${this.escapeXml(description)}</itunes:summary>
+    <itunes:type>episodic</itunes:type>
+    <itunes:explicit>false</itunes:explicit>${valueTag}
+    ${itemsXml}
+  </channel>
+</rss>`
+  }
+  
   private filterMediaEvents(events: NDKEvent[]): NDKEvent[] {
     return events.filter(event => this.isMediaEvent(event))
   }
@@ -78,7 +143,7 @@ export class PodcastFeedGenerator {
     )
   }
   
-  private generateItem(event: NDKEvent): string {
+  private generateItem(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): string {
     const audioUrl = this.extractAudioUrl(event.content)
     const videoUrl = this.extractVideoUrl(event.content)
     if (!audioUrl && !videoUrl) return ''
@@ -96,6 +161,10 @@ export class PodcastFeedGenerator {
     // Convert markdown to HTML and sanitize
     const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
     
+    // Generate value splits for this item (synchronous version for now)
+    const valueSplits = this.generateValueSplitsForEventSync(event, longFormMap)
+    const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
+    
     return `    <item>
       <title>${this.escapeXml(title)}</title>
       <link>${this.escapeXml(mediaUrl)}</link>
@@ -108,8 +177,70 @@ export class PodcastFeedGenerator {
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
       <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
       <itunes:duration>00:00:00</itunes:duration>
-      <itunes:explicit>false</itunes:explicit>
+      <itunes:explicit>false</itunes:explicit>${valueTag}
     </item>`
+  }
+  
+  /**
+   * Generates value splits for a specific event based on the priority order:
+   * 1. Associated long-form content (kind:30023) zap splits (highest priority)
+   * 2. Kind:1 event zap splits
+   * 3. Default profile lightning address (lowest priority)
+   */
+  private generateValueSplitsForEventSync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): ValueSplit[] {
+    const title = this.extractTitle(event)
+    
+    // Priority 1: Check associated long-form content (kind:30023) for zap splits
+    if (longFormMap) {
+      const longFormEvent = longFormMap.get(title)
+      if (longFormEvent) {
+        const longFormSplits = this.nostrService?.extractZapSplitsWithPercentages(longFormEvent) || []
+        if (longFormSplits.length > 0) {
+          return longFormSplits.map(split => ({
+            pubkey: split.pubkey,
+            percentage: split.percentage
+          }))
+        }
+      }
+    }
+    
+    // Priority 2: Check kind:1 event for zap splits
+    const kind1Splits = this.nostrService?.extractZapSplitsWithPercentages(event) || []
+    if (kind1Splits.length > 0) {
+      return kind1Splits.map(split => ({
+        pubkey: split.pubkey,
+        percentage: split.percentage
+      }))
+    }
+    
+    // Priority 3: Return empty array (will fall back to channel-level default)
+    return []
+  }
+  
+  /**
+   * Generates the Podcast 2.0 value tag XML for value splits
+   */
+  private generateValueTag(splits: ValueSplit[]): string {
+    if (splits.length === 0) {
+      return ''
+    }
+    
+    const recipients = splits.map(split => {
+      const name = split.name || `Recipient ${split.pubkey.substring(0, 8)}`
+      const address = split.lightningAddress || `recipient@${split.pubkey.substring(0, 8)}.ln`
+      
+      return `        <podcast:valueRecipient 
+          name="${this.escapeXml(name)}"
+          type="lnaddress"
+          address="${this.escapeXml(address)}"
+          split="${split.percentage}"
+        />`
+    }).join('\n')
+    
+    return `
+      <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
+${recipients}
+      </podcast:value>`
   }
   
   private extractAudioUrl(content: string): string | undefined {
@@ -161,5 +292,83 @@ export class PodcastFeedGenerator {
         default: return c
       }
     })
+  }
+
+  /**
+   * Async version of generateItem that fetches recipient information
+   */
+  private async generateItemAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>, profile?: NostrProfile, npub?: string): Promise<string> {
+    const audioUrl = this.extractAudioUrl(event.content)
+    const videoUrl = this.extractVideoUrl(event.content)
+    if (!audioUrl && !videoUrl) return ''
+    
+    const title = this.extractTitle(event)
+    const pubDate = new Date((event.created_at || 0) * 1000).toUTCString()
+    const guid = event.id
+    const mediaType = videoUrl ? 'video' : 'audio'
+    const mediaUrl = videoUrl || audioUrl || ''
+    
+    // Extract show notes from long-form content if available
+    const showNotes = this.extractShowNotes(event)
+    const content = showNotes || event.content
+    
+    // Convert markdown to HTML and sanitize
+    const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
+    
+    // Generate value splits for this item with recipient information
+    const valueSplits = await this.generateValueSplitsForEventAsync(event, longFormMap, profile, npub)
+    const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
+    
+    return `    <item>
+      <title>${this.escapeXml(title)}</title>
+      <link>${this.escapeXml(mediaUrl)}</link>
+      <guid>${guid}</guid>
+      <pubDate>${pubDate}</pubDate>
+      <description><![CDATA[${htmlContent}]]></description>
+      <enclosure url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
+      <media:content url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
+      <itunes:title>${this.escapeXml(title)}</itunes:title>
+      <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
+      <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
+      <itunes:duration>00:00:00</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>${valueTag}
+    </item>`
+  }
+  
+  /**
+   * Async version that fetches recipient lightning addresses and names
+   */
+  private async generateValueSplitsForEventAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>, profile?: NostrProfile, npub?: string): Promise<ValueSplit[]> {
+    const title = this.extractTitle(event)
+    
+    // Priority 1: Check associated long-form content (kind:30023) for zap splits
+    if (longFormMap) {
+      const longFormEvent = longFormMap.get(title)
+      if (longFormEvent) {
+        const longFormSplits = await this.nostrService?.fetchZapSplitsWithRecipients(longFormEvent) || []
+        if (longFormSplits.length > 0) {
+          return longFormSplits
+        }
+      }
+    }
+    
+    // Priority 2: Check kind:1 event for zap splits
+    const kind1Splits = await this.nostrService?.fetchZapSplitsWithRecipients(event) || []
+    if (kind1Splits.length > 0) {
+      return kind1Splits
+    }
+    
+    // Priority 3: Use profile's lightning address as default (100% to profile owner)
+    if (profile && profile.lud16 && npub) {
+      return [{
+        pubkey: npub,
+        percentage: 100,
+        lightningAddress: profile.lud16,
+        name: profile.name || npub
+      }]
+    }
+    
+    // Priority 4: Return empty array (will fall back to channel-level default)
+    return []
   }
 } 

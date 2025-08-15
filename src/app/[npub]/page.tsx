@@ -194,19 +194,101 @@ export default async function NpubPage({
   // Create a map to store value split information for each long-form event
   const valueSplitMap = new Map<string, Map<string, number>>()
   
-  // Fetch zap profiles for each long-form event
+  // Create a map to store zap profiles for kind:1 events
+  const kind1ZapProfilesMap = new Map<string, Map<string, NostrProfile>>()
+  
+  // Create a map to store value split information for kind:1 events
+  const kind1ValueSplitMap = new Map<string, Map<string, number>>()
+  
+  // Helper function to get zap splits for an event (long-form takes priority)
+  const getZapSplitsForEvent = (event: NDKEvent, longFormEvent?: NDKEvent): { zapProfiles: Map<string, NostrProfile>; valueSplit: Map<string, number>; lightningAddresses: Map<string, string> } | null => {
+    // Priority 1: Check long-form content first
+    if (longFormEvent) {
+      const longFormZapProfiles = zapProfilesMap.get(longFormEvent.id)
+      const longFormValueSplit = valueSplitMap.get(longFormEvent.id)
+      if (longFormZapProfiles && longFormValueSplit) {
+        console.log(`Using long-form zap splits for event ${event.id}`)
+        return { zapProfiles: longFormZapProfiles, valueSplit: longFormValueSplit, lightningAddresses }
+      }
+    }
+    
+    // Priority 2: Fall back to kind:1 event
+    const kind1ZapProfiles = kind1ZapProfilesMap.get(event.id)
+    const kind1ValueSplit = kind1ValueSplitMap.get(event.id)
+    if (kind1ZapProfiles && kind1ValueSplit) {
+      console.log(`Using kind:1 zap splits for event ${event.id}`)
+      return { zapProfiles: kind1ZapProfiles, valueSplit: kind1ValueSplit, lightningAddresses }
+    }
+    
+    // Priority 3: Use profile's lightning address as default (100% to profile owner)
+    if (profile && profile.lud16) {
+      console.log(`Using profile lightning address as default zap split for event ${event.id}`)
+      const defaultZapProfiles = new Map<string, NostrProfile>()
+      const defaultValueSplit = new Map<string, number>()
+      const defaultLightningAddresses = new Map<string, string>()
+      
+      // Add the profile owner as the default recipient
+      defaultZapProfiles.set(npub, profile)
+      defaultValueSplit.set(npub, 100)
+      defaultLightningAddresses.set(npub, profile.lud16)
+      
+      return { zapProfiles: defaultZapProfiles, valueSplit: defaultValueSplit, lightningAddresses: defaultLightningAddresses }
+    }
+    
+    console.log(`No zap splits found for event ${event.id} and no profile lightning address`)
+    return null
+  }
+  
+  // Fetch zap profiles and value splits for each long-form event
   for (const longFormEvent of Array.from(longFormMap.values())) {
     const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
     if (zapProfiles.size > 0) {
       zapProfilesMap.set(longFormEvent.id, zapProfiles)
+      console.log(`Found ${zapProfiles.size} zap profiles in long-form event ${longFormEvent.id}`)
     }
     
     // Extract value split information
     const valueSplit = nostrService.extractValueSplitFromEvent(longFormEvent)
     if (valueSplit.size > 0) {
       valueSplitMap.set(longFormEvent.id, valueSplit)
+      console.log(`Found value split in long-form event ${longFormEvent.id}:`, Array.from(valueSplit.entries()))
     }
   }
+  
+  // Fetch zap profiles and value splits for kind:1 events that have zap splits
+  for (const event of mediaEvents) {
+    const zapProfiles = await nostrService.fetchZapProfiles(event)
+    if (zapProfiles.size > 0) {
+      kind1ZapProfilesMap.set(event.id, zapProfiles)
+      console.log(`Found ${zapProfiles.size} zap profiles in kind:1 event ${event.id}`)
+    }
+    
+    // Extract value split information
+    const valueSplit = nostrService.extractValueSplitFromEvent(event)
+    if (valueSplit.size > 0) {
+      kind1ValueSplitMap.set(event.id, valueSplit)
+      console.log(`Found value split in kind:1 event ${event.id}:`, Array.from(valueSplit.entries()))
+    }
+  }
+  
+  // Fetch lightning addresses for all recipients to ensure we have them as fallback
+  const allPubkeys = new Set<string>()
+  
+  // Collect all pubkeys from zap splits
+  for (const valueSplit of Array.from(valueSplitMap.values())) {
+    for (const pubkey of Array.from(valueSplit.keys())) {
+      allPubkeys.add(pubkey)
+    }
+  }
+  for (const valueSplit of Array.from(kind1ValueSplitMap.values())) {
+    for (const pubkey of Array.from(valueSplit.keys())) {
+      allPubkeys.add(pubkey)
+    }
+  }
+  
+  // Fetch lightning addresses for all pubkeys
+  const lightningAddresses = await nostrService.fetchLightningAddresses(Array.from(allPubkeys))
+  console.log(`Fetched lightning addresses for ${lightningAddresses.size} pubkeys`)
   
   if (!profile) {
     return (
@@ -298,11 +380,8 @@ export default async function NpubPage({
             // Find matching long-form content
             const longFormEvent = longFormMap.get(headline)
             
-            // Get zap profiles for this long-form event if it exists
-            const zapProfiles = longFormEvent ? zapProfilesMap.get(longFormEvent.id) : undefined
-            
-            // Get value split information for this long-form event if it exists
-            const valueSplit = longFormEvent ? valueSplitMap.get(longFormEvent.id) : undefined
+            // Get zap splits for this event (long-form takes priority)
+            const zapSplitsData = getZapSplitsForEvent(event, longFormEvent)
             
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
@@ -403,15 +482,15 @@ export default async function NpubPage({
                     </div>
                   )}
                   
-                  {/* Zap Splits Section */}
-                  {longFormEvent && zapProfiles && zapProfiles.size > 0 && (
+                  {/* Zap Splits Section - Always show if zap splits exist */}
+                  {zapSplitsData && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
                           <span>Zap Splits</span>
                           <div className="flex items-center">
                             <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
-                              {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
+                              {Array.from(zapSplitsData.zapProfiles.entries()).map(([pubkey, profile]) => (
                                 <a 
                                   key={pubkey}
                                   href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
@@ -442,8 +521,8 @@ export default async function NpubPage({
                         </summary>
                         <div className="mt-3">
                           <div className="text-sm text-gray-600">
-                            {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => {
-                              const percentage = valueSplit?.get(pubkey) || 0;
+                            {Array.from(zapSplitsData.zapProfiles.entries()).map(([pubkey, profile]) => {
+                              const percentage = zapSplitsData.valueSplit.get(pubkey) || 0;
                               return (
                                 <div key={pubkey} className="flex items-center justify-between py-1">
                                   <div className="flex items-center">
@@ -467,13 +546,66 @@ export default async function NpubPage({
                                           </div>
                                         )}
                                       </div>
-                                      <span>{profile.name || pubkey.slice(0, 8)}</span>
+                                      <div className="flex flex-col">
+                                        <span>{profile.name || pubkey.slice(0, 8)}</span>
+                                        {profile.lud16 && (
+                                          <span className="text-xs text-gray-500 font-mono">{profile.lud16}</span>
+                                        )}
+                                        {!profile.lud16 && zapSplitsData.lightningAddresses.get(pubkey) && (
+                                          <span className="text-xs text-gray-500 font-mono">{zapSplitsData.lightningAddresses.get(pubkey)}</span>
+                                        )}
+                                      </div>
                                     </a>
                                   </div>
                                   <span className="text-gray-500">{percentage}%</span>
                                 </div>
                               );
                             })}
+                            {/* Help link - only shown when expanded */}
+                            <div className="py-2 mt-2">
+                              <a 
+                                href="https://github.com/dergigi/castr.me/#zap-splits--value-splits"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Learn more about value splits"
+                              >
+                                <i className="fa-solid fa-circle-question mr-1"></i>
+                                Learn more about value splits
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </details>
+                    </div>
+                  )}
+                  
+                  {/* Zap Splits Info - Show when no zap splits are configured */}
+                  {!zapSplitsData && (
+                    <div className="mt-6 border-t border-gray-100 pt-4">
+                      <details className="group">
+                        <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-500 hover:text-gray-700">
+                          <span>Zap Splits</span>
+                          <svg className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </summary>
+                        <div className="mt-3">
+                          <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
+                            <p>No zap splits configured for this episode.</p>
+                            {/* Help link - only shown when expanded */}
+                            <div className="py-2 mt-2">
+                              <a 
+                                href="https://github.com/dergigi/castr.me/#zap-splits--value-splits"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Learn more about value splits"
+                              >
+                                <i className="fa-solid fa-circle-question mr-1"></i>
+                                Learn more about value splits
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </details>
@@ -492,4 +624,4 @@ export default async function NpubPage({
       </div>
     </div>
   )
-} 
+}
