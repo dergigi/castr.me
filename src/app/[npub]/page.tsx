@@ -200,7 +200,28 @@ export default async function NpubPage({
   // Create a map to store value split information for kind:1 events
   const kind1ValueSplitMap = new Map<string, Map<string, number>>()
   
-  // Fetch zap profiles for each long-form event
+  // Helper function to get zap splits for an event (long-form takes priority)
+  const getZapSplitsForEvent = (event: NDKEvent, longFormEvent?: NDKEvent): { zapProfiles: Map<string, NostrProfile>; valueSplit: Map<string, number> } | null => {
+    // Priority 1: Check long-form content first
+    if (longFormEvent) {
+      const longFormZapProfiles = zapProfilesMap.get(longFormEvent.id)
+      const longFormValueSplit = valueSplitMap.get(longFormEvent.id)
+      if (longFormZapProfiles && longFormValueSplit) {
+        return { zapProfiles: longFormZapProfiles, valueSplit: longFormValueSplit }
+      }
+    }
+    
+    // Priority 2: Fall back to kind:1 event
+    const kind1ZapProfiles = kind1ZapProfilesMap.get(event.id)
+    const kind1ValueSplit = kind1ValueSplitMap.get(event.id)
+    if (kind1ZapProfiles && kind1ValueSplit) {
+      return { zapProfiles: kind1ZapProfiles, valueSplit: kind1ValueSplit }
+    }
+    
+    return null
+  }
+  
+  // Fetch zap profiles and value splits for each long-form event
   for (const longFormEvent of Array.from(longFormMap.values())) {
     const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
     if (zapProfiles.size > 0) {
@@ -214,7 +235,7 @@ export default async function NpubPage({
     }
   }
   
-  // Fetch zap profiles for kind:1 events that have zap splits
+  // Fetch zap profiles and value splits for kind:1 events that have zap splits
   for (const event of mediaEvents) {
     const zapProfiles = await nostrService.fetchZapProfiles(event)
     if (zapProfiles.size > 0) {
@@ -318,19 +339,8 @@ export default async function NpubPage({
             // Find matching long-form content
             const longFormEvent = longFormMap.get(headline)
             
-            // Get zap profiles for this long-form event if it exists
-            const zapProfiles = longFormEvent ? zapProfilesMap.get(longFormEvent.id) : undefined
-            
-            // Get value split information for this long-form event if it exists
-            const valueSplit = longFormEvent ? valueSplitMap.get(longFormEvent.id) : undefined
-            
-            // Get zap profiles for kind:1 event if it has zap splits
-            const kind1ZapProfiles = kind1ZapProfilesMap.get(event.id)
-            const kind1ValueSplit = kind1ValueSplitMap.get(event.id)
-            
-            // Determine which zap splits to show (long-form takes priority)
-            const displayZapProfiles = zapProfiles || kind1ZapProfiles
-            const displayValueSplit = valueSplit || kind1ValueSplit
+            // Get zap splits for this event (long-form takes priority)
+            const zapSplitsData = getZapSplitsForEvent(event, longFormEvent)
             
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
@@ -432,14 +442,14 @@ export default async function NpubPage({
                   )}
                   
                   {/* Zap Splits Section - Always show if zap splits exist */}
-                  {displayZapProfiles && displayZapProfiles.size > 0 && (
+                  {zapSplitsData && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
                           <span>Zap Splits</span>
                           <div className="flex items-center">
                             <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
-                              {Array.from(displayZapProfiles.entries()).map(([pubkey, profile]) => (
+                              {Array.from(zapSplitsData.zapProfiles.entries()).map(([pubkey, profile]) => (
                                 <a 
                                   key={pubkey}
                                   href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
@@ -470,8 +480,8 @@ export default async function NpubPage({
                         </summary>
                         <div className="mt-3">
                           <div className="text-sm text-gray-600">
-                            {Array.from(displayZapProfiles.entries()).map(([pubkey, profile]) => {
-                              const percentage = displayValueSplit?.get(pubkey) || 0;
+                            {Array.from(zapSplitsData.zapProfiles.entries()).map(([pubkey, profile]) => {
+                              const percentage = zapSplitsData.valueSplit.get(pubkey) || 0;
                               return (
                                 <div key={pubkey} className="flex items-center justify-between py-1">
                                   <div className="flex items-center">

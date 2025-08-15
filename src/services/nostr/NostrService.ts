@@ -443,39 +443,129 @@ export class NostrService {
   }
 
   /**
+   * Extracts zap splits from an event according to NIP-57 specification
+   * @param event The event containing zap tags
+   * @returns Array of zap split information with pubkeys and weights
+   */
+  extractZapSplitsFromEvent(event: NDKEvent): Array<{ pubkey: string; weight: number }> {
+    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2);
+    const splits: Array<{ pubkey: string; weight: number }> = [];
+    
+    for (const tag of zapTags) {
+      const pubkey = tag[1];
+      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1; // Default weight is 1 if not specified
+      
+      if (!isNaN(weight) && weight > 0) {
+        splits.push({ pubkey, weight });
+      }
+    }
+    
+    return splits;
+  }
+
+  /**
    * Extracts value split information from zap tags in an event
    * @param event The event containing zap tags
    * @returns A map of pubkeys to their percentage of the value split
    */
   extractValueSplitFromEvent(event: NDKEvent): Map<string, number> {
     const valueSplitMap = new Map<string, number>();
+    const splits = this.extractZapSplitsFromEvent(event);
     
-    // Zap tags typically have the format ['zap', pubkey, '', share_value, ...]
-    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length > 3);
-    
-    // First, extract share values
-    const shareValues: { pubkey: string; share: number }[] = [];
-    let totalShares = 0;
-    
-    for (const tag of zapTags) {
-      const pubkey = tag[1];
-      const shareValue = parseFloat(tag[3]);
-      
-      if (!isNaN(shareValue)) {
-        shareValues.push({ pubkey, share: shareValue });
-        totalShares += shareValue;
-      }
+    if (splits.length === 0) {
+      return valueSplitMap;
     }
     
-    // Now calculate the percentage for each pubkey
-    if (totalShares > 0) {
-      shareValues.forEach(({ pubkey, share }) => {
-        const percentage = Math.round((share / totalShares) * 100);
+    // Calculate total weight
+    const totalWeight = splits.reduce((sum, split) => sum + split.weight, 0);
+    
+    // Calculate percentages
+    if (totalWeight > 0) {
+      splits.forEach(({ pubkey, weight }) => {
+        const percentage = Math.round((weight / totalWeight) * 100);
+        valueSplitMap.set(pubkey, percentage);
+      });
+    } else {
+      // If no weights specified, distribute equally
+      const equalPercentage = Math.round(100 / splits.length);
+      splits.forEach(({ pubkey }, index) => {
+        const percentage = index === splits.length - 1 
+          ? 100 - (equalPercentage * (splits.length - 1)) 
+          : equalPercentage;
         valueSplitMap.set(pubkey, percentage);
       });
     }
     
     return valueSplitMap;
+  }
+
+  /**
+   * Extracts zap splits with percentages from an event
+   * @param event The event containing zap tags
+   * @returns Array of zap splits with calculated percentages
+   */
+  extractZapSplitsWithPercentages(event: NDKEvent): Array<{ pubkey: string; percentage: number }> {
+    const splits = this.extractZapSplitsFromEvent(event);
+    
+    if (splits.length === 0) {
+      return [];
+    }
+    
+    // Calculate total weight
+    const totalWeight = splits.reduce((sum, split) => sum + split.weight, 0);
+    
+    // Calculate percentages
+    if (totalWeight > 0) {
+      return splits.map(({ pubkey, weight }) => ({
+        pubkey,
+        percentage: Math.round((weight / totalWeight) * 100)
+      }));
+    } else {
+      // If no weights specified, distribute equally
+      const equalPercentage = Math.round(100 / splits.length);
+      return splits.map(({ pubkey }, index) => ({
+        pubkey,
+        percentage: index === splits.length - 1 
+          ? 100 - (equalPercentage * (splits.length - 1)) 
+          : equalPercentage
+      }));
+    }
+  }
+
+  /**
+   * Fetches zap splits with recipient information (lightning addresses and names)
+   * @param event The event containing zap tags
+   * @returns Array of zap splits with recipient information
+   */
+  async fetchZapSplitsWithRecipients(event: NDKEvent): Promise<Array<{
+    pubkey: string;
+    percentage: number;
+    lightningAddress?: string;
+    name?: string;
+  }>> {
+    const splits = this.extractZapSplitsWithPercentages(event);
+    
+    if (splits.length === 0) {
+      return [];
+    }
+    
+    // Fetch lightning addresses and profiles for all recipients
+    const pubkeys = splits.map(split => split.pubkey);
+    const lightningAddresses = await this.fetchLightningAddresses(pubkeys);
+    const recipientProfiles = await this.fetchZapProfiles(event);
+    
+    // Combine the data
+    return splits.map(split => {
+      const lightningAddress = lightningAddresses.get(split.pubkey);
+      const profile = recipientProfiles.get(split.pubkey);
+      const name = profile?.name || `Recipient ${split.pubkey.substring(0, 8)}`;
+      
+      return {
+        ...split,
+        lightningAddress,
+        name
+      };
+    });
   }
 
   /**
@@ -501,26 +591,5 @@ export class NostrService {
     }
     
     return addressMap;
-  }
-
-  /**
-   * Extracts zap splits from an event according to NIP-57 specification
-   * @param event The event containing zap tags
-   * @returns Array of zap split information with pubkeys and weights
-   */
-  extractZapSplitsFromEvent(event: NDKEvent): Array<{ pubkey: string; weight: number }> {
-    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2);
-    const splits: Array<{ pubkey: string; weight: number }> = [];
-    
-    for (const tag of zapTags) {
-      const pubkey = tag[1];
-      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1; // Default weight is 1 if not specified
-      
-      if (!isNaN(weight) && weight > 0) {
-        splits.push({ pubkey, weight });
-      }
-    }
-    
-    return splits;
   }
 } 

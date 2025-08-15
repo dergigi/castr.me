@@ -194,63 +194,30 @@ export class PodcastFeedGenerator {
     if (longFormMap) {
       const longFormEvent = longFormMap.get(title)
       if (longFormEvent) {
-        const longFormSplits = this.extractZapSplitsFromEvent(longFormEvent)
+        const longFormSplits = this.nostrService?.extractZapSplitsWithPercentages(longFormEvent) || []
         if (longFormSplits.length > 0) {
-          return longFormSplits
+          return longFormSplits.map(split => ({
+            pubkey: split.pubkey,
+            percentage: split.percentage
+          }))
         }
       }
     }
     
     // Priority 2: Check kind:1 event for zap splits
-    const kind1Splits = this.extractZapSplitsFromEvent(event)
+    const kind1Splits = this.nostrService?.extractZapSplitsWithPercentages(event) || []
     if (kind1Splits.length > 0) {
-      return kind1Splits
+      return kind1Splits.map(split => ({
+        pubkey: split.pubkey,
+        percentage: split.percentage
+      }))
     }
     
     // Priority 3: Return empty array (will fall back to channel-level default)
     return []
   }
   
-  /**
-   * Extracts zap splits from an event according to NIP-57 specification
-   * Zap tags format: ['zap', pubkey, relay, weight, ...]
-   */
-  private extractZapSplitsFromEvent(event: NDKEvent): ValueSplit[] {
-    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2)
-    
-    if (zapTags.length === 0) {
-      return []
-    }
-    
-    // Extract weights and calculate percentages
-    const splits: { pubkey: string; weight: number }[] = []
-    let totalWeight = 0
-    
-    for (const tag of zapTags) {
-      const pubkey = tag[1]
-      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1 // Default weight is 1 if not specified
-      
-      if (!isNaN(weight) && weight > 0) {
-        splits.push({ pubkey, weight })
-        totalWeight += weight
-      }
-    }
-    
-    // Calculate percentages
-    if (totalWeight > 0) {
-      return splits.map(({ pubkey, weight }) => ({
-        pubkey,
-        percentage: Math.round((weight / totalWeight) * 100)
-      }))
-    }
-    
-    // If no weights specified, distribute equally
-    const equalPercentage = Math.round(100 / splits.length)
-    return splits.map(({ pubkey }, index) => ({
-      pubkey,
-      percentage: index === splits.length - 1 ? 100 - (equalPercentage * (splits.length - 1)) : equalPercentage
-    }))
-  }
+
   
   /**
    * Generates the Podcast 2.0 value tag XML for value splits
@@ -380,7 +347,7 @@ ${recipients}
     if (longFormMap) {
       const longFormEvent = longFormMap.get(title)
       if (longFormEvent) {
-        const longFormSplits = await this.extractZapSplitsFromEventAsync(longFormEvent)
+        const longFormSplits = await this.nostrService?.fetchZapSplitsWithRecipients(longFormEvent) || []
         if (longFormSplits.length > 0) {
           return longFormSplits
         }
@@ -388,75 +355,12 @@ ${recipients}
     }
     
     // Priority 2: Check kind:1 event for zap splits
-    const kind1Splits = await this.extractZapSplitsFromEventAsync(event)
+    const kind1Splits = await this.nostrService?.fetchZapSplitsWithRecipients(event) || []
     if (kind1Splits.length > 0) {
       return kind1Splits
     }
     
     // Priority 3: Return empty array (will fall back to channel-level default)
     return []
-  }
-  
-  /**
-   * Async version that fetches lightning addresses and names for recipients
-   */
-  private async extractZapSplitsFromEventAsync(event: NDKEvent): Promise<ValueSplit[]> {
-    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2)
-    
-    if (zapTags.length === 0) {
-      return []
-    }
-    
-    // Extract weights and calculate percentages
-    const splits: { pubkey: string; weight: number }[] = []
-    let totalWeight = 0
-    
-    for (const tag of zapTags) {
-      const pubkey = tag[1]
-      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1 // Default weight is 1 if not specified
-      
-      if (!isNaN(weight) && weight > 0) {
-        splits.push({ pubkey, weight })
-        totalWeight += weight
-      }
-    }
-    
-    // Calculate percentages
-    let percentageSplits: ValueSplit[] = []
-    if (totalWeight > 0) {
-      percentageSplits = splits.map(({ pubkey, weight }) => ({
-        pubkey,
-        percentage: Math.round((weight / totalWeight) * 100)
-      }))
-    } else {
-      // If no weights specified, distribute equally
-      const equalPercentage = Math.round(100 / splits.length)
-      percentageSplits = splits.map(({ pubkey }, index) => ({
-        pubkey,
-        percentage: index === splits.length - 1 ? 100 - (equalPercentage * (splits.length - 1)) : equalPercentage
-      }))
-    }
-    
-    // Fetch lightning addresses and names for all recipients
-    if (this.nostrService && percentageSplits.length > 0) {
-      const pubkeys = percentageSplits.map(split => split.pubkey)
-      const lightningAddresses = await this.nostrService.fetchLightningAddresses(pubkeys)
-      const recipientProfiles = await this.nostrService.fetchZapProfiles(event)
-      
-      // Update splits with actual lightning addresses and names
-      return percentageSplits.map(split => {
-        const lightningAddress = lightningAddresses.get(split.pubkey)
-        const profile = recipientProfiles.get(split.pubkey)
-        const name = profile?.name || `Recipient ${split.pubkey.substring(0, 8)}`
-        
-        return {
-          ...split,
-          lightningAddress,
-          name
-        }
-      })
-    }
-    
-    return percentageSplits
   }
 } 
