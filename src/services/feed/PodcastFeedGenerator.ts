@@ -36,7 +36,7 @@ export class PodcastFeedGenerator {
     
     // Generate value tag if Lightning address exists (default fallback)
     const valueTag = profile.lud16 ? `
-    <podcast:value type="lightning" method="lnaddress">
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00000015000">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
         type="lnaddress"
@@ -92,7 +92,7 @@ export class PodcastFeedGenerator {
     
     // Generate value tag if Lightning address exists (default fallback)
     const valueTag = profile.lud16 ? `
-    <podcast:value type="lightning" method="lnaddress">
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00000015000">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
         type="lnaddress"
@@ -227,7 +227,7 @@ export class PodcastFeedGenerator {
     
     const recipients = splits.map(split => {
       const name = split.name || `Recipient ${split.pubkey.substring(0, 8)}`
-      const address = split.lightningAddress || `unknown@${split.pubkey.substring(0, 8)}.ln`
+      const address = split.lightningAddress || `recipient@${split.pubkey.substring(0, 8)}.ln`
       
       return `        <podcast:valueRecipient 
           name="${this.escapeXml(name)}"
@@ -238,7 +238,7 @@ export class PodcastFeedGenerator {
     }).join('\n')
     
     return `
-      <podcast:value type="lightning" method="lnaddress">
+      <podcast:value type="lightning" method="lnaddress" suggested="0.00000015000">
 ${recipients}
       </podcast:value>`
   }
