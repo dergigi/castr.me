@@ -48,7 +48,8 @@ export async function GET(
       )
     }
 
-    const feed = feedGenerator.generateFeed(profile, eventsWithShowNotes, npub, longFormMap)
+    // Use the async version to fetch recipient information
+    const feed = await feedGenerator.generateFeedAsync(profile, eventsWithShowNotes, npub, longFormMap)
     
     return new NextResponse(feed, {
       headers: {

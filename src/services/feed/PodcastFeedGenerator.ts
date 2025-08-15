@@ -31,7 +31,7 @@ export class PodcastFeedGenerator {
     const mediaEvents = this.filterMediaEvents(events)
       .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
     
-    // Generate items XML
+    // Generate items XML (synchronous for now, will enhance with async later)
     const items = mediaEvents.map(event => this.generateItem(event, longFormMap)).join('\n')
     
     // Generate value tag if Lightning address exists (default fallback)
@@ -66,6 +66,62 @@ export class PodcastFeedGenerator {
     <itunes:type>episodic</itunes:type>
     <itunes:explicit>false</itunes:explicit>${valueTag}
     ${items}
+  </channel>
+</rss>`
+  }
+  
+  /**
+   * Async version of generateFeed that fetches recipient information
+   */
+  async generateFeedAsync(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>): Promise<string> {
+    const title = profile.name || npub
+    const description = profile.about || 'A media feed generated from Nostr posts'
+    const link = `https://castr.me/${npub}`
+    const language = 'en-us'
+    const pubDate = new Date().toUTCString()
+    const image = profile.picture || `https://robohash.org/${npub}.png?set=set3&size=500x500`
+    
+    // Filter for media events and sort by date
+    const mediaEvents = this.filterMediaEvents(events)
+      .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+    
+    // Generate items XML with async recipient fetching
+    const itemsPromises = mediaEvents.map(event => this.generateItemAsync(event, longFormMap))
+    const items = await Promise.all(itemsPromises)
+    const itemsXml = items.join('\n')
+    
+    // Generate value tag if Lightning address exists (default fallback)
+    const valueTag = profile.lud16 ? `
+    <podcast:value type="lightning" method="lnaddress">
+      <podcast:valueRecipient 
+        name="${this.escapeXml(title)}"
+        type="lnaddress"
+        address="${this.escapeXml(profile.lud16)}"
+        split="100"
+      />
+    </podcast:value>` : ''
+    
+    // Generate the complete RSS feed
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:media="http://search.yahoo.com/mrss/" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+  <channel>
+    <title>${this.escapeXml(title)}</title>
+    <link>${this.escapeXml(link)}</link>
+    <description>${this.escapeXml(description)}</description>
+    <language>${language}</language>
+    <pubDate>${pubDate}</pubDate>
+    <lastBuildDate>${pubDate}</lastBuildDate>
+    <image>
+      <url>${this.escapeXml(image)}</url>
+      <title>${this.escapeXml(title)}</title>
+      <link>${this.escapeXml(link)}</link>
+    </image>
+    <itunes:image href="${this.escapeXml(image)}"/>
+    <itunes:author>${this.escapeXml(profile.name || npub)}</itunes:author>
+    <itunes:summary>${this.escapeXml(description)}</itunes:summary>
+    <itunes:type>episodic</itunes:type>
+    <itunes:explicit>false</itunes:explicit>${valueTag}
+    ${itemsXml}
   </channel>
 </rss>`
   }
@@ -271,5 +327,136 @@ ${recipients}
         default: return c
       }
     })
+  }
+
+  /**
+   * Async version of generateItem that fetches recipient information
+   */
+  private async generateItemAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): Promise<string> {
+    const audioUrl = this.extractAudioUrl(event.content)
+    const videoUrl = this.extractVideoUrl(event.content)
+    if (!audioUrl && !videoUrl) return ''
+    
+    const title = this.extractTitle(event)
+    const pubDate = new Date((event.created_at || 0) * 1000).toUTCString()
+    const guid = event.id
+    const mediaType = videoUrl ? 'video' : 'audio'
+    const mediaUrl = videoUrl || audioUrl || ''
+    
+    // Extract show notes from long-form content if available
+    const showNotes = this.extractShowNotes(event)
+    const content = showNotes || event.content
+    
+    // Convert markdown to HTML and sanitize
+    const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
+    
+    // Generate value splits for this item with recipient information
+    const valueSplits = await this.generateValueSplitsForEventAsync(event, longFormMap)
+    const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
+    
+    return `    <item>
+      <title>${this.escapeXml(title)}</title>
+      <link>${this.escapeXml(mediaUrl)}</link>
+      <guid>${guid}</guid>
+      <pubDate>${pubDate}</pubDate>
+      <description><![CDATA[${htmlContent}]]></description>
+      <enclosure url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
+      <media:content url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
+      <itunes:title>${this.escapeXml(title)}</itunes:title>
+      <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
+      <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
+      <itunes:duration>00:00:00</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>${valueTag}
+    </item>`
+  }
+  
+  /**
+   * Async version that fetches recipient lightning addresses and names
+   */
+  private async generateValueSplitsForEventAsync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): Promise<ValueSplit[]> {
+    const title = this.extractTitle(event)
+    
+    // Priority 1: Check associated long-form content (kind:30023) for zap splits
+    if (longFormMap) {
+      const longFormEvent = longFormMap.get(title)
+      if (longFormEvent) {
+        const longFormSplits = await this.extractZapSplitsFromEventAsync(longFormEvent)
+        if (longFormSplits.length > 0) {
+          return longFormSplits
+        }
+      }
+    }
+    
+    // Priority 2: Check kind:1 event for zap splits
+    const kind1Splits = await this.extractZapSplitsFromEventAsync(event)
+    if (kind1Splits.length > 0) {
+      return kind1Splits
+    }
+    
+    // Priority 3: Return empty array (will fall back to channel-level default)
+    return []
+  }
+  
+  /**
+   * Async version that fetches lightning addresses and names for recipients
+   */
+  private async extractZapSplitsFromEventAsync(event: NDKEvent): Promise<ValueSplit[]> {
+    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2)
+    
+    if (zapTags.length === 0) {
+      return []
+    }
+    
+    // Extract weights and calculate percentages
+    const splits: { pubkey: string; weight: number }[] = []
+    let totalWeight = 0
+    
+    for (const tag of zapTags) {
+      const pubkey = tag[1]
+      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1 // Default weight is 1 if not specified
+      
+      if (!isNaN(weight) && weight > 0) {
+        splits.push({ pubkey, weight })
+        totalWeight += weight
+      }
+    }
+    
+    // Calculate percentages
+    let percentageSplits: ValueSplit[] = []
+    if (totalWeight > 0) {
+      percentageSplits = splits.map(({ pubkey, weight }) => ({
+        pubkey,
+        percentage: Math.round((weight / totalWeight) * 100)
+      }))
+    } else {
+      // If no weights specified, distribute equally
+      const equalPercentage = Math.round(100 / splits.length)
+      percentageSplits = splits.map(({ pubkey }, index) => ({
+        pubkey,
+        percentage: index === splits.length - 1 ? 100 - (equalPercentage * (splits.length - 1)) : equalPercentage
+      }))
+    }
+    
+    // Fetch lightning addresses and names for all recipients
+    if (this.nostrService && percentageSplits.length > 0) {
+      const pubkeys = percentageSplits.map(split => split.pubkey)
+      const lightningAddresses = await this.nostrService.fetchLightningAddresses(pubkeys)
+      const recipientProfiles = await this.nostrService.fetchZapProfiles(event)
+      
+      // Update splits with actual lightning addresses and names
+      return percentageSplits.map(split => {
+        const lightningAddress = lightningAddresses.get(split.pubkey)
+        const profile = recipientProfiles.get(split.pubkey)
+        const name = profile?.name || `Recipient ${split.pubkey.substring(0, 8)}`
+        
+        return {
+          ...split,
+          lightningAddress,
+          name
+        }
+      })
+    }
+    
+    return percentageSplits
   }
 } 
