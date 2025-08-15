@@ -561,6 +561,19 @@ export default async function NpubPage({
                                 </div>
                               );
                             })}
+                            {/* Help link - only shown when expanded */}
+                            <div className="flex items-center justify-center py-2 mt-2 border-t border-gray-100">
+                              <a 
+                                href="https://github.com/your-username/pubcaster#zap-splits"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Learn more about value splits"
+                              >
+                                <i className="fa-solid fa-circle-question mr-1"></i>
+                                Learn more about value splits
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </details>
@@ -589,6 +602,19 @@ export default async function NpubPage({
                             <p className="text-xs mt-2 text-gray-400">
                               Example: <code className="bg-gray-100 px-1 rounded">["zap", "abc123...", "wss://relay.example.com", "2"]</code>
                             </p>
+                            {/* Help link - only shown when expanded */}
+                            <div className="flex items-center justify-center py-2 mt-3 border-t border-gray-200">
+                              <a 
+                                href="https://github.com/your-username/pubcaster#zap-splits"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Learn more about value splits"
+                              >
+                                <i className="fa-solid fa-circle-question mr-1"></i>
+                                Learn more about value splits
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </details>
