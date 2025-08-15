@@ -73,21 +73,33 @@ This allows podcasters to maintain detailed show notes separate from the audio p
 
 ## Zap Splits & Value Splits
 
-Value splits are automatically generated in the RSS feed based on zap splits from Nostr events. The system follows this priority order:
+When you zap (send Lightning payments) to podcast episodes, the money can be automatically split among multiple recipients. This system determines who gets what percentage based on zap splits configured in your Nostr posts.
 
-1. **Associated Long-form Content (kind:30023)** - Highest priority
-   - Zap splits defined in show notes take precedence
-   - Allows for episode-specific payment configurations
+### How Payment Splits Work
 
-2. **Kind:1 Event Zap Splits** - Medium priority  
-   - Zap splits defined directly in the audio post
-   - Used when no associated long-form content exists
+The system follows a simple priority order to determine payment distribution:
 
-3. **Default Profile Lightning Address** - Lowest priority
-   - Falls back to the channel-level default
-   - Uses the `lud16` field from the Nostr profile
+**Show Notes Take Priority**: If you've created detailed show notes (long-form content) for an episode, any zap splits defined there will be used. This allows you to set specific payment arrangements for each episode, like splitting revenue with guests or co-hosts.
 
-For detailed information about how value splits work, see [VALUE_SPLITS.md](docs/VALUE_SPLITS.md).
+**Episode Posts as Fallback**: If no show notes exist, the system looks for zap splits defined directly in the episode post itself. This works for episodes where you haven't created separate show notes.
+
+**Default Profile**: If no zap splits are found anywhere, payments go to the lightning address in your Nostr profile.
+
+### Setting Up Zap Splits
+
+Zap splits are configured using special tags in your Nostr posts. The format follows the NIP-57 specification:
+
+```
+["zap", recipient_pubkey, relay_url, weight]
+```
+
+The weight determines what percentage each person receives. For example, if you set weights of 2 and 1, the first person gets 67% and the second gets 33%. If no weights are specified, the split is equal.
+
+### What Users See
+
+In the HTML interface, zap splits are displayed as an expandable section showing each recipient's name, lightning address, and percentage. The RSS feed includes these splits as Podcast 2.0 value tags, allowing podcast apps to handle payment distribution automatically.
+
+For detailed technical information about how value splits work, see [VALUE_SPLITS.md](docs/VALUE_SPLITS.md).
 
 ## Installation
 

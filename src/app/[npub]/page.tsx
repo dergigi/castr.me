@@ -207,6 +207,7 @@ export default async function NpubPage({
       const longFormZapProfiles = zapProfilesMap.get(longFormEvent.id)
       const longFormValueSplit = valueSplitMap.get(longFormEvent.id)
       if (longFormZapProfiles && longFormValueSplit) {
+        console.log(`Using long-form zap splits for event ${event.id}`)
         return { zapProfiles: longFormZapProfiles, valueSplit: longFormValueSplit }
       }
     }
@@ -215,9 +216,11 @@ export default async function NpubPage({
     const kind1ZapProfiles = kind1ZapProfilesMap.get(event.id)
     const kind1ValueSplit = kind1ValueSplitMap.get(event.id)
     if (kind1ZapProfiles && kind1ValueSplit) {
+      console.log(`Using kind:1 zap splits for event ${event.id}`)
       return { zapProfiles: kind1ZapProfiles, valueSplit: kind1ValueSplit }
     }
     
+    console.log(`No zap splits found for event ${event.id}`)
     return null
   }
   
@@ -226,12 +229,14 @@ export default async function NpubPage({
     const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
     if (zapProfiles.size > 0) {
       zapProfilesMap.set(longFormEvent.id, zapProfiles)
+      console.log(`Found ${zapProfiles.size} zap profiles in long-form event ${longFormEvent.id}`)
     }
     
     // Extract value split information
     const valueSplit = nostrService.extractValueSplitFromEvent(longFormEvent)
     if (valueSplit.size > 0) {
       valueSplitMap.set(longFormEvent.id, valueSplit)
+      console.log(`Found value split in long-form event ${longFormEvent.id}:`, Array.from(valueSplit.entries()))
     }
   }
   
@@ -240,12 +245,14 @@ export default async function NpubPage({
     const zapProfiles = await nostrService.fetchZapProfiles(event)
     if (zapProfiles.size > 0) {
       kind1ZapProfilesMap.set(event.id, zapProfiles)
+      console.log(`Found ${zapProfiles.size} zap profiles in kind:1 event ${event.id}`)
     }
     
     // Extract value split information
     const valueSplit = nostrService.extractValueSplitFromEvent(event)
     if (valueSplit.size > 0) {
       kind1ValueSplitMap.set(event.id, valueSplit)
+      console.log(`Found value split in kind:1 event ${event.id}:`, Array.from(valueSplit.entries()))
     }
   }
   
@@ -522,6 +529,34 @@ export default async function NpubPage({
                       </details>
                     </div>
                   )}
+                  
+                  {/* Zap Splits Info - Show when no zap splits are configured */}
+                  {!zapSplitsData && (
+                    <div className="mt-6 border-t border-gray-100 pt-4">
+                      <details className="group">
+                        <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-500 hover:text-gray-700">
+                          <span>Zap Splits</span>
+                          <svg className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </summary>
+                        <div className="mt-3">
+                          <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
+                            <p className="mb-2">No zap splits configured for this episode.</p>
+                            <p className="text-xs">
+                              To enable automatic payment splitting, add zap tags to your Nostr post or show notes:
+                            </p>
+                            <code className="block text-xs bg-gray-100 p-2 rounded mt-2 font-mono">
+                              ["zap", "recipient_pubkey", "relay_url", "weight"]
+                            </code>
+                            <p className="text-xs mt-2 text-gray-400">
+                              Example: <code className="bg-gray-100 px-1 rounded">["zap", "abc123...", "wss://relay.example.com", "2"]</code>
+                            </p>
+                          </div>
+                        </div>
+                      </details>
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -535,4 +570,4 @@ export default async function NpubPage({
       </div>
     </div>
   )
-} 
+}
