@@ -194,6 +194,12 @@ export default async function NpubPage({
   // Create a map to store value split information for each long-form event
   const valueSplitMap = new Map<string, Map<string, number>>()
   
+  // Create a map to store zap profiles for kind:1 events
+  const kind1ZapProfilesMap = new Map<string, Map<string, NostrProfile>>()
+  
+  // Create a map to store value split information for kind:1 events
+  const kind1ValueSplitMap = new Map<string, Map<string, number>>()
+  
   // Fetch zap profiles for each long-form event
   for (const longFormEvent of Array.from(longFormMap.values())) {
     const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
@@ -205,6 +211,20 @@ export default async function NpubPage({
     const valueSplit = nostrService.extractValueSplitFromEvent(longFormEvent)
     if (valueSplit.size > 0) {
       valueSplitMap.set(longFormEvent.id, valueSplit)
+    }
+  }
+  
+  // Fetch zap profiles for kind:1 events that have zap splits
+  for (const event of mediaEvents) {
+    const zapProfiles = await nostrService.fetchZapProfiles(event)
+    if (zapProfiles.size > 0) {
+      kind1ZapProfilesMap.set(event.id, zapProfiles)
+    }
+    
+    // Extract value split information
+    const valueSplit = nostrService.extractValueSplitFromEvent(event)
+    if (valueSplit.size > 0) {
+      kind1ValueSplitMap.set(event.id, valueSplit)
     }
   }
   
@@ -303,6 +323,14 @@ export default async function NpubPage({
             
             // Get value split information for this long-form event if it exists
             const valueSplit = longFormEvent ? valueSplitMap.get(longFormEvent.id) : undefined
+            
+            // Get zap profiles for kind:1 event if it has zap splits
+            const kind1ZapProfiles = kind1ZapProfilesMap.get(event.id)
+            const kind1ValueSplit = kind1ValueSplitMap.get(event.id)
+            
+            // Determine which zap splits to show (long-form takes priority)
+            const displayZapProfiles = zapProfiles || kind1ZapProfiles
+            const displayValueSplit = valueSplit || kind1ValueSplit
             
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
@@ -403,15 +431,15 @@ export default async function NpubPage({
                     </div>
                   )}
                   
-                  {/* Zap Splits Section */}
-                  {longFormEvent && zapProfiles && zapProfiles.size > 0 && (
+                  {/* Zap Splits Section - Always show if zap splits exist */}
+                  {displayZapProfiles && displayZapProfiles.size > 0 && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
                       <details className="group">
                         <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
                           <span>Zap Splits</span>
                           <div className="flex items-center">
                             <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
-                              {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => (
+                              {Array.from(displayZapProfiles.entries()).map(([pubkey, profile]) => (
                                 <a 
                                   key={pubkey}
                                   href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
@@ -442,8 +470,8 @@ export default async function NpubPage({
                         </summary>
                         <div className="mt-3">
                           <div className="text-sm text-gray-600">
-                            {Array.from(zapProfiles.entries()).map(([pubkey, profile]) => {
-                              const percentage = valueSplit?.get(pubkey) || 0;
+                            {Array.from(displayZapProfiles.entries()).map(([pubkey, profile]) => {
+                              const percentage = displayValueSplit?.get(pubkey) || 0;
                               return (
                                 <div key={pubkey} className="flex items-center justify-between py-1">
                                   <div className="flex items-center">
@@ -467,7 +495,12 @@ export default async function NpubPage({
                                           </div>
                                         )}
                                       </div>
-                                      <span>{profile.name || pubkey.slice(0, 8)}</span>
+                                      <div className="flex flex-col">
+                                        <span>{profile.name || pubkey.slice(0, 8)}</span>
+                                        {profile.lud16 && (
+                                          <span className="text-xs text-gray-500 font-mono">{profile.lud16}</span>
+                                        )}
+                                      </div>
                                     </a>
                                   </div>
                                   <span className="text-gray-500">{percentage}%</span>
