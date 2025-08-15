@@ -592,16 +592,7 @@ export default async function NpubPage({
                         </summary>
                         <div className="mt-3">
                           <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
-                            <p className="mb-2">No zap splits configured for this episode.</p>
-                            <p className="text-xs">
-                              To enable automatic payment splitting, add zap tags to your Nostr post or show notes:
-                            </p>
-                            <code className="block text-xs bg-gray-100 p-2 rounded mt-2 font-mono">
-                              ["zap", "recipient_pubkey", "relay_url", "weight"]
-                            </code>
-                            <p className="text-xs mt-2 text-gray-400">
-                              Example: <code className="bg-gray-100 px-1 rounded">["zap", "abc123...", "wss://relay.example.com", "2"]</code>
-                            </p>
+                            <p>No zap splits configured for this episode.</p>
                             {/* Help link - only shown when expanded */}
                             <div className="py-2 mt-2">
                               <a 
