@@ -73,7 +73,7 @@ This allows podcasters to maintain detailed show notes separate from the audio p
 
 ## Zap Splits
 
-Zap splits automatically distribute Lightning payments among multiple recipients when users zap podcast episodes.
+Zap splits automatically distribute Lightning payments among multiple recipients when users boost podcast episodes.
 
 ### Implementation
 
