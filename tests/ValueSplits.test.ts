@@ -1,12 +1,15 @@
 import { PodcastFeedGenerator } from '../src/services/feed/PodcastFeedGenerator'
+import { NostrService } from '../src/services/nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
 import { NostrProfile } from '../src/services/nostr/NostrService'
 
 describe('Value Splits', () => {
   let feedGenerator: PodcastFeedGenerator
+  let nostrService: NostrService
 
   beforeEach(() => {
-    feedGenerator = new PodcastFeedGenerator()
+    nostrService = new NostrService()
+    feedGenerator = new PodcastFeedGenerator(nostrService)
   })
 
   describe('extractZapSplitsFromEvent', () => {
@@ -18,7 +21,63 @@ describe('Value Splits', () => {
         ]
       } as NDKEvent
 
-      const splits = (feedGenerator as any).extractZapSplitsFromEvent(mockEvent)
+      const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
+      
+      expect(splits).toHaveLength(2)
+      expect(splits[0]).toEqual({ pubkey: 'pubkey1', weight: 1 })
+      expect(splits[1]).toEqual({ pubkey: 'pubkey2', weight: 1 })
+    })
+
+    it('should extract weighted splits when weights are specified', () => {
+      const mockEvent = {
+        tags: [
+          ['zap', 'pubkey1', 'wss://relay.example.com', '2'],
+          ['zap', 'pubkey2', 'wss://relay.example.com', '1']
+        ]
+      } as NDKEvent
+
+      const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
+      
+      expect(splits).toHaveLength(2)
+      expect(splits[0]).toEqual({ pubkey: 'pubkey1', weight: 2 })
+      expect(splits[1]).toEqual({ pubkey: 'pubkey2', weight: 1 })
+    })
+
+    it('should handle invalid weights gracefully', () => {
+      const mockEvent = {
+        tags: [
+          ['zap', 'pubkey1', 'wss://relay.example.com', 'invalid'],
+          ['zap', 'pubkey2', 'wss://relay.example.com', '1']
+        ]
+      } as NDKEvent
+
+      const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
+      
+      expect(splits).toHaveLength(1)
+      expect(splits[0]).toEqual({ pubkey: 'pubkey2', weight: 1 })
+    })
+
+    it('should return empty array when no zap tags exist', () => {
+      const mockEvent = {
+        tags: [['p', 'somepubkey']]
+      } as NDKEvent
+
+      const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
+      
+      expect(splits).toHaveLength(0)
+    })
+  })
+
+  describe('extractZapSplitsWithPercentages', () => {
+    it('should extract equal splits when no weights are specified', () => {
+      const mockEvent = {
+        tags: [
+          ['zap', 'pubkey1', 'wss://relay.example.com'],
+          ['zap', 'pubkey2', 'wss://relay.example.com']
+        ]
+      } as NDKEvent
+
+      const splits = nostrService.extractZapSplitsWithPercentages(mockEvent)
       
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey1', percentage: 50 })
@@ -33,35 +92,11 @@ describe('Value Splits', () => {
         ]
       } as NDKEvent
 
-      const splits = (feedGenerator as any).extractZapSplitsFromEvent(mockEvent)
+      const splits = nostrService.extractZapSplitsWithPercentages(mockEvent)
       
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey1', percentage: 67 })
       expect(splits[1]).toEqual({ pubkey: 'pubkey2', percentage: 33 })
-    })
-
-    it('should handle invalid weights gracefully', () => {
-      const mockEvent = {
-        tags: [
-          ['zap', 'pubkey1', 'wss://relay.example.com', 'invalid'],
-          ['zap', 'pubkey2', 'wss://relay.example.com', '1']
-        ]
-      } as NDKEvent
-
-      const splits = (feedGenerator as any).extractZapSplitsFromEvent(mockEvent)
-      
-      expect(splits).toHaveLength(1)
-      expect(splits[0]).toEqual({ pubkey: 'pubkey2', percentage: 100 })
-    })
-
-    it('should return empty array when no zap tags exist', () => {
-      const mockEvent = {
-        tags: [['p', 'somepubkey']]
-      } as NDKEvent
-
-      const splits = (feedGenerator as any).extractZapSplitsFromEvent(mockEvent)
-      
-      expect(splits).toHaveLength(0)
     })
   })
 
