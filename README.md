@@ -75,8 +75,6 @@ This allows podcasters to maintain detailed show notes separate from the audio p
 
 Zap splits automatically distribute Lightning payments among multiple recipients when users boost podcast episodes.
 
-### How It Works
-
 If you've created detailed show notes (long-form content, see above) for an episode, any zap splits defined in the long-form post will be used. This allows you to set (and update!) specific payment arrangements for each episode, like splitting revenue with guests or co-hosts.
 
 If no show notes exist, the system looks for zap splits defined directly in the `kind1` (read: "tweet") that you used to post the episode. This makes sure that zap splits work for episodes where you haven't created separate show notes.
@@ -84,23 +82,6 @@ If no show notes exist, the system looks for zap splits defined directly in the 
 If no zap splits are found anywhere, payments in the form of zaps or boosts go to the lightning address in your Nostr profile.
 
 For detailed technical information about how value splits work, see [VALUE_SPLITS.md](docs/VALUE_SPLITS.md).
-
-### Technical Implementation
-
-**Nostr Integration:**
-- Extracts zap splits from `kind:1` and `kind:30023` events
-- Fetches recipient lightning addresses from Nostr profiles
-- Uses NIP-57 zap split format: `["zap", pubkey, relay, weight]`
-
-**Podcast 2.0 Compliance:**
-- Generates `<podcast:value>` tags with `lnaddress` recipients
-- Includes episode-level and channel-level value splits
-- Compatible with Lightning-enabled podcast apps
-
-**Display:**
-- HTML view shows recipient names, lightning addresses, and percentages
-- RSS feed includes value tags for automatic payment routing
-- Always displays zap splits section (defaults to profile owner if none configured)
 
 See [VALUE_SPLITS.md](docs/VALUE_SPLITS.md) for technical details.
 
