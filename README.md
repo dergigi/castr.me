@@ -71,35 +71,33 @@ Show notes are implemented using Nostr's long-form content (`kind:30023`) events
 
 This allows podcasters to maintain detailed show notes separate from the audio post while keeping them properly linked.
 
-## Zap Splits & Value Splits
+## Zap Splits
 
-When you zap (send Lightning payments) to podcast episodes, the money can be automatically split among multiple recipients. This system determines who gets what percentage based on zap splits configured in your Nostr posts.
+Zap splits automatically distribute Lightning payments among multiple recipients when users zap podcast episodes.
 
-### How Payment Splits Work
+### Implementation
 
-The system follows a simple priority order to determine payment distribution:
+**Priority Order:**
+1. Show notes (long-form content) zap splits
+2. Episode post zap splits  
+3. Profile lightning address (100% default)
 
-**Show Notes Take Priority**: If you've created detailed show notes (long-form content) for an episode, any zap splits defined there will be used. This allows you to set specific payment arrangements for each episode, like splitting revenue with guests or co-hosts.
+**Nostr Integration:**
+- Extracts zap splits from `kind:1` and `kind:30023` events
+- Fetches recipient lightning addresses from Nostr profiles
+- Uses NIP-57 zap split format: `["zap", pubkey, relay, weight]`
 
-**Episode Posts as Fallback**: If no show notes exist, the system looks for zap splits defined directly in the episode post itself. This works for episodes where you haven't created separate show notes.
+**Podcast 2.0 Compliance:**
+- Generates `<podcast:value>` tags with `lnaddress` recipients
+- Includes episode-level and channel-level value splits
+- Compatible with Lightning-enabled podcast apps
 
-**Default Profile**: If no zap splits are found anywhere, payments go to the lightning address in your Nostr profile.
+**Display:**
+- HTML view shows recipient names, lightning addresses, and percentages
+- RSS feed includes value tags for automatic payment routing
+- Always displays zap splits section (defaults to profile owner if none configured)
 
-### Setting Up Zap Splits
-
-Zap splits are configured using special tags in your Nostr posts. The format follows the NIP-57 specification:
-
-```
-["zap", recipient_pubkey, relay_url, weight]
-```
-
-The weight determines what percentage each person receives. For example, if you set weights of 2 and 1, the first person gets 67% and the second gets 33%. If no weights are specified, the split is equal.
-
-### What Users See
-
-In the HTML interface, zap splits are displayed as an expandable section showing each recipient's name, lightning address, and percentage. The RSS feed includes these splits as Podcast 2.0 value tags, allowing podcast apps to handle payment distribution automatically.
-
-For detailed technical information about how value splits work, see [VALUE_SPLITS.md](docs/VALUE_SPLITS.md).
+See [VALUE_SPLITS.md](docs/VALUE_SPLITS.md) for technical details.
 
 ## Installation
 
