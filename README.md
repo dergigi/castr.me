@@ -71,9 +71,11 @@ Show notes are implemented using Nostr's long-form content (`kind:30023`) events
 
 This allows podcasters to maintain detailed show notes separate from the audio post while keeping them properly linked.
 
-## Zap Splits
+## Zap Splits & Value Splits
 
-Zap splits automatically distribute Lightning payments among multiple recipients when users boost podcast episodes.
+TL;DR: Whatever is defined in the associated long-form `kind:30023` is taken as gospel, and will be used as the basis for the <value> splits. Fallback is the `kind:1`. Ultimate fallback is the `lud06` lightning address set in your nostr profile.
+
+We use zap splits to automatically create Podcasting 2.0 value splits so that Lightning payments can be distributed among multiple recipients when users boost podcast episodes.
 
 If you've created detailed show notes (long-form content, see above) for an episode, any zap splits defined in the long-form post will be used. This allows you to set (and update!) specific payment arrangements for each episode, like splitting revenue with guests or co-hosts.
 
@@ -81,9 +83,7 @@ If no show notes exist, the system looks for zap splits defined directly in the 
 
 If no zap splits are found anywhere, payments in the form of zaps or boosts go to the lightning address in your Nostr profile.
 
-For detailed technical information about how value splits work, see [VALUE_SPLITS.md](docs/VALUE_SPLITS.md).
-
-See [VALUE_SPLITS.md](docs/VALUE_SPLITS.md) for technical details.
+See [VALUE_SPLITS.md](docs/VALUE_SPLITS.md) for details.
 
 ## Installation
 
