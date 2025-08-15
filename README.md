@@ -53,7 +53,7 @@ You can discover profiles that post media using search queries on Nostr search e
 
 ## Still TODO
 
-- [ ] Create `<value>` tags based on zap splits
+- [x] Create `<value>` tags based on zap splits
 - [ ] Somehow link to transcripts file (and add it to the RSS feed)
 - [ ] Implement content negotiation, i.e. render RSS/HTML based on request
 - [ ] Properly query relays, the way it's done now is stupid
@@ -73,7 +73,21 @@ This allows podcasters to maintain detailed show notes separate from the audio p
 
 ## Zap Splits & Value Splits
 
-Whatever is defined in the associated long-form `kind:30023` is taken as gospel, and will be used as the basis for the `<value>` splits.
+Value splits are automatically generated in the RSS feed based on zap splits from Nostr events. The system follows this priority order:
+
+1. **Associated Long-form Content (kind:30023)** - Highest priority
+   - Zap splits defined in show notes take precedence
+   - Allows for episode-specific payment configurations
+
+2. **Kind:1 Event Zap Splits** - Medium priority  
+   - Zap splits defined directly in the audio post
+   - Used when no associated long-form content exists
+
+3. **Default Profile Lightning Address** - Lowest priority
+   - Falls back to the channel-level default
+   - Uses the `lud16` field from the Nostr profile
+
+For detailed information about how value splits work, see [VALUE_SPLITS.md](docs/VALUE_SPLITS.md).
 
 ## Installation
 

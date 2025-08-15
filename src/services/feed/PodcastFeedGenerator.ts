@@ -1,4 +1,4 @@
-import { NostrProfile } from '../nostr/NostrService'
+import { NostrProfile, NostrService } from '../nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
@@ -9,8 +9,17 @@ marked.setOptions({
   breaks: true, // Convert line breaks to <br>
 })
 
+interface ValueSplit {
+  pubkey: string
+  percentage: number
+  lightningAddress?: string
+  name?: string
+}
+
 export class PodcastFeedGenerator {
-  generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string): string {
+  constructor(private nostrService?: NostrService) {}
+
+  generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>): string {
     const title = profile.name || npub
     const description = profile.about || 'A media feed generated from Nostr posts'
     const link = `https://castr.me/${npub}`
@@ -23,9 +32,9 @@ export class PodcastFeedGenerator {
       .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
     
     // Generate items XML
-    const items = mediaEvents.map(event => this.generateItem(event)).join('\n')
+    const items = mediaEvents.map(event => this.generateItem(event, longFormMap)).join('\n')
     
-    // Generate value tag if Lightning address exists
+    // Generate value tag if Lightning address exists (default fallback)
     const valueTag = profile.lud16 ? `
     <podcast:value type="lightning" method="lnaddress">
       <podcast:valueRecipient 
@@ -78,7 +87,7 @@ export class PodcastFeedGenerator {
     )
   }
   
-  private generateItem(event: NDKEvent): string {
+  private generateItem(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): string {
     const audioUrl = this.extractAudioUrl(event.content)
     const videoUrl = this.extractVideoUrl(event.content)
     if (!audioUrl && !videoUrl) return ''
@@ -96,6 +105,10 @@ export class PodcastFeedGenerator {
     // Convert markdown to HTML and sanitize
     const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
     
+    // Generate value splits for this item (synchronous version for now)
+    const valueSplits = this.generateValueSplitsForEventSync(event, longFormMap)
+    const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
+    
     return `    <item>
       <title>${this.escapeXml(title)}</title>
       <link>${this.escapeXml(mediaUrl)}</link>
@@ -108,8 +121,105 @@ export class PodcastFeedGenerator {
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
       <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
       <itunes:duration>00:00:00</itunes:duration>
-      <itunes:explicit>false</itunes:explicit>
+      <itunes:explicit>false</itunes:explicit>${valueTag}
     </item>`
+  }
+  
+  /**
+   * Generates value splits for a specific event based on the priority order:
+   * 1. Associated long-form content (kind:30023) zap splits (highest priority)
+   * 2. Kind:1 event zap splits
+   * 3. Default profile lightning address (lowest priority)
+   */
+  private generateValueSplitsForEventSync(event: NDKEvent, longFormMap?: Map<string, NDKEvent>): ValueSplit[] {
+    const title = this.extractTitle(event)
+    
+    // Priority 1: Check associated long-form content (kind:30023) for zap splits
+    if (longFormMap) {
+      const longFormEvent = longFormMap.get(title)
+      if (longFormEvent) {
+        const longFormSplits = this.extractZapSplitsFromEvent(longFormEvent)
+        if (longFormSplits.length > 0) {
+          return longFormSplits
+        }
+      }
+    }
+    
+    // Priority 2: Check kind:1 event for zap splits
+    const kind1Splits = this.extractZapSplitsFromEvent(event)
+    if (kind1Splits.length > 0) {
+      return kind1Splits
+    }
+    
+    // Priority 3: Return empty array (will fall back to channel-level default)
+    return []
+  }
+  
+  /**
+   * Extracts zap splits from an event according to NIP-57 specification
+   * Zap tags format: ['zap', pubkey, relay, weight, ...]
+   */
+  private extractZapSplitsFromEvent(event: NDKEvent): ValueSplit[] {
+    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2)
+    
+    if (zapTags.length === 0) {
+      return []
+    }
+    
+    // Extract weights and calculate percentages
+    const splits: { pubkey: string; weight: number }[] = []
+    let totalWeight = 0
+    
+    for (const tag of zapTags) {
+      const pubkey = tag[1]
+      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1 // Default weight is 1 if not specified
+      
+      if (!isNaN(weight) && weight > 0) {
+        splits.push({ pubkey, weight })
+        totalWeight += weight
+      }
+    }
+    
+    // Calculate percentages
+    if (totalWeight > 0) {
+      return splits.map(({ pubkey, weight }) => ({
+        pubkey,
+        percentage: Math.round((weight / totalWeight) * 100)
+      }))
+    }
+    
+    // If no weights specified, distribute equally
+    const equalPercentage = Math.round(100 / splits.length)
+    return splits.map(({ pubkey }, index) => ({
+      pubkey,
+      percentage: index === splits.length - 1 ? 100 - (equalPercentage * (splits.length - 1)) : equalPercentage
+    }))
+  }
+  
+  /**
+   * Generates the Podcast 2.0 value tag XML for value splits
+   */
+  private generateValueTag(splits: ValueSplit[]): string {
+    if (splits.length === 0) {
+      return ''
+    }
+    
+    const recipients = splits.map(split => {
+      const name = split.name || `Recipient ${split.pubkey.substring(0, 8)}`
+      const address = split.lightningAddress || `unknown@${split.pubkey.substring(0, 8)}.ln`
+      
+      return `        <podcast:valueRecipient 
+          name="${this.escapeXml(name)}"
+          type="lnaddress"
+          address="${this.escapeXml(address)}"
+          split="${split.percentage}"
+        />`
+    }).join('\n')
+    
+    return `
+      <podcast:value type="lightning" method="lnaddress">
+${recipients}
+      </podcast:value>`
   }
   
   private extractAudioUrl(content: string): string | undefined {

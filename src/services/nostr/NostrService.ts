@@ -477,4 +477,50 @@ export class NostrService {
     
     return valueSplitMap;
   }
+
+  /**
+   * Fetches lightning addresses for a list of pubkeys
+   * @param pubkeys Array of pubkeys to fetch lightning addresses for
+   * @returns A map of pubkeys to their lightning addresses
+   */
+  async fetchLightningAddresses(pubkeys: string[]): Promise<Map<string, string>> {
+    const addressMap = new Map<string, string>();
+    
+    try {
+      for (const pubkey of pubkeys) {
+        if (this.ndk) {
+          const user = this.ndk.getUser({ pubkey });
+          const profile = await user.fetchProfile();
+          if (profile && profile.lud16) {
+            addressMap.set(pubkey, profile.lud16);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching lightning addresses:', error);
+    }
+    
+    return addressMap;
+  }
+
+  /**
+   * Extracts zap splits from an event according to NIP-57 specification
+   * @param event The event containing zap tags
+   * @returns Array of zap split information with pubkeys and weights
+   */
+  extractZapSplitsFromEvent(event: NDKEvent): Array<{ pubkey: string; weight: number }> {
+    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2);
+    const splits: Array<{ pubkey: string; weight: number }> = [];
+    
+    for (const tag of zapTags) {
+      const pubkey = tag[1];
+      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1; // Default weight is 1 if not specified
+      
+      if (!isNaN(weight) && weight > 0) {
+        splits.push({ pubkey, weight });
+      }
+    }
+    
+    return splits;
+  }
 } 
