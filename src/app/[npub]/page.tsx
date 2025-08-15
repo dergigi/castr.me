@@ -564,7 +564,7 @@ export default async function NpubPage({
                             {/* Help link - only shown when expanded */}
                             <div className="py-2 mt-2">
                               <a 
-                                href="https://github.com/your-username/pubcaster#zap-splits"
+                                href="https://github.com/dergigi/castr.me/#zap-splits--value-splits"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
@@ -605,7 +605,7 @@ export default async function NpubPage({
                             {/* Help link - only shown when expanded */}
                             <div className="py-2 mt-2">
                               <a 
-                                href="https://github.com/your-username/pubcaster#zap-splits"
+                                href="https://github.com/dergigi/castr.me/#zap-splits--value-splits"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
