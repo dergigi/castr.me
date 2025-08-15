@@ -562,7 +562,7 @@ export default async function NpubPage({
                               );
                             })}
                             {/* Help link - only shown when expanded */}
-                            <div className="flex items-center justify-center py-2 mt-2 border-t border-gray-100">
+                            <div className="py-2 mt-2">
                               <a 
                                 href="https://github.com/your-username/pubcaster#zap-splits"
                                 target="_blank"
@@ -603,7 +603,7 @@ export default async function NpubPage({
                               Example: <code className="bg-gray-100 px-1 rounded">["zap", "abc123...", "wss://relay.example.com", "2"]</code>
                             </p>
                             {/* Help link - only shown when expanded */}
-                            <div className="flex items-center justify-center py-2 mt-3 border-t border-gray-200">
+                            <div className="py-2 mt-2">
                               <a 
                                 href="https://github.com/your-username/pubcaster#zap-splits"
                                 target="_blank"
