@@ -109,7 +109,7 @@ describe('Value Splits', () => {
 
       const xml = (feedGenerator as any).generateValueTag(splits)
       
-      expect(xml).toContain('<podcast:value type="lightning" method="lnaddress" suggested="0.00000015000">')
+      expect(xml).toContain('<podcast:value type="lightning" method="lnaddress" suggested="0.00000000021">')
       expect(xml).toContain('name="Recipient pubkey1"')
       expect(xml).toContain('address="recipient@pubkey1.ln"')
       expect(xml).toContain('split="60"')
