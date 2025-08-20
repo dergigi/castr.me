@@ -5,6 +5,7 @@ import type { ReactElement } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 import CopyButton from '@/components/CopyButton'
+import LiveActivityCard from '@/components/LiveActivityCard'
 import type { Metadata } from 'next'
 
 // Define the profile interface
@@ -185,6 +186,21 @@ export default async function NpubPage({
   // Fetch all long-form posts for the user
   const longFormEvents = await nostrService.getLongFormEvents(npub)
   
+  // Fetch live activities for the user
+  const liveActivityEvents = await nostrService.getLiveActivityEvents(npub)
+  const transformedActivities = liveActivityEvents.map(event => nostrService.transformToLiveActivity(event))
+
+  // Populate participant profiles for live activities
+  const liveActivities = await Promise.all(
+    transformedActivities.map(async (activity) => {
+      if (activity.participants && activity.participants.length > 0) {
+        const populatedParticipants = await nostrService.populateLiveActivityParticipants(activity.participants)
+        return { ...activity, participants: populatedParticipants }
+      }
+      return activity
+    })
+  )
+
   // Create a map of kind1 event titles to long-form events for quick lookup
   const longFormMap = nostrService.matchLongFormShowNotes(mediaEvents, longFormEvents)
   
@@ -366,6 +382,34 @@ export default async function NpubPage({
             </a>
             <CopyButton url={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://castr.me'}/${npub}/rss.xml`} />
           </div>
+        </div>
+
+        {/* Live Activities */}
+        <div className="space-y-6">
+          {liveActivities
+            .sort((a, b) => {
+              // Sort by status priority: live > planned > ended, then by start time
+              const statusPriority = { live: 3, planned: 2, ended: 1 };
+              const aStatus = nostrService.getLiveActivityStatus(a);
+              const bStatus = nostrService.getLiveActivityStatus(b);
+
+              if (statusPriority[aStatus] !== statusPriority[bStatus]) {
+                return statusPriority[bStatus] - statusPriority[aStatus];
+              }
+
+              // If same status, sort by start time (newest first for live/ended, earliest first for planned)
+              const aTime = a.starts || a.created_at || 0;
+              const bTime = b.starts || b.created_at || 0;
+
+              if (aStatus === 'planned') {
+                return aTime - bTime; // Earliest first for planned
+              } else {
+                return bTime - aTime; // Latest first for live/ended
+              }
+            })
+            .map((activity) => (
+              <LiveActivityCard key={activity.id} activity={activity} />
+            ))}
         </div>
 
         {/* Media Posts */}
