@@ -31,7 +31,10 @@ export async function GET(
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
     const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
-    
+
+    // Fetch all live activities
+    const liveActivityEvents = await nostrService.getLiveActivityEvents(npub)
+
     // Fetch long-form content for show notes and zap splits
     const longFormEvents = await nostrService.getLongFormEvents(npub)
     
@@ -49,8 +52,8 @@ export async function GET(
     }
 
     // Use the async version to fetch recipient information
-    const feed = await feedGenerator.generateFeedAsync(profile, eventsWithShowNotes, npub, longFormMap)
-    
+    const feed = await feedGenerator.generateFeedAsync(profile, eventsWithShowNotes, npub, longFormMap, liveActivityEvents)
+
     return new NextResponse(feed, {
       headers: {
         'Content-Type': 'application/xml',
