@@ -5,6 +5,7 @@ import type { ReactElement } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 import CopyButton from '@/components/CopyButton'
+import LiveActivityCard from '@/components/LiveActivityCard'
 import type { Metadata } from 'next'
 
 // Define the profile interface
@@ -188,12 +189,15 @@ export default async function NpubPage({
 
   const profile = await nostrService.getUserProfile(npub)
   const events = await nostrService.getKind1Events(npub)
+  const liveActivityEvents = await nostrService.getLiveActivityEvents(npub)
   const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
+
+  const mediaPosts = [...mediaEvents, ...liveActivityEvents]
     .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
   
   // Fetch all long-form posts for the user
   const longFormEvents = await nostrService.getLongFormEvents(npub)
-  
+
   // Create a map of kind1 event titles to long-form events for quick lookup
   const longFormMap = nostrService.matchLongFormShowNotes(mediaEvents, longFormEvents)
   
@@ -381,7 +385,18 @@ export default async function NpubPage({
 
         {/* Media Posts */}
         <div className="space-y-6">
-          {mediaEvents.map((event: NDKEvent) => {
+          {mediaPosts.map(async (event: NDKEvent) => {
+            if (event.kind === 30311) {
+              const activity = nostrService.transformToLiveActivity(event)
+
+              // Populate participant profiles for live activities
+              if (activity.participants && activity.participants.length > 0) {
+                activity.participants = await nostrService.populateLiveActivityParticipants(activity.participants)
+              }
+
+              return <LiveActivityCard key={event.id} activity={activity} />
+            }
+
             const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
             const videoUrl = event.content.match(/https?:\/\/[^\s]+\.(mp4|webm|mov)/)?.[0]
             const cleanContent = event.content.replace(audioUrl || videoUrl || '', '').trim()

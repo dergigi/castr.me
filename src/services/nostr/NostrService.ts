@@ -1,7 +1,10 @@
 import NDK from '@nostr-dev-kit/ndk'
 import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
-import { decode } from 'nostr-tools/nip19'
-import type { MediaEvent } from "../../types";
+import { decode, naddrEncode } from 'nostr-tools/nip19'
+import type { MediaEvent, LiveActivity, LiveActivityParticipant } from "../../types";
+
+// NIP-53 Live Activity kind (not yet in NDK types)
+const LIVE_ACTIVITY_KIND = 30311 as number;
 
 export interface NostrProfile {
   name?: string
@@ -710,4 +713,207 @@ export class NostrService {
     
     return addressMap;
   }
-} 
+
+  /**
+   * Fetches lightning addresses and names for a list of pubkeys
+   * @param pubkeys Array of pubkeys to fetch information for
+   * @returns A map of pubkeys to their lightning addresses and names
+   */
+  async fetchLightningAddressesWithNames(pubkeys: string[]): Promise<Map<string, { lightningAddress?: string; name?: string }>> {
+    const infoMap = new Map<string, { lightningAddress?: string; name?: string }>();
+
+    if (!this.ndk || pubkeys.length === 0) {
+      return infoMap;
+    }
+
+    try {
+      // Fetch all profile events (kind 0) for all pubkeys in a single batch query
+      const events = await this.ndk.fetchEvents({
+        kinds: [0], // Profile events
+        authors: pubkeys,
+        limit: pubkeys.length
+      });
+
+      // Process events and populate map
+      events?.forEach(event => {
+        let profile: NostrProfile | undefined;
+        try {
+          profile = JSON.parse(event.content);
+        } catch (parseError) {
+          console.error(`Error parsing profile for pubkey ${event.pubkey}:`, parseError);
+        }
+
+        infoMap.set(event.pubkey, {
+          lightningAddress: profile?.lud16,
+          name: profile?.name
+        });
+      });
+
+      // Add missing pubkeys with undefined values
+      pubkeys.forEach(pubkey => {
+        if (!infoMap.has(pubkey)) {
+          infoMap.set(pubkey, { lightningAddress: undefined, name: undefined });
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fetching lightning addresses and names:', error);
+    }
+
+    return infoMap;
+  }
+
+  /**
+   * Fetches Live Activity events (NIP-53, kind 30311) for a user
+   * @param npub The npub of the user
+   * @returns An array of Live Activity events
+   */
+  async getLiveActivityEvents(npub: string = this.defaultIdentifier): Promise<NDKEvent[]> {
+    try {
+      const pubkey = this.getPubkeyFromIdentifier(npub)
+      if (!pubkey) return []
+      const events = await this.ndk?.fetchEvents({
+        kinds: [LIVE_ACTIVITY_KIND], // NIP-53 Live Activities
+        authors: [pubkey],
+        limit: 50,
+      })
+      return events ? Array.from(events) : []
+    } catch (error) {
+      console.error('Error fetching live activity events:', error)
+      return []
+    }
+  }
+
+  /**
+   * Transforms an NDKEvent (kind 30311) into a LiveActivity object
+   * @param event The NDKEvent to transform
+   * @returns A LiveActivity object with parsed fields
+   */
+  transformToLiveActivity(event: NDKEvent): LiveActivity {
+    const tags = event.tags;
+
+    // Extract fields from tags
+    const identifier = this.getTagValue(tags, 'd');
+    const title = this.getTagValue(tags, 'title');
+    const summary = this.getTagValue(tags, 'summary');
+    const image = this.getTagValue(tags, 'image');
+    const streamingUrl = this.getTagValue(tags, 'streaming');
+    const recordingUrl = this.getTagValue(tags, 'recording');
+    const status = this.getTagValue(tags, 'status') as 'planned' | 'live' | 'ended' | undefined;
+
+    // Parse numeric fields
+    const starts = this.getTagValue(tags, 'starts') ? parseInt(this.getTagValue(tags, 'starts')!) : (event.created_at || undefined);
+    const ends = this.getTagValue(tags, 'ends') ? parseInt(this.getTagValue(tags, 'ends')!) : (event.created_at ? event.created_at + 7200 : undefined);
+    const currentParticipants = this.getTagValue(tags, 'current_participants') ? parseInt(this.getTagValue(tags, 'current_participants')!) : undefined;
+    const totalParticipants = this.getTagValue(tags, 'total_participants') ? parseInt(this.getTagValue(tags, 'total_participants')!) : undefined;
+
+    // Extract hashtags (t tags)
+    const hashtags = tags.filter(tag => tag[0] === 't' && tag.length > 1).map(tag => tag[1]);
+
+    // Extract participants (p tags)
+    const participants = this.extractLiveActivityParticipants(tags);
+
+    // Extract relays
+    const relays = tags.filter(tag => tag[0] === 'relays' && tag.length > 1).map(tag => tag[1]);
+
+    // Create Naddr for linking
+    const naddr = naddrEncode({
+      identifier: identifier || '',
+      pubkey: event.pubkey,
+      kind: 30311,
+      relays: relays || []
+    })
+
+    return {
+      id: event.id,
+      naddr: naddr,
+      pubkey: event.pubkey,
+      created_at: event.created_at || 0,
+      content: event.content,
+      tags: event.tags,
+      sig: event.sig || '',
+      identifier,
+      title,
+      summary,
+      image,
+      hashtags,
+      streamingUrl,
+      recordingUrl,
+      starts,
+      ends,
+      status,
+      currentParticipants,
+      totalParticipants,
+      participants,
+      relays
+    };
+  }
+
+  /**
+   * Extracts participants from p tags in a Live Activity event
+   * @param tags The tags array from the event
+   * @returns Array of LiveActivityParticipant objects
+   */
+  private extractLiveActivityParticipants(tags: string[][]): LiveActivityParticipant[] {
+    const participants: LiveActivityParticipant[] = [];
+
+    // p tags have format: ['p', pubkey, relay?, role?, proof?]
+    const pTags = tags.filter(tag => tag[0] === 'p' && tag.length >= 2);
+
+    for (const tag of pTags) {
+      const participant: LiveActivityParticipant = {
+        pubkey: tag[1],
+        relay: tag.length > 2 ? tag[2] : undefined,
+        role: tag.length > 3 ? tag[3] as 'Host' | 'Speaker' | 'Participant' : undefined,
+        proof: tag.length > 4 ? tag[4] : undefined
+      };
+
+      participants.push(participant);
+    }
+
+    return participants;
+  }
+
+  /**
+   * Fetches profiles for Live Activity participants
+   * @param participants Array of participants
+   * @returns Array of participants with populated profile information
+   */
+  async populateLiveActivityParticipants(participants: LiveActivityParticipant[]): Promise<LiveActivityParticipant[]> {
+    const populatedParticipants: LiveActivityParticipant[] = [];
+
+    for (const participant of participants) {
+      try {
+        if (this.ndk) {
+          const user = this.ndk.getUser({ pubkey: participant.pubkey });
+          const profile = await user.fetchProfile();
+
+          populatedParticipants.push({
+            ...participant,
+            profile: profile ? {
+              name: profile.name,
+              picture: profile.picture
+            } : undefined
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching participant profile:', error);
+        // Add participant without profile info if fetch fails
+        populatedParticipants.push(participant);
+      }
+    }
+
+    return populatedParticipants;
+  }
+
+  /**
+   * Helper method to get a tag value by tag name
+   * @param tags The tags array
+   * @param tagName The name of the tag to find
+   * @returns The value of the tag or undefined
+   */
+  private getTagValue(tags: string[][], tagName: string): string | undefined {
+    const tag = tags.find(tag => tag[0] === tagName && tag.length > 1);
+    return tag ? tag[1] : undefined;
+  }
+}
