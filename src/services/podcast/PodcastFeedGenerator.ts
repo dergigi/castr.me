@@ -1,5 +1,6 @@
 import { NDKUser } from "@nostr-dev-kit/ndk";
 import { MediaEvent } from "../../types";
+import { getMimeType as getUtilMimeType } from "../../utils/mimeTypes";
 
 /**
  * Generates an RSS feed for audio podcasts.
@@ -21,14 +22,7 @@ export class PodcastFeedGenerator {
   }
 
   private getMimeType(url: string): string {
-    if (url.endsWith('.mp3')) return 'audio/mpeg';
-    if (url.endsWith('.m4a')) return 'audio/mp4';
-    if (url.endsWith('.wav')) return 'audio/wav';
-    if (url.endsWith('.ogg')) return 'audio/ogg';
-    if (url.endsWith('.mp4')) return 'video/mp4';
-    if (url.endsWith('.webm')) return 'video/webm';
-    if (url.endsWith('.mov')) return 'video/quicktime';
-    return 'application/octet-stream';
+    return getUtilMimeType(url);
   }
 
   generateFeed(profile: NDKUser, events: MediaEvent[], npub: string): string {

@@ -26,7 +26,12 @@ export async function GET(
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
     const audioEvents = events.filter(event => nostrService.isMediaEvent(event))
-    
+
+    // Fetch all live activities (will be filtered by type in feed generator)
+    const liveActivityEvents = await nostrService.getLiveActivityEvents(npub)
+    const liveActivities = liveActivityEvents
+      .map(event => nostrService.transformToLiveActivity(event))
+
     if (!profile) {
       return NextResponse.json(
         { error: 'Profile not found' },
@@ -34,8 +39,8 @@ export async function GET(
       )
     }
 
-    const feed = feedGenerator.generateFeed(profile, audioEvents, npub)
-    
+    const feed = feedGenerator.generateFeed(profile, audioEvents, npub, undefined, liveActivities)
+
     return new NextResponse(feed, {
       headers: {
         'Content-Type': 'application/xml',
