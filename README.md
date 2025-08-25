@@ -131,7 +131,11 @@ npm test
 
 ## Configuration
 
-- Default relay: `wss://relay.nostr.band`
+- Default relays: 
+  - `wss://relay.nostr.band`
+  - `wss://wot.dergigi.com/`
+  - `wss://wot.utxo.one`
+  - `wss://relay.damus.io`
 - Default npub: `npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n`
 
 ## API
