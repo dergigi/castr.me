@@ -16,13 +16,18 @@ export interface NostrProfile {
 
 export class NostrService {
   private ndk: NDK | null = null
-  private readonly defaultRelay = 'wss://relay.nostr.band'
+  private readonly defaultRelays = [
+    'wss://relay.nostr.band',
+    'wss://wot.dergigi.com/',
+    'wss://wot.utxo.one',
+    'wss://relay.damus.io'
+  ]
   private readonly defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
   async initialize(): Promise<void> {
     if (!this.ndk) {
       this.ndk = new NDK({
-        explicitRelayUrls: [this.defaultRelay],
+        explicitRelayUrls: this.defaultRelays,
       })
       await this.ndk.connect()
     }
