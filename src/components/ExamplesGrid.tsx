@@ -10,6 +10,7 @@ interface NostrProfile {
   nip05?: string;
   lud16?: string;
   lud06?: string;
+  nodeid?: string;
 }
 
 // Define the example interface

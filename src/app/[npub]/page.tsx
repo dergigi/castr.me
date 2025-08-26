@@ -15,6 +15,7 @@ interface NostrProfile {
   nip05?: string;
   lud16?: string;
   lud06?: string;
+  nodeid?: string;
 }
 
 // Function to count words in a string
@@ -548,10 +549,13 @@ export default async function NpubPage({
                                       </div>
                                       <div className="flex flex-col">
                                         <span>{profile.name || pubkey.slice(0, 8)}</span>
-                                        {profile.lud16 && (
+                                        {profile.nodeid && (
+                                          <span className="text-xs text-gray-500 font-mono">{profile.nodeid}</span>
+                                        )}
+                                        {!profile.nodeid && profile.lud16 && (
                                           <span className="text-xs text-gray-500 font-mono">{profile.lud16}</span>
                                         )}
-                                        {!profile.lud16 && zapSplitsData.lightningAddresses.get(pubkey) && (
+                                        {!profile.nodeid && !profile.lud16 && zapSplitsData.lightningAddresses.get(pubkey) && (
                                           <span className="text-xs text-gray-500 font-mono">{zapSplitsData.lightningAddresses.get(pubkey)}</span>
                                         )}
                                       </div>
