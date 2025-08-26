@@ -35,17 +35,8 @@ export class PodcastFeedGenerator {
     // Generate items XML (synchronous for now, will enhance with async later)
     const items = mediaEvents.map(event => this.generateItem(event, longFormMap)).join('\n')
     
-    // Generate value tags for channel-level defaults (lnaddress and/or keysend)
-    const channelLnaddress = profile.lud16 ? `
-    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
-      <podcast:valueRecipient 
-        name="${this.escapeXml(title)}"
-        type="lnaddress"
-        address="${this.escapeXml(profile.lud16)}"
-        split="100"
-      />
-    </podcast:value>` : ''
-    const channelKeysend = (profile as any)?.nodeid ? `
+    // Generate value tag for channel-level default (prefer keysend if nodeid exists, else lnaddress)
+    const valueTag = (profile as any)?.nodeid ? `
     <podcast:value type="lightning" method="keysend" suggested="0.00021">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
@@ -53,8 +44,15 @@ export class PodcastFeedGenerator {
         address="${this.escapeXml((profile as any).nodeid)}"
         split="100"
       />
-    </podcast:value>` : ''
-    const valueTag = `${channelLnaddress}${channelKeysend}`
+    </podcast:value>` : (profile.lud16 ? `
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
+      <podcast:valueRecipient 
+        name="${this.escapeXml(title)}"
+        type="lnaddress"
+        address="${this.escapeXml(profile.lud16)}"
+        split="100"
+      />
+    </podcast:value>` : '')
     
     // Generate the complete RSS feed
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -101,17 +99,8 @@ export class PodcastFeedGenerator {
     const items = await Promise.all(itemsPromises)
     const itemsXml = items.join('\n')
     
-    // Generate value tags for channel-level defaults (lnaddress and/or keysend)
-    const channelLnaddress = profile.lud16 ? `
-    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
-      <podcast:valueRecipient 
-        name="${this.escapeXml(title)}"
-        type="lnaddress"
-        address="${this.escapeXml(profile.lud16)}"
-        split="100"
-      />
-    </podcast:value>` : ''
-    const channelKeysend = (profile as any)?.nodeid ? `
+    // Generate value tag for channel-level default (prefer keysend if nodeid exists, else lnaddress)
+    const valueTag = (profile as any)?.nodeid ? `
     <podcast:value type="lightning" method="keysend" suggested="0.00021">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
@@ -119,8 +108,15 @@ export class PodcastFeedGenerator {
         address="${this.escapeXml((profile as any).nodeid)}"
         split="100"
       />
-    </podcast:value>` : ''
-    const valueTag = `${channelLnaddress}${channelKeysend}`
+    </podcast:value>` : (profile.lud16 ? `
+    <podcast:value type="lightning" method="lnaddress" suggested="0.00021">
+      <podcast:valueRecipient 
+        name="${this.escapeXml(title)}"
+        type="lnaddress"
+        address="${this.escapeXml(profile.lud16)}"
+        split="100"
+      />
+    </podcast:value>` : '')
     
     // Generate the complete RSS feed
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -246,8 +242,8 @@ export class PodcastFeedGenerator {
       return ''
     }
     
-    // Build lnaddress recipients where available (fallback to synthetic lnaddress when neither address nor nodeId exists)
-    const lnRecipients = splits.filter(split => split.lightningAddress || !split.nodeId).map(split => {
+    // Build lnaddress recipients only when recipient has NO nodeId (fallback to synthetic lnaddress if needed)
+    const lnRecipients = splits.filter(split => !split.nodeId).map(split => {
       const name = split.name || `Recipient ${split.pubkey.substring(0, 8)}`
       const address = split.lightningAddress || `recipient@${split.pubkey.substring(0, 8)}.ln`
       return `        <podcast:valueRecipient 
@@ -279,7 +275,7 @@ ${lnRecipients}
 ${keysendRecipients}
       </podcast:value>` : ''
 
-    return `${lnBlock}${keysendBlock}`
+    return `${keysendBlock}${lnBlock}`
   }
   
   private extractAudioUrl(content: string): string | undefined {
@@ -397,17 +393,23 @@ ${keysendRecipients}
       return kind1Splits
     }
     
-    // Priority 3: Use profile's defaults (lnaddress and/or nodeid) as 100%
+    // Priority 3: Use profile defaults as 100% (prefer nodeid over lnaddress)
     if (profile && npub) {
-      const hasLn = !!profile.lud16
-      const hasNode = !!(profile as any)?.nodeid
-      if (hasLn || hasNode) {
+      const nodeId = (profile as any)?.nodeid
+      if (nodeId) {
+        return [{
+          pubkey: npub,
+          percentage: 100,
+          name: profile.name || npub,
+          nodeId
+        }]
+      }
+      if (profile.lud16) {
         return [{
           pubkey: npub,
           percentage: 100,
           lightningAddress: profile.lud16,
-          name: profile.name || npub,
-          nodeId: (profile as any)?.nodeid
+          name: profile.name || npub
         }]
       }
     }
