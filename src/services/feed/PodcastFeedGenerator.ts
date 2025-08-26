@@ -36,12 +36,12 @@ export class PodcastFeedGenerator {
     const items = mediaEvents.map(event => this.generateItem(event, longFormMap)).join('\n')
     
     // Generate value tag for channel-level default (prefer keysend if nodeid exists, else lnaddress)
-    const valueTag = (profile as any)?.nodeid ? `
+    const valueTag = profile.nodeid ? `
     <podcast:value type="lightning" method="keysend" suggested="0.00021">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
         type="node"
-        address="${this.escapeXml((profile as any).nodeid)}"
+        address="${this.escapeXml(profile.nodeid)}"
         split="100"
       />
     </podcast:value>` : (profile.lud16 ? `
@@ -100,12 +100,12 @@ export class PodcastFeedGenerator {
     const itemsXml = items.join('\n')
     
     // Generate value tag for channel-level default (prefer keysend if nodeid exists, else lnaddress)
-    const valueTag = (profile as any)?.nodeid ? `
+    const valueTag = profile.nodeid ? `
     <podcast:value type="lightning" method="keysend" suggested="0.00021">
       <podcast:valueRecipient 
         name="${this.escapeXml(title)}"
         type="node"
-        address="${this.escapeXml((profile as any).nodeid)}"
+        address="${this.escapeXml(profile.nodeid)}"
         split="100"
       />
     </podcast:value>` : (profile.lud16 ? `
@@ -395,7 +395,7 @@ ${keysendRecipients}
     
     // Priority 3: Use profile defaults as 100% (prefer nodeid over lnaddress)
     if (profile && npub) {
-      const nodeId = (profile as any)?.nodeid
+      const nodeId = profile.nodeid
       if (nodeId) {
         return [{
           pubkey: npub,

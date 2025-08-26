@@ -566,7 +566,7 @@ export class NostrService {
       const lightningAddress = lightningAddresses.get(split.pubkey);
       const profile = recipientProfiles.get(split.pubkey);
       const name = profile?.name || `Recipient ${split.pubkey.substring(0, 8)}`;
-      const nodeId = (profile as any)?.nodeid as string | undefined;
+      const nodeId = profile?.nodeid;
       
       return {
         ...split,
