@@ -77,6 +77,8 @@ TL;DR: Whatever is defined in the associated long-form `kind:30023` is taken as 
 
 We use zap splits to automatically create Podcasting 2.0 value splits so that Lightning payments can be distributed among multiple recipients when users boost podcast episodes.
 
+**Payment Methods:** The system supports both keysend (via `nodeid` in profiles) and lightning addresses (`lud16`). Keysend is preferred when available. You can add the `nodeid` field to your profile using [https://metadata.dergigi.com/](https://metadata.dergigi.com/).
+
 If you've created detailed show notes (long-form content, see above) for an episode, any zap splits defined in the long-form post will be used. This allows you to set (and update!) specific payment arrangements for each episode, like splitting revenue with guests or co-hosts.
 
 If no show notes exist, the system looks for zap splits defined directly in the `kind1` (read: "tweet") that you used to post the episode. This makes sure that zap splits work for episodes where you haven't created separate show notes.
