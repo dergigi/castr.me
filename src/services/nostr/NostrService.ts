@@ -12,6 +12,7 @@ export interface NostrProfile {
   nip05?: string
   lud16?: string
   lud06?: string
+  nodeid?: string
 }
 
 export class NostrService {
@@ -547,6 +548,7 @@ export class NostrService {
     percentage: number;
     lightningAddress?: string;
     name?: string;
+    nodeId?: string;
   }>> {
     const splits = this.extractZapSplitsWithPercentages(event);
     
@@ -564,11 +566,13 @@ export class NostrService {
       const lightningAddress = lightningAddresses.get(split.pubkey);
       const profile = recipientProfiles.get(split.pubkey);
       const name = profile?.name || `Recipient ${split.pubkey.substring(0, 8)}`;
+      const nodeId = (profile as any)?.nodeid as string | undefined;
       
       return {
         ...split,
         lightningAddress,
-        name
+        name,
+        nodeId
       };
     });
   }
