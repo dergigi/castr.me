@@ -76,7 +76,7 @@ This allows podcasters to maintain detailed show notes separate from the audio p
 TL;DR: Whatever is defined in the associated long-form `kind:30023` is taken as gospel, and will be used as the basis for the <value> splits. Fallback is the `kind:1`. Ultimate fallback is the `lud06` lightning address set in your nostr profile.
 
 We use zap splits to automatically create Podcasting 2.0 value splits so that Lightning payments can be distributed among multiple recipients when users boost podcast episodes.
-The system supports both keysend (via `nodeid` in profiles) and lightning addresses (`lud16`). Keysend is preferred when available. You can add the `nodeid` field to your profile using [https://metadata.dergigi.com/](https://metadata.dergigi.com/).
+The system supports both keysend (via `nodeid` in profiles) and lightning addresses (`lud16`). Keysend is preferred when available. You can add the `nodeid` field to your profile using [metadata.dergigi.com](https://metadata.dergigi.com/).
 
 If you've created detailed show notes (long-form content, see above) for an episode, any zap splits defined in the long-form post will be used. This allows you to set (and update!) specific payment arrangements for each episode, like splitting revenue with guests or co-hosts.
 
@@ -123,13 +123,6 @@ npm test
    ```
    (The feed will automatically be served as RSS when requested by a podcast app)
 
-3. Default profile:
-   - Visit the root URL to see the default profile:
-   ```
-   http://localhost:3000/
-   ```
-   - Default npub: `npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n`
-
 ## Configuration
 
 - Default relays: 
@@ -137,7 +130,6 @@ npm test
   - `wss://wot.dergigi.com/`
   - `wss://wot.utxo.one`
   - `wss://relay.damus.io`
-- Default npub: `npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n`
 
 ## API
 
