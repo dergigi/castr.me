@@ -29,7 +29,7 @@ export default function Home(): React.JSX.Element {
               Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.
             </p>
             
-            <div className="mt-10 flex flex-col items-center justify-center gap-8">
+            <div className="mt-10 mb-20 flex flex-col items-center justify-center gap-8">
               <NpubInput placeholder="npub1..." />
               <div className="flex items-center justify-center gap-x-6">
                 <Link
