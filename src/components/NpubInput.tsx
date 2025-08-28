@@ -36,20 +36,18 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
   }, [value, decodeNpub, router])
 
   useEffect((): (() => void) | void => {
-    if (!value) return
-    const handle = setTimeout((): void => {
-      const input = value.trim()
-      const isValid = decodeNpub(input)
-      setIsValid(isValid)
-      if (isValid) {
-        if (lastNavigatedRef.current !== input) {
-          lastNavigatedRef.current = input
-          setIsNavigating(true)
-          router.push(`/${input}`)
-        }
-      }
-    }, 400)
-    return (): void => clearTimeout(handle)
+    if (!value) {
+      setIsValid(false)
+      return
+    }
+    const input = value.trim()
+    const valid = decodeNpub(input)
+    setIsValid(valid)
+    if (valid && lastNavigatedRef.current !== input) {
+      lastNavigatedRef.current = input
+      setIsNavigating(true)
+      router.push(`/${input}`)
+    }
   }, [value, decodeNpub, router])
 
   return (
