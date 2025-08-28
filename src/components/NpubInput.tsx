@@ -26,7 +26,7 @@ export default function NpubInput({ placeholder = 'Paste any npub to give it a t
     }
   }, [])
 
-  const onSubmit = useCallback((e: FormEvent) => {
+  const onSubmit = useCallback((e: FormEvent): void => {
     e.preventDefault()
     const input = value.trim()
     if (decodeNpub(input)) {
@@ -35,9 +35,9 @@ export default function NpubInput({ placeholder = 'Paste any npub to give it a t
     }
   }, [value, decodeNpub, router])
 
-  useEffect(() => {
+  useEffect((): (() => void) | void => {
     if (!value) return
-    const handle = setTimeout(() => {
+    const handle = setTimeout((): void => {
       const input = value.trim()
       const isValid = decodeNpub(input)
       setIsValid(isValid)
@@ -49,7 +49,7 @@ export default function NpubInput({ placeholder = 'Paste any npub to give it a t
         }
       }
     }, 400)
-    return () => clearTimeout(handle)
+    return (): void => clearTimeout(handle)
   }, [value, decodeNpub, router])
 
   return (
@@ -61,7 +61,7 @@ export default function NpubInput({ placeholder = 'Paste any npub to give it a t
           autoComplete="off"
           spellCheck={false}
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={(e): void => setValue(e.target.value)}
           placeholder={placeholder}
           className="w-full rounded-full border border-gray-300 bg-white pl-4 pr-9 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           aria-label="npub"
