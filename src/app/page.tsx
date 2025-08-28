@@ -30,7 +30,7 @@ export default function Home(): React.JSX.Element {
             </p>
             
             <div className="mt-10 flex flex-col items-center justify-center gap-4">
-              <NpubInput placeholder="Paste any npub to give it a try!" />
+              <NpubInput placeholder="npub1..." />
               <div className="flex items-center justify-center gap-x-6">
                 <Link
                   href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
@@ -174,7 +174,7 @@ export default function Home(): React.JSX.Element {
               Enter any Nostr npub to generate a podcast feed. Start with our demo or use your own.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4">
-              <NpubInput placeholder="Paste any npub to give it a try!" />
+              <NpubInput placeholder="npub1..." />
               <div className="flex items-center justify-center gap-x-6">
                 <Link
                   href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"

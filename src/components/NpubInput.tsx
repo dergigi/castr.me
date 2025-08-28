@@ -8,7 +8,7 @@ interface NpubInputProps {
   className?: string
 }
 
-export default function NpubInput({ placeholder = 'Paste any npub to give it a try!', className = '' }: NpubInputProps): React.JSX.Element {
+export default function NpubInput({ placeholder = 'npub1...', className = '' }: NpubInputProps): React.JSX.Element {
   const router = useRouter()
   const [value, setValue] = useState('')
   const [isValid, setIsValid] = useState(false)
