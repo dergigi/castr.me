@@ -414,11 +414,17 @@ export default async function NpubPage({
                       href={`${process.env.HTTP_NOSTR_GATEWAY}/${event.id}`}
                       className="text-sm text-gray-500 whitespace-nowrap hover:text-gray-700 hover:underline"
                     >
-                      {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                      {((): string => {
+                        const createdAt = (event as { created_at?: number }).created_at
+                        if (typeof createdAt === 'number') {
+                          return new Date(createdAt * 1000).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })
+                        }
+                        return 'Unknown date'
+                      })()}
                     </a>
                   </div>
                   {audioUrl && (
