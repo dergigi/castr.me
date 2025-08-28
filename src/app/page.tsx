@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRightIcon, RssIcon, GlobeAltIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import ExamplesGrid from '@/components/ExamplesGrid'
+import NpubInput from '@/components/NpubInput'
 
 export default function Home(): React.JSX.Element {
   return (
@@ -28,21 +29,23 @@ export default function Home(): React.JSX.Element {
               Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.
             </p>
             
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
-                className="group rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200 flex items-center gap-2"
-              >
-                Try Demo Feed
-                <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              
-              <a
-                href="#examples"
-                className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
-              >
-                Learn more <span aria-hidden="true">→</span>
-              </a>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4">
+              <NpubInput placeholder="Enter your npub to try your own feed" buttonLabel="Open Feed" />
+              <div className="flex items-center justify-center gap-x-6">
+                <Link
+                  href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
+                  className="group rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200 flex items-center gap-2"
+                >
+                  Try Demo Feed
+                  <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <a
+                  href="#examples"
+                  className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
+                >
+                  Learn more <span aria-hidden="true">→</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -170,19 +173,22 @@ export default function Home(): React.JSX.Element {
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
               Enter any Nostr npub to generate a podcast feed. Start with our demo or use your own.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
-                className="rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200"
-              >
-                Open Demo Feed
-              </Link>
-              <a
-                href="https://github.com/dergigi/castr.me#overview"
-                className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
-              >
-                Learn more <span aria-hidden="true">→</span>
-              </a>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4">
+              <NpubInput placeholder="Paste an npub here" buttonLabel="Generate RSS" />
+              <div className="flex items-center justify-center gap-x-6">
+                <Link
+                  href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
+                  className="rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200"
+                >
+                  Open Demo Feed
+                </Link>
+                <a
+                  href="https://github.com/dergigi/castr.me#overview"
+                  className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
+                >
+                  Learn more <span aria-hidden="true">→</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
