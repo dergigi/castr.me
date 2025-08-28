@@ -313,6 +313,7 @@ export default async function NpubPage({
             fill
             className="object-cover opacity-90"
             priority
+            unoptimized
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/10 via-gray-900/50 to-gray-900/80" />
@@ -344,6 +345,7 @@ export default async function NpubPage({
                 fill
                 className="object-cover"
                 priority
+                unoptimized
               />
             )}
           </a>
@@ -399,6 +401,7 @@ export default async function NpubPage({
                               alt={headline}
                               fill
                               className="object-cover"
+                              unoptimized
                             />
                           </div>
                         ) : null;
@@ -414,11 +417,17 @@ export default async function NpubPage({
                       href={`${process.env.HTTP_NOSTR_GATEWAY}/${event.id}`}
                       className="text-sm text-gray-500 whitespace-nowrap hover:text-gray-700 hover:underline"
                     >
-                      {new Date(event.created_at * 1000).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                      {((): string => {
+                        const createdAt = (event as { created_at?: number }).created_at
+                        if (typeof createdAt === 'number') {
+                          return new Date(createdAt * 1000).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })
+                        }
+                        return 'Unknown date'
+                      })()}
                     </a>
                   </div>
                   {audioUrl && (
@@ -506,6 +515,7 @@ export default async function NpubPage({
                                       alt={profile.name || pubkey.slice(0, 8)}
                                       fill
                                       className="object-cover"
+                                      unoptimized
                                     />
                                   ) : (
                                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
@@ -540,6 +550,7 @@ export default async function NpubPage({
                                             alt={profile.name || pubkey.slice(0, 8)}
                                             fill
                                             className="object-cover"
+                                            unoptimized
                                           />
                                         ) : (
                                           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">

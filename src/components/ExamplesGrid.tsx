@@ -129,6 +129,36 @@ const nostrService = new NostrService()
 // Initialize NDK connection
 let initialized = false
 
+const PROFILE_TIMEOUT_MS = 800
+
+function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => T): Promise<T> {
+  return new Promise<T>(resolve => {
+    let settled = false
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true
+        resolve(onTimeout())
+      }
+    }, ms)
+
+    promise
+      .then(result => {
+        if (!settled) {
+          settled = true
+          clearTimeout(timer)
+          resolve(result)
+        }
+      })
+      .catch(() => {
+        if (!settled) {
+          settled = true
+          clearTimeout(timer)
+          resolve(onTimeout())
+        }
+      })
+  })
+}
+
 // Function to truncate description to keep it very short
 function truncateDescription(description: string): string {
   if (!description) return ''
@@ -160,7 +190,9 @@ async function getProfileData(npub: string): Promise<NostrProfile | null> {
       initialized = true
     }
     
-    const profile = await nostrService.getUserProfile(npub)
+    const fetchProfile = nostrService.getUserProfile(npub)
+    // Timebox the profile fetch so we don't block rendering for too long
+    const profile = await withTimeout(fetchProfile, PROFILE_TIMEOUT_MS, () => null)
     return profile
   } catch (error) {
     console.error(`Error fetching profile for ${npub}:`, error)
@@ -169,7 +201,7 @@ async function getProfileData(npub: string): Promise<NostrProfile | null> {
 }
 
 export default async function ExamplesGrid(): Promise<React.JSX.Element> {
-  // Fetch all profile data
+  // Fetch all profile data with timeouts
   const profilePromises = examples.map(example => getProfileData(example.npub))
   const profiles = await Promise.all(profilePromises)
 
@@ -197,6 +229,7 @@ export default async function ExamplesGrid(): Promise<React.JSX.Element> {
                   className="object-cover"
                   sizes="40px"
                   style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               ) : (
                 <Image
@@ -206,6 +239,7 @@ export default async function ExamplesGrid(): Promise<React.JSX.Element> {
                   className="object-cover"
                   sizes="40px"
                   style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               )}
               {/* Fallback colored initials - will show if image fails to load */}
