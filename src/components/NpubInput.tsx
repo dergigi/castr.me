@@ -60,7 +60,7 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
 
   return (
     <form onSubmit={onSubmit} className={`flex w-full max-w-xl items-stretch gap-2 ${className}`}>
-      <div className="relative w-full">
+      <div className="relative w-full mb-3">
         <input
           type="text"
           inputMode="text"
@@ -69,7 +69,7 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
           value={value}
           onChange={(e): void => setValue(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-full border border-gray-300 bg-white pl-5 pr-12 py-3 mb-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          className="w-full rounded-full border border-gray-300 bg-white pl-5 pr-12 py-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           aria-label="npub"
         />
         {isValid && (
