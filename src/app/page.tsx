@@ -12,7 +12,7 @@ export default function Home(): React.JSX.Element {
           <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
         </div>
         
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+        <div className="mx-auto max-w-2xl pt-32 pb-20 sm:pt-48 sm:pb-24 lg:pt-56 lg:pb-28">
           <div className="text-center">
             <div className="flex justify-center mb-8">
               <div className="relative">
@@ -29,7 +29,7 @@ export default function Home(): React.JSX.Element {
               Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.
             </p>
             
-            <div className="mt-10 flex flex-col items-center justify-center gap-6">
+            <div className="mt-10 flex flex-col items-center justify-center gap-8">
               <NpubInput placeholder="npub1..." />
               <div className="flex items-center justify-center gap-x-6">
                 <Link
