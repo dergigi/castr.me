@@ -17,12 +17,13 @@ export interface NostrProfile {
 
 export class NostrService {
   private ndk: NDK | null = null
-  private readonly defaultRelays = [
+  private readonly defaultRelaysRaw = [
     'wss://relay.nostr.band',
     'wss://wot.dergigi.com/',
     'wss://wot.utxo.one',
     'wss://relay.damus.io'
   ]
+  private readonly defaultRelays = Array.from(new Set(this.defaultRelaysRaw.map(url => url.replace(/\/$/, ''))))
   private readonly defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
   async initialize(): Promise<void> {

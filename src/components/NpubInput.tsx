@@ -14,6 +14,7 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
   const [isValid, setIsValid] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
   const lastNavigatedRef = useRef<string | null>(null)
+  const lastPrefetchedRef = useRef<string | null>(null)
 
   const decodeNpub = useCallback((text: string): boolean => {
     if (!text) return false
@@ -43,10 +44,17 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
     const input = value.trim()
     const valid = decodeNpub(input)
     setIsValid(valid)
-    if (valid && lastNavigatedRef.current !== input) {
-      lastNavigatedRef.current = input
-      setIsNavigating(true)
-      router.push(`/${input}`)
+    if (valid) {
+      if (lastPrefetchedRef.current !== input) {
+        lastPrefetchedRef.current = input
+        // Best-effort prefetch; ignore errors (Next may not prefetch on some routes)
+        try { router.prefetch(`/${input}`); } catch { /* noop */ }
+      }
+      if (lastNavigatedRef.current !== input) {
+        lastNavigatedRef.current = input
+        setIsNavigating(true)
+        router.push(`/${input}`)
+      }
     }
   }, [value, decodeNpub, router])
 
