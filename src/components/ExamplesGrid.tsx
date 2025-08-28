@@ -229,6 +229,7 @@ export default async function ExamplesGrid(): Promise<React.JSX.Element> {
                   className="object-cover"
                   sizes="40px"
                   style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               ) : (
                 <Image
@@ -238,6 +239,7 @@ export default async function ExamplesGrid(): Promise<React.JSX.Element> {
                   className="object-cover"
                   sizes="40px"
                   style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               )}
               {/* Fallback colored initials - will show if image fails to load */}

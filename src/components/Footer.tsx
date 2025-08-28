@@ -14,6 +14,7 @@ const Footer: React.FC = () => {
                 width={24}
                 height={24}
                 className="flex-shrink-0"
+                unoptimized
               />
               <span className="text-sm font-semibold text-gray-700">castr.me</span>
             </a>

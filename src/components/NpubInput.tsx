@@ -73,7 +73,7 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
           aria-label="npub"
         />
         {isValid && (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
             {isNavigating ? (
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"></circle>
