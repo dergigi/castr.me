@@ -29,7 +29,7 @@ export default function Home(): React.JSX.Element {
               Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.
             </p>
             
-            <div className="mt-10 flex flex-col items-center justify-center gap-4">
+            <div className="mt-10 flex flex-col items-center justify-center gap-6">
               <NpubInput placeholder="npub1..." />
               <div className="flex items-center justify-center gap-x-6">
                 <Link
@@ -173,7 +173,7 @@ export default function Home(): React.JSX.Element {
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
               Enter any Nostr npub to generate a podcast feed. Start with our demo or use your own.
             </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4">
+            <div className="mt-10 flex flex-col items-center justify-center gap-6">
               <NpubInput placeholder="npub1..." />
               <div className="flex items-center justify-center gap-x-6">
                 <Link
