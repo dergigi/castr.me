@@ -311,7 +311,8 @@ export class NostrService {
     const audioUrl = this.extractAudioUrl(event.content);
     const videoUrl = this.extractVideoUrl(event.content);
     const mediaType = videoUrl ? 'video' : audioUrl ? 'audio' : undefined;
-    
+    const imageUrl = this.extractImage(event);
+
     return {
       id: event.id,
       pubkey: event.pubkey,
@@ -322,7 +323,8 @@ export class NostrService {
       audioUrl,
       videoUrl,
       mediaType,
-      title: this.extractTitle(event)
+      title: this.extractTitle(event),
+      imageUrl
     };
   }
 
@@ -342,6 +344,15 @@ export class NostrService {
     // Try to find an image tag
     const imageTag = event.tags.find(tag => tag[0] === 'image');
     if (imageTag) return imageTag[1];
+
+    // Try to find an image URL in r tags (reference/resource tags)
+    const rTags = event.tags.filter(tag => tag[0] === 'r' && tag.length > 1);
+    for (const tag of rTags) {
+      const url = tag[1];
+      if (/\.(?:jpg|jpeg|png|gif|webp)$/i.test(url)) {
+        return url;
+      }
+    }
 
     // Try to find an image URL in the content
     const imageRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/i;

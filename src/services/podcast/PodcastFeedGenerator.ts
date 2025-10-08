@@ -44,19 +44,22 @@ export class PodcastFeedGenerator {
       const eventContent = event.content || '';
       const mediaUrl = event.audioUrl || event.videoUrl || '';
       const mimeType = this.getMimeType(mediaUrl);
-      
+      const imageTag = event.imageUrl
+        ? `\n        <podcast:image href="${this.escapeXml(event.imageUrl)}"/>`
+        : '';
+
       return `
       <item>
         <title>${this.escapeXml(eventTitle)}</title>
         <description>${this.escapeXml(eventContent)}</description>
         <enclosure url="${this.escapeXml(mediaUrl)}" type="${mimeType}" length="0"/>
         <guid>${event.id}</guid>
-        <pubDate>${new Date(event.created_at * 1000).toUTCString()}</pubDate>
+        <pubDate>${new Date(event.created_at * 1000).toUTCString()}</pubDate>${imageTag}
       </item>
     `}).join('\n');
 
     return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0">
   <channel>
     <title>${title}</title>
     <description>${description}</description>
