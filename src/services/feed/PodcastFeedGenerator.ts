@@ -107,7 +107,6 @@ export class PodcastFeedGenerator {
       <pubDate>${pubDate}</pubDate>
       <description><![CDATA[${htmlContent}]]></description>
       <enclosure url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
-      <media:content url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
       <itunes:title>${this.escapeXml(title)}</itunes:title>
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
       <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
