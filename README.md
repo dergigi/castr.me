@@ -36,9 +36,9 @@ Castr.me scans a Nostr profile's posts and looks for `kind1` events that contain
 ## Finding Content
 
 You can discover profiles that post media using search queries on Nostr search engines. For example:
-- `https://nostr.band/?q=.mp4` - Find profiles posting video files
-- `https://nostr.band/?q=.mp3` - Find profiles posting audio files
-- `https://nostr.band/?q=.m4a` - Find profiles posting podcast audio
+- `https://ants.sh/?q=.mp4` - Find profiles posting video files
+- `https://ants.sh/?q=.mp3` - Find profiles posting audio files
+- `https://ants.sh/?q=.m4a` - Find profiles posting podcast audio
 
 ## Features
 
