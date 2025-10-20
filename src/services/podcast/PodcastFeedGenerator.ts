@@ -381,8 +381,7 @@ ${keysendRecipients}
       <itunes:explicit>false</itunes:explicit>${imageTag}${valueTag}
     </item>`
   }
-  }
-  
+
   /**
    * Async version that fetches recipient lightning addresses and names
    */
