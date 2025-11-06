@@ -97,6 +97,16 @@ export class NostrService {
    * @returns hex pubkey or null if invalid
    */
   private getPubkeyFromIdentifier(identifier: string): string | null {
+    const data = this.getIdentifierData(identifier)
+    return data?.pubkey || null
+  }
+
+  /**
+   * Extracts pubkey and optional relay hints from npub or nprofile identifier
+   * @param identifier npub or nprofile string (may be URL-encoded)
+   * @returns Object with pubkey and optional relays array, or null if invalid
+   */
+  private getIdentifierData(identifier: string): { pubkey: string; relays?: string[] } | null {
     try {
       // Ignore favicon.ico requests
       if (identifier === 'favicon.ico') return null;
@@ -114,9 +124,12 @@ export class NostrService {
       
       switch (decoded.type) {
         case 'npub':
-          return decoded.data;
+          return { pubkey: decoded.data };
         case 'nprofile':
-          return decoded.data.pubkey;
+          return { 
+            pubkey: decoded.data.pubkey,
+            relays: decoded.data.relays // Extract relay hints from nprofile
+          };
         default:
           return null;
       }
@@ -148,12 +161,16 @@ export class NostrService {
 
   async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromIdentifier(identifier)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [31990],
-        authors: [pubkey] as string[],
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [31990],
+          authors: [pubkey] as string[],
+        },
+        relays?.length ? { relayUrls: relays } : undefined
+      )
       return events ? Array.from(events).map(event => this.transformToMediaEvent(event)) : []
     } catch (error) {
       console.error('Error fetching media events:', error)
@@ -163,13 +180,17 @@ export class NostrService {
 
   async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromIdentifier(identifier)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [1],
-        authors: [pubkey] as string[],
-        limit: 420,
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [1],
+          authors: [pubkey] as string[],
+          limit: 420,
+        },
+        relays?.length ? { relayUrls: relays } : undefined
+      )
       return events ? Array.from(events) : []
     } catch (error) {
       console.error('Error fetching kind1 events:', error)
@@ -184,13 +205,17 @@ export class NostrService {
    */
   async getLongFormEvents(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromIdentifier(identifier)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey] as string[],
-        limit: 100, // Limit to avoid too many results
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [30023], // NIP-23 long-form content
+          authors: [pubkey] as string[],
+          limit: 100, // Limit to avoid too many results
+        },
+        relays?.length ? { relayUrls: relays } : undefined
+      )
       return events ? Array.from(events) : []
     } catch (error) {
       console.error('Error fetching long-form events:', error)
