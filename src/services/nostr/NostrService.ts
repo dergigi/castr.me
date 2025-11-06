@@ -1,5 +1,4 @@
-import NDK from '@nostr-dev-kit/ndk'
-import { decode } from 'nostr-tools/nip19'
+import NDK, { nip19 } from '@nostr-dev-kit/ndk'
 import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
 import type { MediaEvent } from "../../types";
 
@@ -55,7 +54,7 @@ export class NostrService {
     'wss://relay.damus.io'
   ]
   private readonly defaultRelays = Array.from(new Set(this.defaultRelaysRaw.map(url => url.replace(/\/$/, ''))))
-  private readonly defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
+  private readonly defaultIdentifier = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
   async initialize(): Promise<void> {
     if (!this.ndk) {
@@ -91,37 +90,41 @@ export class NostrService {
     }
   }
 
-  private getPubkeyFromNpub(npub: string): string | null {
+  /**
+   * Extracts pubkey from npub or nprofile identifier following NDK best practices
+   * @param identifier npub or nprofile string
+   * @returns hex pubkey or null if invalid
+   */
+  private getPubkeyFromIdentifier(identifier: string): string | null {
     try {
       // Ignore favicon.ico requests
-      if (npub === 'favicon.ico') return null;
+      if (identifier === 'favicon.ico') return null;
       
-      // Remove any potential URL encoding or invalid characters
-      const cleanNpub = decodeURIComponent(npub).replace(/[^a-zA-Z0-9]/g, '')
+      const decoded = nip19.decode(identifier.trim());
       
-      // Ensure npub has the correct prefix and length
-      const normalizedNpub = cleanNpub.startsWith('npub1') ? cleanNpub : `npub1${cleanNpub}`
-      
-      // Validate the npub format (must be exactly 63 characters: 'npub1' + 58 chars)
-      if (normalizedNpub.length !== 63 || !/^npub1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(normalizedNpub)) {
-        console.error('Invalid npub format:', npub)
-        return null
+      switch (decoded.type) {
+        case 'npub':
+          return decoded.data;
+        case 'nprofile':
+          return decoded.data.pubkey;
+        default:
+          return null;
       }
-
-      const decoded = decode(normalizedNpub)
-      if (decoded.type !== 'npub') return null
-      return decoded.data
     } catch (error) {
-      console.error('Error decoding npub:', error)
+      console.error('Error decoding identifier:', error)
       return null
     }
   }
 
-  async getUserProfile(npub: string = this.defaultNpub): Promise<NostrProfile | null> {
+  /**
+   * Fetches user profile from npub or nprofile identifier
+   * @param identifier npub, nprofile, hex pubkey, or NIP-05 identifier
+   * @returns User profile or null if not found
+   */
+  async getUserProfile(identifier: string = this.defaultIdentifier): Promise<NostrProfile | null> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return null
-      const user = await this.ndk?.getUser({ pubkey })
+      // NDK's fetchUser() handles npub, nprofile, hex pubkey, and NIP-05 automatically
+      const user = await this.ndk?.fetchUser(identifier)
       if (!user) return null
       const profile = await user.fetchProfile()
       return profile
@@ -131,9 +134,9 @@ export class NostrService {
     }
   }
 
-  async getMediaEvents(npub: string = this.defaultNpub): Promise<MediaEvent[]> {
+  async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
+      const pubkey = this.getPubkeyFromIdentifier(identifier)
       if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [31990],
@@ -146,9 +149,9 @@ export class NostrService {
     }
   }
 
-  async getKind1Events(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
+  async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
+      const pubkey = this.getPubkeyFromIdentifier(identifier)
       if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [1],
@@ -164,12 +167,12 @@ export class NostrService {
 
   /**
    * Fetches all long-form content (NIP-23) events for a user
-   * @param npub The npub of the user
+   * @param identifier npub or nprofile identifier of the user
    * @returns An array of long-form content events
    */
-  async getLongFormEvents(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
+  async getLongFormEvents(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
+      const pubkey = this.getPubkeyFromIdentifier(identifier)
       if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [30023], // NIP-23 long-form content
@@ -425,12 +428,12 @@ export class NostrService {
       
       if (eventId.startsWith('nevent1')) {
         // For nevent format, we need to extract the event ID
-        const decoded = decode(eventId);
+        const decoded = nip19.decode(eventId);
         if (decoded.type !== 'nevent') return null;
         return await this.ndk?.fetchEvent(decoded.data.id) || null;
       } else if (eventId.startsWith('naddr1')) {
         // For naddr format, we need to extract the pubkey and identifier
-        const decoded = decode(eventId);
+        const decoded = nip19.decode(eventId);
         if (decoded.type !== 'naddr') return null;
         pubkey = decoded.data.pubkey;
         identifier = decoded.data.identifier;
