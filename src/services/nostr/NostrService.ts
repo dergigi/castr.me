@@ -1,7 +1,7 @@
 import NDK from '@nostr-dev-kit/ndk'
 import { decode } from 'nostr-tools/nip19'
-import { NDKEvent } from '@nostr-dev-kit/ndk'
-import { MediaEvent } from "../../types";
+import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
+import type { MediaEvent } from "../../types";
 
 export interface NostrProfile {
   name?: string
@@ -13,6 +13,37 @@ export interface NostrProfile {
   lud16?: string
   lud06?: string
   nodeid?: string
+}
+
+/**
+ * Simple in-memory cache adapter for server-side use
+ * Prevents NDK from trying to use localStorage during SSR
+ */
+class InMemoryCacheAdapter implements NDKCacheAdapter {
+  locking = false
+  ready = true
+  private cache = new Map<string, NDKEvent[]>()
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  query(_subscription: NDKSubscription): NDKEvent[] {
+    // Return empty array - we'll rely on relay queries
+    return []
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async setEvent(event: NDKEvent, _filters: NDKFilter[], _relay?: NDKRelay): Promise<void> {
+    // Simple in-memory caching - could be enhanced if needed
+    const key = event.id
+    if (!this.cache.has(key)) {
+      this.cache.set(key, [event])
+    }
+  }
+
+  async deleteEventIds(eventIds: NDKEventId[]): Promise<void> {
+    for (const eventId of eventIds) {
+      this.cache.delete(eventId)
+    }
+  }
 }
 
 export class NostrService {
@@ -28,8 +59,33 @@ export class NostrService {
 
   async initialize(): Promise<void> {
     if (!this.ndk) {
+      // Use in-memory cache adapter to avoid localStorage issues during SSR
+      const isServer = typeof window === 'undefined'
+      const cacheAdapter = isServer ? new InMemoryCacheAdapter() : undefined
+
+      // Provide a minimal localStorage shim on the server to satisfy libraries that expect it
+      if (isServer) {
+        interface GlobalWithStorage extends Omit<typeof globalThis, 'localStorage'> {
+          localStorage?: Storage
+        }
+        const g = globalThis as GlobalWithStorage
+        const needsShim = !g.localStorage || typeof g.localStorage.getItem !== 'function'
+        if (needsShim) {
+          const store = new Map<string, string>()
+          g.localStorage = {
+            getItem(key: string): string | null { return store.has(key) ? store.get(key)! : null },
+            setItem(key: string, value: string): void { store.set(key, String(value)) },
+            removeItem(key: string): void { store.delete(key) },
+            clear(): void { store.clear() },
+            key(index: number): string | null { return Array.from(store.keys())[index] ?? null },
+            get length(): number { return store.size },
+          }
+        }
+      }
+      
       this.ndk = new NDK({
         explicitRelayUrls: this.defaultRelays,
+        cacheAdapter,
       })
       await this.ndk.connect()
     }
