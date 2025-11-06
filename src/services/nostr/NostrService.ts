@@ -164,12 +164,16 @@ export class NostrService {
       const data = this.getIdentifierData(identifier)
       if (!data) return []
       const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : undefined
       const events = await this.ndk?.fetchEvents(
         {
           kinds: [31990],
           authors: [pubkey] as string[],
         },
-        relays?.length ? { relayUrls: relays } : undefined
+        relayUrls ? { relayUrls } : undefined
       )
       return events ? Array.from(events).map(event => this.transformToMediaEvent(event)) : []
     } catch (error) {
@@ -183,13 +187,17 @@ export class NostrService {
       const data = this.getIdentifierData(identifier)
       if (!data) return []
       const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : undefined
       const events = await this.ndk?.fetchEvents(
         {
           kinds: [1],
           authors: [pubkey] as string[],
           limit: 420,
         },
-        relays?.length ? { relayUrls: relays } : undefined
+        relayUrls ? { relayUrls } : undefined
       )
       return events ? Array.from(events) : []
     } catch (error) {
@@ -208,13 +216,17 @@ export class NostrService {
       const data = this.getIdentifierData(identifier)
       if (!data) return []
       const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : undefined
       const events = await this.ndk?.fetchEvents(
         {
           kinds: [30023], // NIP-23 long-form content
           authors: [pubkey] as string[],
           limit: 100, // Limit to avoid too many results
         },
-        relays?.length ? { relayUrls: relays } : undefined
+        relayUrls ? { relayUrls } : undefined
       )
       return events ? Array.from(events) : []
     } catch (error) {
