@@ -93,7 +93,7 @@ export class NostrService {
 
   /**
    * Extracts pubkey from npub or nprofile identifier following NDK best practices
-   * @param identifier npub or nprofile string
+   * @param identifier npub or nprofile string (may be URL-encoded)
    * @returns hex pubkey or null if invalid
    */
   private getPubkeyFromIdentifier(identifier: string): string | null {
@@ -101,7 +101,16 @@ export class NostrService {
       // Ignore favicon.ico requests
       if (identifier === 'favicon.ico') return null;
       
-      const decoded = decode(identifier.trim());
+      // Decode URL encoding first (Next.js may URL-encode the path parameter)
+      let decodedIdentifier: string;
+      try {
+        decodedIdentifier = decodeURIComponent(identifier);
+      } catch {
+        // If it's not URL-encoded, use as-is
+        decodedIdentifier = identifier;
+      }
+      
+      const decoded = decode(decodedIdentifier.trim());
       
       switch (decoded.type) {
         case 'npub':
