@@ -1,5 +1,6 @@
-import NDK, { nip19 } from '@nostr-dev-kit/ndk'
+import NDK from '@nostr-dev-kit/ndk'
 import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
+import { decode } from 'nostr-tools/nip19'
 import type { MediaEvent } from "../../types";
 
 export interface NostrProfile {
@@ -100,7 +101,7 @@ export class NostrService {
       // Ignore favicon.ico requests
       if (identifier === 'favicon.ico') return null;
       
-      const decoded = nip19.decode(identifier.trim());
+      const decoded = decode(identifier.trim());
       
       switch (decoded.type) {
         case 'npub':
@@ -123,8 +124,10 @@ export class NostrService {
    */
   async getUserProfile(identifier: string = this.defaultIdentifier): Promise<NostrProfile | null> {
     try {
-      // NDK's fetchUser() handles npub, nprofile, hex pubkey, and NIP-05 automatically
-      const user = await this.ndk?.fetchUser(identifier)
+      // Extract pubkey from identifier (handles npub, nprofile, or use hex/NIP-05 directly)
+      const pubkey = this.getPubkeyFromIdentifier(identifier) || identifier
+      if (!pubkey) return null
+      const user = this.ndk?.getUser({ pubkey })
       if (!user) return null
       const profile = await user.fetchProfile()
       return profile
@@ -140,7 +143,7 @@ export class NostrService {
       if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [31990],
-        authors: [pubkey],
+        authors: [pubkey] as string[],
       })
       return events ? Array.from(events).map(event => this.transformToMediaEvent(event)) : []
     } catch (error) {
@@ -155,7 +158,7 @@ export class NostrService {
       if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [1],
-        authors: [pubkey],
+        authors: [pubkey] as string[],
         limit: 420,
       })
       return events ? Array.from(events) : []
@@ -176,7 +179,7 @@ export class NostrService {
       if (!pubkey) return []
       const events = await this.ndk?.fetchEvents({
         kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey],
+        authors: [pubkey] as string[],
         limit: 100, // Limit to avoid too many results
       })
       return events ? Array.from(events) : []
@@ -314,7 +317,7 @@ export class NostrService {
       // Fetch long-form content events (kind 30023) from the same author
       const events = await this.ndk?.fetchEvents({
         kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey],
+        authors: [pubkey] as string[],
         limit: 100, // Limit to avoid too many results
       });
       
@@ -428,12 +431,12 @@ export class NostrService {
       
       if (eventId.startsWith('nevent1')) {
         // For nevent format, we need to extract the event ID
-        const decoded = nip19.decode(eventId);
+        const decoded = decode(eventId);
         if (decoded.type !== 'nevent') return null;
         return await this.ndk?.fetchEvent(decoded.data.id) || null;
       } else if (eventId.startsWith('naddr1')) {
         // For naddr format, we need to extract the pubkey and identifier
-        const decoded = nip19.decode(eventId);
+        const decoded = decode(eventId);
         if (decoded.type !== 'naddr') return null;
         pubkey = decoded.data.pubkey;
         identifier = decoded.data.identifier;
@@ -441,7 +444,7 @@ export class NostrService {
         // Fetch events with the matching pubkey and identifier
         const events = await this.ndk?.fetchEvents({
           kinds: [30023], // NIP-23 long-form content
-          authors: [pubkey],
+          authors: [pubkey] as string[],
           limit: 1,
         });
         
