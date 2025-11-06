@@ -14,6 +14,18 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // Ensure nostr-tools is properly resolved for server-side rendering
+    if (isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      }
+    }
+    return config
+  },
 }
 
 module.exports = nextConfig 
