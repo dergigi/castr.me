@@ -1,6 +1,6 @@
 {
   "name": "pubcaster",
-  "version": "0.1.1",
+  "version": "1.0.1",
   "description": "Automated podcast feed generator for Nostr profiles",
   "main": "dist/server/index.js",
   "scripts": {
