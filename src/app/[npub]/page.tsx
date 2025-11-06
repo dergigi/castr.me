@@ -182,6 +182,7 @@ export default async function NpubPage({
   const profile = await nostrService.getUserProfile(npub)
   const events = await nostrService.getKind1Events(npub)
   const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
+    .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
   
   // Fetch all long-form posts for the user
   const longFormEvents = await nostrService.getLongFormEvents(npub)

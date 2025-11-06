@@ -35,7 +35,8 @@ app.get('/:npub', async (req, res) => {
   }
 
   const events = await nostrService.getKind1Events(npub);
-  const audioEvents = events.filter(event => nostrService.isMediaEvent(event));
+  const audioEvents = events.filter(event => nostrService.isMediaEvent(event))
+    .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
   
   res.send(`
     <!DOCTYPE html>
