@@ -18,11 +18,41 @@ describe('NostrService', () => {
     nostrService.initialize();
   });
 
-  describe('defaultNpub', () => {
-    it('should have the correct default npub', () => {
+  describe('defaultIdentifier', () => {
+    it('should have the correct default identifier', () => {
       // Access the private property using bracket notation
-      const defaultNpub = (nostrService as any).defaultNpub;
-      expect(defaultNpub).toBe('npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n');
+      const defaultIdentifier = (nostrService as any).defaultIdentifier;
+      expect(defaultIdentifier).toBe('npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n');
+    });
+  });
+
+  describe('getPubkeyFromIdentifier', () => {
+    it('should extract pubkey from npub', () => {
+      const npub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n';
+      const pubkey = (nostrService as any).getPubkeyFromIdentifier(npub);
+      expect(pubkey).toBeTruthy();
+      expect(typeof pubkey).toBe('string');
+      expect(pubkey.length).toBe(64); // Hex pubkey is 64 characters
+    });
+
+    it('should extract pubkey from nprofile', () => {
+      // Example nprofile (you may need to replace with a real one)
+      const nprofile = 'nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gpp4mhxue69uhhytnc9e3k7mgpz4mhxue69uhkg6nzv9ejuumpv34kytnrdaksjlyr9p';
+      const pubkey = (nostrService as any).getPubkeyFromIdentifier(nprofile);
+      expect(pubkey).toBeTruthy();
+      expect(typeof pubkey).toBe('string');
+      expect(pubkey.length).toBe(64); // Hex pubkey is 64 characters
+    });
+
+    it('should return null for invalid identifier', () => {
+      const invalid = 'invalid-identifier';
+      const pubkey = (nostrService as any).getPubkeyFromIdentifier(invalid);
+      expect(pubkey).toBeNull();
+    });
+
+    it('should return null for favicon.ico', () => {
+      const pubkey = (nostrService as any).getPubkeyFromIdentifier('favicon.ico');
+      expect(pubkey).toBeNull();
     });
   });
 

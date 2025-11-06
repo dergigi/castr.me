@@ -8,7 +8,7 @@ interface NpubInputProps {
   className?: string
 }
 
-export default function NpubInput({ placeholder = 'npub1...', className = '' }: NpubInputProps): React.JSX.Element {
+export default function NpubInput({ placeholder = 'npub1... or nprofile1...', className = '' }: NpubInputProps): React.JSX.Element {
   const router = useRouter()
   const [value, setValue] = useState('')
   const [isValid, setIsValid] = useState(false)
@@ -16,12 +16,12 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
   const lastNavigatedRef = useRef<string | null>(null)
   const lastPrefetchedRef = useRef<string | null>(null)
 
-  const decodeNpub = useCallback((text: string): boolean => {
+  const decodeIdentifier = useCallback((text: string): boolean => {
     if (!text) return false
     try {
       const trimmed = text.trim()
       const decoded = decode(trimmed)
-      return decoded.type === 'npub'
+      return decoded.type === 'npub' || decoded.type === 'nprofile'
     } catch {
       return false
     }
@@ -30,11 +30,11 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
   const onSubmit = useCallback((e: FormEvent): void => {
     e.preventDefault()
     const input = value.trim()
-    if (decodeNpub(input)) {
+    if (decodeIdentifier(input)) {
       setIsNavigating(true)
       router.push(`/${input}`)
     }
-  }, [value, decodeNpub, router])
+  }, [value, decodeIdentifier, router])
 
   useEffect((): (() => void) | void => {
     if (!value) {
@@ -42,7 +42,7 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
       return
     }
     const input = value.trim()
-    const valid = decodeNpub(input)
+    const valid = decodeIdentifier(input)
     setIsValid(valid)
     if (valid) {
       if (lastPrefetchedRef.current !== input) {
@@ -56,7 +56,7 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
         router.push(`/${input}`)
       }
     }
-  }, [value, decodeNpub, router])
+  }, [value, decodeIdentifier, router])
 
   return (
     <form onSubmit={onSubmit} className={`flex w-full max-w-xl items-stretch gap-2 ${className}`}>
@@ -70,7 +70,7 @@ export default function NpubInput({ placeholder = 'npub1...', className = '' }: 
           onChange={(e): void => setValue(e.target.value)}
           placeholder={placeholder}
           className="w-full rounded-full border border-gray-300 bg-white pl-5 pr-12 py-3 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-          aria-label="npub"
+          aria-label="Nostr profile identifier"
         />
         {isValid && (
           <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">

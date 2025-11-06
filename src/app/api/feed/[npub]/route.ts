@@ -22,7 +22,15 @@ export async function GET(
     }
     
     const resolvedParams = await params
-    const npub = resolvedParams.npub
+    let npub = resolvedParams.npub
+    
+    // Decode URL encoding if present
+    try {
+      npub = decodeURIComponent(npub)
+    } catch {
+      // If not URL-encoded, use as-is
+    }
+    
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
     const audioEvents = events.filter(event => nostrService.isMediaEvent(event))

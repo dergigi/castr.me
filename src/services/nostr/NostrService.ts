@@ -1,6 +1,6 @@
 import NDK from '@nostr-dev-kit/ndk'
-import { decode } from 'nostr-tools/nip19'
 import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
+import { decode } from 'nostr-tools/nip19'
 import type { MediaEvent } from "../../types";
 
 export interface NostrProfile {
@@ -55,7 +55,7 @@ export class NostrService {
     'wss://relay.damus.io'
   ]
   private readonly defaultRelays = Array.from(new Set(this.defaultRelaysRaw.map(url => url.replace(/\/$/, ''))))
-  private readonly defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
+  private readonly defaultIdentifier = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
   async initialize(): Promise<void> {
     if (!this.ndk) {
@@ -91,37 +91,65 @@ export class NostrService {
     }
   }
 
-  private getPubkeyFromNpub(npub: string): string | null {
+  /**
+   * Extracts pubkey from npub or nprofile identifier following NDK best practices
+   * @param identifier npub or nprofile string (may be URL-encoded)
+   * @returns hex pubkey or null if invalid
+   */
+  private getPubkeyFromIdentifier(identifier: string): string | null {
+    const data = this.getIdentifierData(identifier)
+    return data?.pubkey || null
+  }
+
+  /**
+   * Extracts pubkey and optional relay hints from npub or nprofile identifier
+   * @param identifier npub or nprofile string (may be URL-encoded)
+   * @returns Object with pubkey and optional relays array, or null if invalid
+   */
+  private getIdentifierData(identifier: string): { pubkey: string; relays?: string[] } | null {
     try {
       // Ignore favicon.ico requests
-      if (npub === 'favicon.ico') return null;
+      if (identifier === 'favicon.ico') return null;
       
-      // Remove any potential URL encoding or invalid characters
-      const cleanNpub = decodeURIComponent(npub).replace(/[^a-zA-Z0-9]/g, '')
-      
-      // Ensure npub has the correct prefix and length
-      const normalizedNpub = cleanNpub.startsWith('npub1') ? cleanNpub : `npub1${cleanNpub}`
-      
-      // Validate the npub format (must be exactly 63 characters: 'npub1' + 58 chars)
-      if (normalizedNpub.length !== 63 || !/^npub1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(normalizedNpub)) {
-        console.error('Invalid npub format:', npub)
-        return null
+      // Decode URL encoding first (Next.js may URL-encode the path parameter)
+      let decodedIdentifier: string;
+      try {
+        decodedIdentifier = decodeURIComponent(identifier);
+      } catch {
+        // If it's not URL-encoded, use as-is
+        decodedIdentifier = identifier;
       }
-
-      const decoded = decode(normalizedNpub)
-      if (decoded.type !== 'npub') return null
-      return decoded.data
+      
+      const decoded = decode(decodedIdentifier.trim());
+      
+      switch (decoded.type) {
+        case 'npub':
+          return { pubkey: decoded.data };
+        case 'nprofile':
+          return { 
+            pubkey: decoded.data.pubkey,
+            relays: decoded.data.relays // Extract relay hints from nprofile
+          };
+        default:
+          return null;
+      }
     } catch (error) {
-      console.error('Error decoding npub:', error)
+      console.error('Error decoding identifier:', error)
       return null
     }
   }
 
-  async getUserProfile(npub: string = this.defaultNpub): Promise<NostrProfile | null> {
+  /**
+   * Fetches user profile from npub or nprofile identifier
+   * @param identifier npub, nprofile, hex pubkey, or NIP-05 identifier
+   * @returns User profile or null if not found
+   */
+  async getUserProfile(identifier: string = this.defaultIdentifier): Promise<NostrProfile | null> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
+      // Extract pubkey from identifier (handles npub, nprofile, or use hex/NIP-05 directly)
+      const pubkey = this.getPubkeyFromIdentifier(identifier) || identifier
       if (!pubkey) return null
-      const user = await this.ndk?.getUser({ pubkey })
+      const user = this.ndk?.getUser({ pubkey })
       if (!user) return null
       const profile = await user.fetchProfile()
       return profile
@@ -131,14 +159,22 @@ export class NostrService {
     }
   }
 
-  async getMediaEvents(npub: string = this.defaultNpub): Promise<MediaEvent[]> {
+  async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [31990],
-        authors: [pubkey],
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : undefined
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [31990],
+          authors: [pubkey] as string[],
+        },
+        relayUrls ? { relayUrls } : undefined
+      )
       return events ? Array.from(events).map(event => this.transformToMediaEvent(event)) : []
     } catch (error) {
       console.error('Error fetching media events:', error)
@@ -146,15 +182,23 @@ export class NostrService {
     }
   }
 
-  async getKind1Events(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
+  async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [1],
-        authors: [pubkey],
-        limit: 420,
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : undefined
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [1],
+          authors: [pubkey] as string[],
+          limit: 420,
+        },
+        relayUrls ? { relayUrls } : undefined
+      )
       return events ? Array.from(events) : []
     } catch (error) {
       console.error('Error fetching kind1 events:', error)
@@ -164,18 +208,26 @@ export class NostrService {
 
   /**
    * Fetches all long-form content (NIP-23) events for a user
-   * @param npub The npub of the user
+   * @param identifier npub or nprofile identifier of the user
    * @returns An array of long-form content events
    */
-  async getLongFormEvents(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
+  async getLongFormEvents(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey],
-        limit: 100, // Limit to avoid too many results
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : undefined
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [30023], // NIP-23 long-form content
+          authors: [pubkey] as string[],
+          limit: 100, // Limit to avoid too many results
+        },
+        relayUrls ? { relayUrls } : undefined
+      )
       return events ? Array.from(events) : []
     } catch (error) {
       console.error('Error fetching long-form events:', error)
@@ -311,7 +363,7 @@ export class NostrService {
       // Fetch long-form content events (kind 30023) from the same author
       const events = await this.ndk?.fetchEvents({
         kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey],
+        authors: [pubkey] as string[],
         limit: 100, // Limit to avoid too many results
       });
       
@@ -438,7 +490,7 @@ export class NostrService {
         // Fetch events with the matching pubkey and identifier
         const events = await this.ndk?.fetchEvents({
           kinds: [30023], // NIP-23 long-form content
-          authors: [pubkey],
+          authors: [pubkey] as string[],
           limit: 1,
         });
         

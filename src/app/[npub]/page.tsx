@@ -164,9 +164,16 @@ export default async function NpubPage({
     console.log('NDK initialized successfully')
   }
   
-  // Get the npub from params
+  // Get the npub/nprofile from params (may be URL-encoded)
   const resolvedParams = await params
-  const npub = resolvedParams.npub
+  let npub = resolvedParams.npub
+  
+  // Decode URL encoding if present
+  try {
+    npub = decodeURIComponent(npub)
+  } catch {
+    // If not URL-encoded, use as-is
+  }
   
   if (!npub) {
     return (
