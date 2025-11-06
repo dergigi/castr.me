@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.4] - 2024-XX-XX
+## [0.0.4] - 2025-11-06
 
 ### Added
 - NPUB input on homepage for custom feed generation
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Image optimization for GIFs
 - TypeScript type assertions
 
-## [0.0.3] - 2024-XX-XX
+## [0.0.3] - 2025-04-22
 
 ### Added
 - NostrService for centralized profile and content fetching
@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved show notes matching with fuzzy title matching
 - Better markdown to HTML conversion in feed descriptions
 
-## [0.0.2] - 2024-XX-XX
+## [0.0.2] - 2025-04-22
 
 ### Added
 - Video file support in media handling
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Anonymous fallback names in feed generator
 - Media handling unification between HTML and RSS
 
-## [0.0.1] - 2024-XX-XX
+## [0.0.1] - 2025-04-11
 
 ### Added
 - Initial release
