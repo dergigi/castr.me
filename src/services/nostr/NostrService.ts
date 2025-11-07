@@ -167,7 +167,7 @@ export class NostrService {
       // Combine relay hints with default relays for better coverage
       const relayUrls = relays?.length 
         ? Array.from(new Set([...relays, ...this.defaultRelays]))
-        : undefined
+        : this.defaultRelays
       const events = await this.ndk?.fetchEvents(
         {
           kinds: [31990],
@@ -190,7 +190,7 @@ export class NostrService {
       // Combine relay hints with default relays for better coverage
       const relayUrls = relays?.length 
         ? Array.from(new Set([...relays, ...this.defaultRelays]))
-        : undefined
+        : this.defaultRelays
       const events = await this.ndk?.fetchEvents(
         {
           kinds: [1],
@@ -219,7 +219,7 @@ export class NostrService {
       // Combine relay hints with default relays for better coverage
       const relayUrls = relays?.length 
         ? Array.from(new Set([...relays, ...this.defaultRelays]))
-        : undefined
+        : this.defaultRelays
       const events = await this.ndk?.fetchEvents(
         {
           kinds: [30023], // NIP-23 long-form content
