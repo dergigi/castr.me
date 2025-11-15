@@ -161,7 +161,7 @@ export default function Home(): React.JSX.Element {
                 Contribute on GitHub
               </Link>
               <Link
-                href="https://njump.me/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme"
+                href={`${process.env.HTTP_NOSTR_GATEWAY || 'https://njump.to'}/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme`}
                 className="rounded-full bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 transition-all duration-200 flex items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
