@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
             </a>{' '}
             &middot;{' '}
             <a 
-              href="https://njump.me/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme" 
+              href="https://njump.to/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-gray-500 hover:text-gray-700 hover:underline"

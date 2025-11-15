@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Video file support in media handling
 - RoboHash as fallback podcast artwork
-- Links to njump.me for profiles and notes
+- Links to njump.to for profiles and notes
 
 ### Changed
 - Domain updated to castr.me
