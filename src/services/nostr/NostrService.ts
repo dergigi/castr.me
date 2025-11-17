@@ -557,6 +557,52 @@ export class NostrService {
     }
   }
 
+  extractZapPubkeysFromEvents(events: NDKEvent[]): Map<string, string[]> {
+    const pubkeys = new Map<string, string[]>();
+
+    for (const event of events) {
+      const eventPubkeys = this.extractZapPubkeysFromEvent(event);
+      pubkeys.set(event.id, eventPubkeys);
+    }
+
+    return pubkeys;
+  }
+
+  async fetchZapProfilesForEvents(events: NDKEvent[]): Promise<Map<string, Map<string, NostrProfile>>> {
+    const eventMap = new Map<string, Map<string, NostrProfile>>();
+    const allPubkeys = new Set<string>();
+
+    try {
+      // Extract and collect all pubkeys
+      const eventPubkeys = this.extractZapPubkeysFromEvents(events);
+      for (const pubkeys of Array.from(eventPubkeys.values())) {
+        pubkeys.forEach((pk: string) => allPubkeys.add(pk));
+      }
+
+      // Fetch all profiles at once
+      const profiles = await this.fetchUserProfiles(Array.from(allPubkeys));
+
+      // Map profiles to events
+      for (const event of events) {
+        const pubkeys = eventPubkeys.get(event.id) || [];
+        const eventProfiles = new Map<string, NostrProfile>();
+
+        for (const pubkey of pubkeys) {
+          const profile = profiles.get(pubkey);
+          if (profile) {
+            eventProfiles.set(pubkey, profile);
+          }
+        }
+
+        eventMap.set(event.id, eventProfiles);
+      }
+    } catch (error) {
+      console.error('Error fetching zap profiles for events:', error);
+    }
+
+    return eventMap;
+  }
+
   /**
    * Extracts zap splits from an event according to NIP-57 specification
    * @param event The event containing zap tags
@@ -693,21 +739,36 @@ export class NostrService {
    */
   async fetchLightningAddresses(pubkeys: string[]): Promise<Map<string, string>> {
     const addressMap = new Map<string, string>();
-    
-    try {
-      for (const pubkey of pubkeys) {
-        if (this.ndk) {
-          const user = this.ndk.getUser({ pubkey });
-          const profile = await user.fetchProfile();
-          if (profile && profile.lud16) {
-            addressMap.set(pubkey, profile.lud16);
-          }
-        }
+    const users = await this.fetchUserProfiles(pubkeys);
+
+    for (const [pubkey, profile] of Array.from(users.entries())) {
+      if (profile && profile.lud16) {
+        addressMap.set(pubkey, profile.lud16);
       }
-    } catch (error) {
-      console.error('Error fetching lightning addresses:', error);
     }
     
     return addressMap;
   }
-} 
+
+  /**
+   * Fetches user profiles for a list of pubkeys
+   * @param pubkeys Array of pubkeys to fetch user profiles for
+   * @returns A map of pubkeys to their user profiles
+   */
+  async fetchUserProfiles(pubkeys: string[]): Promise<Map<string, NostrProfile>> {
+    const userMap = new Map<string, NostrProfile>();
+
+    if (pubkeys.length > 0) {
+      const users = await this.ndk?.fetchEvents({
+        kinds: [0],
+        authors: pubkeys,
+      })
+
+      for (const user of Array.from(users || [])) {
+        userMap.set(user.pubkey, JSON.parse(user.content));
+      }
+    }
+
+    return userMap;
+  }
+}
