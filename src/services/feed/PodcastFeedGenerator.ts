@@ -1,5 +1,7 @@
 import { NostrProfile, NostrService } from '../nostr/NostrService'
 import { NDKEvent } from '@nostr-dev-kit/ndk'
+import { LiveActivity } from '../../types'
+import { getMimeType } from '../../utils/mimeTypes'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 
@@ -20,7 +22,7 @@ interface ValueSplit {
 export class PodcastFeedGenerator {
   constructor(private nostrService?: NostrService) {}
 
-  generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>): string {
+  generateFeed(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>, liveActivities?: NDKEvent[]): string {
     const title = profile.name || npub
     const description = profile.about || 'A media feed generated from Nostr posts'
     const link = `https://castr.me/${npub}`
@@ -29,12 +31,20 @@ export class PodcastFeedGenerator {
     const image = profile.picture || `https://robohash.org/${npub}.png?set=set3&size=500x500`
     
     // Filter for media events and sort by date
-    const mediaEvents = this.filterMediaEvents(events)
-      .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
-    
+    const mediaEvents = [
+      ...this.filterMediaEvents(events),
+      ...(liveActivities || [])
+    ].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+
     // Generate items XML (synchronous for now, will enhance with async later)
-    const items = mediaEvents.map(event => this.generateItem(event, longFormMap)).join('\n')
-    
+    const items = mediaEvents.map(event => {
+      if (event.kind === 30311) {
+        return this.generateLiveActivityItem(event)
+      } else {
+        return this.generateItem(event, longFormMap)
+      }
+    }).join('\n')
+
     // Generate value tag for channel-level default (prefer keysend if nodeid exists, else lnaddress)
     const valueTag = profile.nodeid ? `
     <podcast:value type="lightning" method="keysend" suggested="0.00021">
@@ -82,23 +92,32 @@ export class PodcastFeedGenerator {
   /**
    * Async version of generateFeed that fetches recipient information
    */
-  async generateFeedAsync(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>): Promise<string> {
+  async generateFeedAsync(profile: NostrProfile, events: NDKEvent[], npub: string, longFormMap?: Map<string, NDKEvent>, liveActivities?: NDKEvent[]): Promise<string> {
     const title = profile.name || npub
     const description = profile.about || 'A media feed generated from Nostr posts'
     const link = `https://castr.me/${npub}`
     const language = 'en-us'
     const pubDate = new Date().toUTCString()
     const image = profile.picture || `https://robohash.org/${npub}.png?set=set3&size=500x500`
-    
+
     // Filter for media events and sort by date
-    const mediaEvents = this.filterMediaEvents(events)
-      .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
-    
-    // Generate items XML with async recipient fetching
-    const itemsPromises = mediaEvents.map(event => this.generateItemAsync(event, longFormMap, profile, npub))
+    const mediaEvents = [
+      ...this.filterMediaEvents(events),
+      ...(liveActivities || [])
+    ].sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+
+      // Generate items XML with async recipient fetching
+    const itemsPromises: Promise<string>[] = mediaEvents.map(event => {
+      if (event.kind === 30311) {
+        return this.generateLiveActivityItemAsync(event)
+      } else {
+        return this.generateItemAsync(event, longFormMap, profile, npub)
+      }
+    })
+
     const items = await Promise.all(itemsPromises)
     const itemsXml = items.join('\n')
-    
+
     // Generate value tag for channel-level default (prefer keysend if nodeid exists, else lnaddress)
     const valueTag = profile.nodeid ? `
     <podcast:value type="lightning" method="keysend" suggested="0.00021">
@@ -146,7 +165,7 @@ export class PodcastFeedGenerator {
   private filterMediaEvents(events: NDKEvent[]): NDKEvent[] {
     return events.filter(event => this.isMediaEvent(event))
   }
-  
+
   private isMediaEvent(event: NDKEvent): boolean {
     const content = event.content
     return (
@@ -168,8 +187,8 @@ export class PodcastFeedGenerator {
     const title = this.extractTitle(event)
     const pubDate = new Date((event.created_at || 0) * 1000).toUTCString()
     const guid = event.id
-    const mediaType = videoUrl ? 'video' : 'audio'
     const mediaUrl = videoUrl || audioUrl || ''
+    const mimeType = getMimeType(mediaUrl)
     
     // Extract show notes from long-form content if available
     const showNotes = this.extractShowNotes(event)
@@ -181,15 +200,15 @@ export class PodcastFeedGenerator {
     // Generate value splits for this item (synchronous version for now)
     const valueSplits = this.generateValueSplitsForEventSync(event, longFormMap)
     const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
-    
+
     return `    <item>
       <title>${this.escapeXml(title)}</title>
       <link>${this.escapeXml(mediaUrl)}</link>
       <guid>${guid}</guid>
       <pubDate>${pubDate}</pubDate>
       <description><![CDATA[${htmlContent}]]></description>
-      <enclosure url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
-      <media:content url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
+      <enclosure url="${this.escapeXml(mediaUrl)}" type="${mimeType}" length="0" />
+      <media:content url="${this.escapeXml(mediaUrl)}" type="${mimeType}" />
       <itunes:title>${this.escapeXml(title)}</itunes:title>
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
       <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
@@ -315,7 +334,7 @@ ${keysendRecipients}
 
     return null
   }
-  
+
   private escapeXml(unsafe: string): string {
     return unsafe.replace(/[<>&'"]/g, c => {
       switch (c) {
@@ -340,8 +359,8 @@ ${keysendRecipients}
     const title = this.extractTitle(event)
     const pubDate = new Date((event.created_at || 0) * 1000).toUTCString()
     const guid = event.id
-    const mediaType = videoUrl ? 'video' : 'audio'
     const mediaUrl = videoUrl || audioUrl || ''
+    const mimeType = getMimeType(mediaUrl)
     
     // Extract show notes from long-form content if available
     const showNotes = this.extractShowNotes(event)
@@ -353,15 +372,15 @@ ${keysendRecipients}
     // Generate value splits for this item with recipient information
     const valueSplits = await this.generateValueSplitsForEventAsync(event, longFormMap, profile, npub)
     const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
-    
+
     return `    <item>
       <title>${this.escapeXml(title)}</title>
       <link>${this.escapeXml(mediaUrl)}</link>
       <guid>${guid}</guid>
       <pubDate>${pubDate}</pubDate>
       <description><![CDATA[${htmlContent}]]></description>
-      <enclosure url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
-      <media:content url="${this.escapeXml(mediaUrl)}" type="${mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'}" />
+      <enclosure url="${this.escapeXml(mediaUrl)}" type="${mimeType}" length="0" />
+      <media:content url="${this.escapeXml(mediaUrl)}" type="${mimeType}" />
       <itunes:title>${this.escapeXml(title)}</itunes:title>
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
       <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
@@ -417,4 +436,205 @@ ${keysendRecipients}
     // Priority 4: Return empty array (will fall back to channel-level default)
     return []
   }
-} 
+
+  /**
+   * Generates RSS item for a Live Activity with recording (ended activities)
+   */
+  private buildLiveRecordingItem(activity: LiveActivity, valueTag?: string): string {
+    // Only include live activities that have recording URLs
+    if (!activity.recordingUrl) return ''
+
+    const title = activity.title || ''
+    const link = `${process.env.NEXT_PUBLIC_HTTP_NOSTR_GATEWAY || 'https://njump.me'}/${activity.naddr}`
+    const pubDate = activity.ends
+      ? new Date(activity.ends * 1000).toUTCString()
+      : new Date((activity.created_at || 0) * 1000).toUTCString()
+    const guid = activity.id
+
+    // Use recording URL as the media URL
+    const mediaUrl = activity.recordingUrl
+    const mimeType = getMimeType(mediaUrl)
+
+    // Build description from summary and content
+    const description = this.buildLiveActivityDescription(activity)
+
+    // Convert markdown to HTML and sanitize
+    const htmlContent = DOMPurify.sanitize(marked.parse(description, { async: false }) as string)
+
+    return `
+    <item>
+      <title>${this.escapeXml(title)}</title>
+      <link>${link}</link>
+      <guid>${guid}</guid>
+      <pubDate>${pubDate}</pubDate>
+      <description><![CDATA[${htmlContent}]]></description>
+      <enclosure url="${this.escapeXml(mediaUrl)}" type="${mimeType}" length="0" />
+      <media:content url="${this.escapeXml(mediaUrl)}" type="${mimeType}" />
+      <itunes:title>${this.escapeXml(title)}</itunes:title>
+      <itunes:author>${this.escapeXml(activity.pubkey)}</itunes:author>
+      <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
+      <itunes:duration>00:00:00</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+      ${activity.image ? `<itunes:image href="${this.escapeXml(activity.image)}"/>` : ''}
+      ${valueTag || ''}
+    </item>`
+  }
+
+  /**
+   * Generates RSS liveItem for a Live Activity with streaming URL (live or planned activities)
+   */
+  private buildLiveStreamItem(activity: LiveActivity, valueTag?: string): string {
+    // Only include live activities that have streaming URLs and are not ended
+    if (!activity.streamingUrl || activity.status === 'ended') return ''
+
+    const title = activity.title || ''
+    const link = `${process.env.NEXT_PUBLIC_HTTP_NOSTR_GATEWAY || 'https://njump.me'}/${activity.naddr}`
+    const guid = activity.id
+    const streamUrl = activity.streamingUrl
+    const mimeType = streamUrl ? getMimeType(streamUrl) : 'application/x-mpegURL'
+
+    // Build description
+    const description = this.buildLiveActivityDescription(activity)
+
+    // Convert markdown to HTML and sanitize
+    const htmlContent = DOMPurify.sanitize(marked.parse(description, { async: false }) as string)
+
+    // Format start and end times
+    const startTime = activity.starts ? new Date(activity.starts * 1000).toISOString() : new Date((activity.created_at || 0) * 1000).toISOString()
+    const endTime = activity.ends ? new Date(activity.ends * 1000).toISOString() : undefined
+
+    return `
+    <podcast:liveItem status="${activity.status || 'live'}" start="${startTime || ''}"${endTime ? ` end="${endTime}"` : ''}>
+      <title>${this.escapeXml(title)}</title>
+      <link>${link}</link>
+      <guid>${guid}</guid>
+      <description><![CDATA[${htmlContent}]]></description>
+      <enclosure url="${this.escapeXml(streamUrl)}" type="${mimeType}" length="0" />
+      <media:content url="${this.escapeXml(streamUrl)}" type="${mimeType}" />
+      <itunes:title>${this.escapeXml(title)}</itunes:title>
+      <itunes:author>${this.escapeXml(activity.pubkey)}</itunes:author>
+      <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
+      <itunes:duration>00:00:00</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+      ${activity.image ? `<itunes:image href="${this.escapeXml(activity.image)}"/>` : ''}
+      ${valueTag || ''}
+    </podcast:liveItem>`
+  }
+
+  /**
+   * Synchronous version
+   */
+  private generateLiveActivityItem(event: NDKEvent): string {
+    const activity = this.nostrService?.transformToLiveActivity(event)
+
+    if (activity?.recordingUrl) {
+      return this.buildLiveRecordingItem(activity)
+    } else if (activity?.streamingUrl) {
+      return this.buildLiveStreamItem(activity)
+    }
+
+    return ''
+  }
+
+  /**
+   * Async version
+   */
+  private async generateLiveActivityItemAsync(event: NDKEvent): Promise<string> {
+    const activity = this.nostrService?.transformToLiveActivity(event)
+    if (!activity) return ''
+
+    // Populate participant profiles for live activities
+    if (activity.participants && activity.participants.length > 0) {
+      activity.participants = await this.nostrService?.populateLiveActivityParticipants(activity.participants)
+    }
+
+    const valueSplits = await this.generateValueSplitsForLiveActivity(activity)
+    const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
+
+    if (activity.recordingUrl) {
+      return this.buildLiveRecordingItem(activity, valueTag)
+    } else if (activity.streamingUrl) {
+      return this.buildLiveStreamItem(activity, valueTag)
+    }
+
+    return ''
+  }
+
+  /**
+   * Helper method to build description for live activities
+   */
+  private buildLiveActivityDescription(activity: LiveActivity): string {
+    let description = ''
+    if (activity.summary) {
+      description += activity.summary
+    }
+    if (activity.content) {
+      description += (description ? '\n\n' : '') + activity.content
+    }
+    if (!description) {
+      description = activity.status === 'ended' ? 'Live activity recording' : 'Live activity'
+    }
+
+    // Add participants information to description
+    if (activity.participants && activity.participants.length > 0) {
+      const participantNames = activity.participants
+        .filter(p => p.profile?.name)
+        .map(p => `${p.profile!.name}${p.role ? ` (${p.role})` : ''}`)
+
+      if (participantNames.length > 0) {
+        description += `\n\nParticipants: ${participantNames.join(', ')}`
+      }
+    }
+
+    // Add hashtags if available
+    if (activity.hashtags && activity.hashtags.length > 0) {
+      description += `\n\nTags: ${activity.hashtags.map(tag => `#${tag}`).join(', ')}`
+    }
+
+    return description
+  }
+
+  /**
+   * Generates value splits for a live activity based on participants' lightning addresses
+   * If no participants exist, falls back to using the activity creator's pubkey
+   */
+  private async generateValueSplitsForLiveActivity(activity: LiveActivity): Promise<ValueSplit[]> {
+    if (!this.nostrService) return []
+
+    // Try participants first if they exist
+    if (activity.participants?.length) {
+      const uniquePubkeys = Array.from(new Set(activity.participants.map(p => p.pubkey)))
+      const participantInfo = await this.nostrService.fetchLightningAddressesWithNames(uniquePubkeys)
+
+      const participantsWithLightning = activity.participants.filter(p =>
+        participantInfo.get(p.pubkey)?.lightningAddress
+      )
+
+      if (participantsWithLightning.length > 0) {
+        const basePercentage = Math.floor(100 / participantsWithLightning.length)
+        const remainder = 100 - (basePercentage * participantsWithLightning.length)
+
+        return participantsWithLightning.map((participant, index) => {
+          const info = participantInfo.get(participant.pubkey)!
+          return {
+            pubkey: participant.pubkey,
+            percentage: basePercentage + (index === 0 ? remainder : 0),
+            lightningAddress: info.lightningAddress!,
+            name: participant.profile?.name || info.name || participant.role || `Participant ${participant.pubkey.substring(0, 8)}`
+          }
+        })
+      }
+    }
+
+    // Fallback to activity creator
+    const creatorInfo = await this.nostrService.fetchLightningAddressesWithNames([activity.pubkey])
+    const creatorData = creatorInfo.get(activity.pubkey)
+
+    return creatorData?.lightningAddress ? [{
+      pubkey: activity.pubkey,
+      percentage: 100,
+      lightningAddress: creatorData.lightningAddress,
+      name: creatorData.name || `Creator ${activity.pubkey.substring(0, 8)}`
+    }] : []
+  }
+}
