@@ -25,6 +25,7 @@
     "@heroicons/react": "^2.2.0",
     "@nostr-dev-kit/ndk": "^2.5.0",
     "express": "^4.18.2",
+    "fathom-client": "^3.7.2",
     "isomorphic-dompurify": "^2.24.0",
     "marked": "^15.0.9",
     "next": "^15.3.0",
