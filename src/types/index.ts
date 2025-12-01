@@ -9,6 +9,7 @@ export interface MediaEvent {
   videoUrl?: string;
   mediaType?: 'audio' | 'video';
   title?: string;
+  imageUrl?: string;
 }
 
 export interface PodcastFeed {
