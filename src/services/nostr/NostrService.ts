@@ -1,7 +1,7 @@
 import NDK from '@nostr-dev-kit/ndk'
+import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
 import { decode } from 'nostr-tools/nip19'
-import { NDKEvent } from '@nostr-dev-kit/ndk'
-import { MediaEvent } from "../../types";
+import type { MediaEvent } from "../../types";
 
 export interface NostrProfile {
   name?: string
@@ -12,53 +12,144 @@ export interface NostrProfile {
   nip05?: string
   lud16?: string
   lud06?: string
+  nodeid?: string
+}
+
+/**
+ * Simple in-memory cache adapter for server-side use
+ * Prevents NDK from trying to use localStorage during SSR
+ */
+class InMemoryCacheAdapter implements NDKCacheAdapter {
+  locking = false
+  ready = true
+  private cache = new Map<string, NDKEvent[]>()
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  query(_subscription: NDKSubscription): NDKEvent[] {
+    // Return empty array - we'll rely on relay queries
+    return []
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async setEvent(event: NDKEvent, _filters: NDKFilter[], _relay?: NDKRelay): Promise<void> {
+    // Simple in-memory caching - could be enhanced if needed
+    const key = event.id
+    if (!this.cache.has(key)) {
+      this.cache.set(key, [event])
+    }
+  }
+
+  async deleteEventIds(eventIds: NDKEventId[]): Promise<void> {
+    for (const eventId of eventIds) {
+      this.cache.delete(eventId)
+    }
+  }
 }
 
 export class NostrService {
   private ndk: NDK | null = null
-  private readonly defaultRelay = 'wss://relay.nostr.band'
-  private readonly defaultNpub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
+  private readonly defaultRelaysRaw = [
+    'wss://relay.nostr.band',
+    'wss://wot.dergigi.com/',
+    'wss://wot.utxo.one',
+    'wss://relay.damus.io'
+  ]
+  private readonly defaultRelays = Array.from(new Set(this.defaultRelaysRaw.map(url => url.replace(/\/$/, ''))))
+  private readonly defaultIdentifier = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
   async initialize(): Promise<void> {
     if (!this.ndk) {
+      // Use in-memory cache adapter to avoid localStorage issues during SSR
+      const isServer = typeof window === 'undefined'
+      const cacheAdapter = isServer ? new InMemoryCacheAdapter() : undefined
+
+      // Provide a minimal localStorage shim on the server to satisfy libraries that expect it
+      if (isServer) {
+        interface GlobalWithStorage extends Omit<typeof globalThis, 'localStorage'> {
+          localStorage?: Storage
+        }
+        const g = globalThis as GlobalWithStorage
+        const needsShim = !g.localStorage || typeof g.localStorage.getItem !== 'function'
+        if (needsShim) {
+          const store = new Map<string, string>()
+          g.localStorage = {
+            getItem(key: string): string | null { return store.has(key) ? store.get(key)! : null },
+            setItem(key: string, value: string): void { store.set(key, String(value)) },
+            removeItem(key: string): void { store.delete(key) },
+            clear(): void { store.clear() },
+            key(index: number): string | null { return Array.from(store.keys())[index] ?? null },
+            get length(): number { return store.size },
+          }
+        }
+      }
+      
       this.ndk = new NDK({
-        explicitRelayUrls: [this.defaultRelay],
+        explicitRelayUrls: this.defaultRelays,
+        cacheAdapter,
       })
       await this.ndk.connect()
     }
   }
 
-  private getPubkeyFromNpub(npub: string): string | null {
+  /**
+   * Extracts pubkey from npub or nprofile identifier following NDK best practices
+   * @param identifier npub or nprofile string (may be URL-encoded)
+   * @returns hex pubkey or null if invalid
+   */
+  private getPubkeyFromIdentifier(identifier: string): string | null {
+    const data = this.getIdentifierData(identifier)
+    return data?.pubkey || null
+  }
+
+  /**
+   * Extracts pubkey and optional relay hints from npub or nprofile identifier
+   * @param identifier npub or nprofile string (may be URL-encoded)
+   * @returns Object with pubkey and optional relays array, or null if invalid
+   */
+  private getIdentifierData(identifier: string): { pubkey: string; relays?: string[] } | null {
     try {
       // Ignore favicon.ico requests
-      if (npub === 'favicon.ico') return null;
+      if (identifier === 'favicon.ico') return null;
       
-      // Remove any potential URL encoding or invalid characters
-      const cleanNpub = decodeURIComponent(npub).replace(/[^a-zA-Z0-9]/g, '')
-      
-      // Ensure npub has the correct prefix and length
-      const normalizedNpub = cleanNpub.startsWith('npub1') ? cleanNpub : `npub1${cleanNpub}`
-      
-      // Validate the npub format (must be exactly 63 characters: 'npub1' + 58 chars)
-      if (normalizedNpub.length !== 63 || !/^npub1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(normalizedNpub)) {
-        console.error('Invalid npub format:', npub)
-        return null
+      // Decode URL encoding first (Next.js may URL-encode the path parameter)
+      let decodedIdentifier: string;
+      try {
+        decodedIdentifier = decodeURIComponent(identifier);
+      } catch {
+        // If it's not URL-encoded, use as-is
+        decodedIdentifier = identifier;
       }
-
-      const decoded = decode(normalizedNpub)
-      if (decoded.type !== 'npub') return null
-      return decoded.data
+      
+      const decoded = decode(decodedIdentifier.trim());
+      
+      switch (decoded.type) {
+        case 'npub':
+          return { pubkey: decoded.data };
+        case 'nprofile':
+          return { 
+            pubkey: decoded.data.pubkey,
+            relays: decoded.data.relays // Extract relay hints from nprofile
+          };
+        default:
+          return null;
+      }
     } catch (error) {
-      console.error('Error decoding npub:', error)
+      console.error('Error decoding identifier:', error)
       return null
     }
   }
 
-  async getUserProfile(npub: string = this.defaultNpub): Promise<NostrProfile | null> {
+  /**
+   * Fetches user profile from npub or nprofile identifier
+   * @param identifier npub, nprofile, hex pubkey, or NIP-05 identifier
+   * @returns User profile or null if not found
+   */
+  async getUserProfile(identifier: string = this.defaultIdentifier): Promise<NostrProfile | null> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
+      // Extract pubkey from identifier (handles npub, nprofile, or use hex/NIP-05 directly)
+      const pubkey = this.getPubkeyFromIdentifier(identifier) || identifier
       if (!pubkey) return null
-      const user = await this.ndk?.getUser({ pubkey })
+      const user = this.ndk?.getUser({ pubkey })
       if (!user) return null
       const profile = await user.fetchProfile()
       return profile
@@ -68,14 +159,22 @@ export class NostrService {
     }
   }
 
-  async getMediaEvents(npub: string = this.defaultNpub): Promise<MediaEvent[]> {
+  async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [31990],
-        authors: [pubkey],
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : this.defaultRelays
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [31990],
+          authors: [pubkey] as string[],
+        },
+        relayUrls ? { relayUrls } : undefined
+      )
       return events ? Array.from(events).map(event => this.transformToMediaEvent(event)) : []
     } catch (error) {
       console.error('Error fetching media events:', error)
@@ -83,15 +182,23 @@ export class NostrService {
     }
   }
 
-  async getKind1Events(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
+  async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [1],
-        authors: [pubkey],
-        limit: 420,
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : this.defaultRelays
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [1],
+          authors: [pubkey] as string[],
+          limit: 420,
+        },
+        relayUrls ? { relayUrls } : undefined
+      )
       return events ? Array.from(events) : []
     } catch (error) {
       console.error('Error fetching kind1 events:', error)
@@ -101,18 +208,26 @@ export class NostrService {
 
   /**
    * Fetches all long-form content (NIP-23) events for a user
-   * @param npub The npub of the user
+   * @param identifier npub or nprofile identifier of the user
    * @returns An array of long-form content events
    */
-  async getLongFormEvents(npub: string = this.defaultNpub): Promise<NDKEvent[]> {
+  async getLongFormEvents(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
     try {
-      const pubkey = this.getPubkeyFromNpub(npub)
-      if (!pubkey) return []
-      const events = await this.ndk?.fetchEvents({
-        kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey],
-        limit: 100, // Limit to avoid too many results
-      })
+      const data = this.getIdentifierData(identifier)
+      if (!data) return []
+      const { pubkey, relays } = data
+      // Combine relay hints with default relays for better coverage
+      const relayUrls = relays?.length 
+        ? Array.from(new Set([...relays, ...this.defaultRelays]))
+        : this.defaultRelays
+      const events = await this.ndk?.fetchEvents(
+        {
+          kinds: [30023], // NIP-23 long-form content
+          authors: [pubkey] as string[],
+          limit: 100, // Limit to avoid too many results
+        },
+        relayUrls ? { relayUrls } : undefined
+      )
       return events ? Array.from(events) : []
     } catch (error) {
       console.error('Error fetching long-form events:', error)
@@ -248,7 +363,7 @@ export class NostrService {
       // Fetch long-form content events (kind 30023) from the same author
       const events = await this.ndk?.fetchEvents({
         kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey],
+        authors: [pubkey] as string[],
         limit: 100, // Limit to avoid too many results
       });
       
@@ -386,7 +501,7 @@ export class NostrService {
         // Fetch events with the matching pubkey and identifier
         const events = await this.ndk?.fetchEvents({
           kinds: [30023], // NIP-23 long-form content
-          authors: [pubkey],
+          authors: [pubkey] as string[],
           limit: 1,
         });
         
@@ -454,38 +569,156 @@ export class NostrService {
   }
 
   /**
+   * Extracts zap splits from an event according to NIP-57 specification
+   * @param event The event containing zap tags
+   * @returns Array of zap split information with pubkeys and weights
+   */
+  extractZapSplitsFromEvent(event: NDKEvent): Array<{ pubkey: string; weight: number }> {
+    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2);
+    const splits: Array<{ pubkey: string; weight: number }> = [];
+    
+    for (const tag of zapTags) {
+      const pubkey = tag[1];
+      const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1; // Default weight is 1 if not specified
+      
+      if (!isNaN(weight) && weight > 0) {
+        splits.push({ pubkey, weight });
+      }
+    }
+    
+    return splits;
+  }
+
+  /**
    * Extracts value split information from zap tags in an event
    * @param event The event containing zap tags
    * @returns A map of pubkeys to their percentage of the value split
    */
   extractValueSplitFromEvent(event: NDKEvent): Map<string, number> {
     const valueSplitMap = new Map<string, number>();
+    const splits = this.extractZapSplitsFromEvent(event);
     
-    // Zap tags typically have the format ['zap', pubkey, '', share_value, ...]
-    const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length > 3);
-    
-    // First, extract share values
-    const shareValues: { pubkey: string; share: number }[] = [];
-    let totalShares = 0;
-    
-    for (const tag of zapTags) {
-      const pubkey = tag[1];
-      const shareValue = parseFloat(tag[3]);
-      
-      if (!isNaN(shareValue)) {
-        shareValues.push({ pubkey, share: shareValue });
-        totalShares += shareValue;
-      }
+    if (splits.length === 0) {
+      return valueSplitMap;
     }
     
-    // Now calculate the percentage for each pubkey
-    if (totalShares > 0) {
-      shareValues.forEach(({ pubkey, share }) => {
-        const percentage = Math.round((share / totalShares) * 100);
+    // Calculate total weight
+    const totalWeight = splits.reduce((sum, split) => sum + split.weight, 0);
+    
+    // Calculate percentages
+    if (totalWeight > 0) {
+      splits.forEach(({ pubkey, weight }) => {
+        const percentage = Math.round((weight / totalWeight) * 100);
+        valueSplitMap.set(pubkey, percentage);
+      });
+    } else {
+      // If no weights specified, distribute equally
+      const equalPercentage = Math.round(100 / splits.length);
+      splits.forEach(({ pubkey }, index) => {
+        const percentage = index === splits.length - 1 
+          ? 100 - (equalPercentage * (splits.length - 1)) 
+          : equalPercentage;
         valueSplitMap.set(pubkey, percentage);
       });
     }
     
     return valueSplitMap;
+  }
+
+  /**
+   * Extracts zap splits with percentages from an event
+   * @param event The event containing zap tags
+   * @returns Array of zap splits with calculated percentages
+   */
+  extractZapSplitsWithPercentages(event: NDKEvent): Array<{ pubkey: string; percentage: number }> {
+    const splits = this.extractZapSplitsFromEvent(event);
+    
+    if (splits.length === 0) {
+      return [];
+    }
+    
+    // Calculate total weight
+    const totalWeight = splits.reduce((sum, split) => sum + split.weight, 0);
+    
+    // Calculate percentages
+    if (totalWeight > 0) {
+      return splits.map(({ pubkey, weight }) => ({
+        pubkey,
+        percentage: Math.round((weight / totalWeight) * 100)
+      }));
+    } else {
+      // If no weights specified, distribute equally
+      const equalPercentage = Math.round(100 / splits.length);
+      return splits.map(({ pubkey }, index) => ({
+        pubkey,
+        percentage: index === splits.length - 1 
+          ? 100 - (equalPercentage * (splits.length - 1)) 
+          : equalPercentage
+      }));
+    }
+  }
+
+  /**
+   * Fetches zap splits with recipient information (lightning addresses and names)
+   * @param event The event containing zap tags
+   * @returns Array of zap splits with recipient information
+   */
+  async fetchZapSplitsWithRecipients(event: NDKEvent): Promise<Array<{
+    pubkey: string;
+    percentage: number;
+    lightningAddress?: string;
+    name?: string;
+    nodeId?: string;
+  }>> {
+    const splits = this.extractZapSplitsWithPercentages(event);
+    
+    if (splits.length === 0) {
+      return [];
+    }
+    
+    // Fetch lightning addresses and profiles for all recipients
+    const pubkeys = splits.map(split => split.pubkey);
+    const lightningAddresses = await this.fetchLightningAddresses(pubkeys);
+    const recipientProfiles = await this.fetchZapProfiles(event);
+    
+    // Combine the data
+    return splits.map(split => {
+      const lightningAddress = lightningAddresses.get(split.pubkey);
+      const profile = recipientProfiles.get(split.pubkey);
+      const name = profile?.name || `Recipient ${split.pubkey.substring(0, 8)}`;
+      const nodeId = profile?.nodeid;
+      
+      return {
+        ...split,
+        lightningAddress,
+        name,
+        nodeId
+      };
+    });
+  }
+
+  /**
+   * Fetches lightning addresses for a list of pubkeys
+   * @param pubkeys Array of pubkeys to fetch lightning addresses for
+   * @returns A map of pubkeys to their lightning addresses
+   */
+  async fetchLightningAddresses(pubkeys: string[]): Promise<Map<string, string>> {
+    const addressMap = new Map<string, string>();
+    
+    try {
+      for (const pubkey of pubkeys) {
+        if (this.ndk) {
+          const user = this.ndk.getUser({ pubkey });
+          const profile = await user.fetchProfile();
+          if (profile && profile.lud16) {
+            addressMap.set(pubkey, profile.lud16);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching lightning addresses:', error);
+    }
+    
+    return addressMap;
   }
 } 

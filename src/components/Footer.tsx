@@ -14,6 +14,7 @@ const Footer: React.FC = () => {
                 width={24}
                 height={24}
                 className="flex-shrink-0"
+                unoptimized
               />
               <span className="text-sm font-semibold text-gray-700">castr.me</span>
             </a>
@@ -40,7 +41,7 @@ const Footer: React.FC = () => {
             </a>{' '}
             &middot;{' '}
             <a 
-              href="https://njump.me/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme" 
+              href={`${process.env.HTTP_NOSTR_GATEWAY || 'https://njump.to'}/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-gray-500 hover:text-gray-700 hover:underline"

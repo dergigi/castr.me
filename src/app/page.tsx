@@ -1,17 +1,21 @@
 import Link from 'next/link'
 import { ArrowRightIcon, RssIcon, GlobeAltIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import ExamplesGrid from '@/components/ExamplesGrid'
+import NpubInput from '@/components/NpubInput'
+import { Suspense } from 'react'
+import PrefetchDemo from '@/components/PrefetchDemo'
 
 export default function Home(): React.JSX.Element {
   return (
     <div className="bg-white">
+      <PrefetchDemo />
       {/* Hero Section */}
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
           <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
         </div>
         
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+        <div className="mx-auto max-w-2xl pt-32 pb-20 sm:pt-48 sm:pb-24 lg:pt-56 lg:pb-28">
           <div className="text-center">
             <div className="flex justify-center mb-8">
               <div className="relative">
@@ -28,21 +32,23 @@ export default function Home(): React.JSX.Element {
               Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.
             </p>
             
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
-                className="group rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200 flex items-center gap-2"
-              >
-                Try Demo Feed
-                <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              
-              <a
-                href="#examples"
-                className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
-              >
-                Learn more <span aria-hidden="true">→</span>
-              </a>
+            <div className="mt-10 mb-20 flex flex-col items-center justify-center gap-8">
+              <NpubInput placeholder="npub1..." />
+              <div className="flex items-center justify-center gap-x-6">
+                <Link
+                  href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
+                  className="group rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200 flex items-center gap-2"
+                >
+                  Try Demo Feed
+                  <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <a
+                  href="#examples"
+                  className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
+                >
+                  Learn more <span aria-hidden="true">→</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -66,7 +72,15 @@ export default function Home(): React.JSX.Element {
           </div>
           
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <ExamplesGrid />
+            <Suspense fallback={
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="h-20 rounded-2xl bg-gray-100 animate-pulse" />
+                ))}
+              </div>
+            }>
+              <ExamplesGrid />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -147,7 +161,7 @@ export default function Home(): React.JSX.Element {
                 Contribute on GitHub
               </Link>
               <Link
-                href="https://njump.me/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme"
+                href={`${process.env.HTTP_NOSTR_GATEWAY || 'https://njump.to'}/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme`}
                 className="rounded-full bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 transition-all duration-200 flex items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -170,19 +184,22 @@ export default function Home(): React.JSX.Element {
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
               Enter any Nostr npub to generate a podcast feed. Start with our demo or use your own.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
-                className="rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200"
-              >
-                Open Demo Feed
-              </Link>
-              <a
-                href="https://github.com/dergigi/castr.me#overview"
-                className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
-              >
-                Learn more <span aria-hidden="true">→</span>
-              </a>
+            <div className="mt-10 flex flex-col items-center justify-center gap-6">
+              <NpubInput placeholder="npub1..." />
+              <div className="flex items-center justify-center gap-x-6">
+                <Link
+                  href="/npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n"
+                  className="rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 transition-all duration-200"
+                >
+                  Open Demo Feed
+                </Link>
+                <a
+                  href="https://github.com/dergigi/castr.me#overview"
+                  className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 transition-colors"
+                >
+                  Learn more <span aria-hidden="true">→</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

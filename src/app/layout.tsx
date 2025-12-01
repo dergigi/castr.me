@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import type { ReactElement } from 'react'
 import { Inter } from 'next/font/google'
 import Footer from '@/components/Footer'
+import { FathomAnalytics } from './fathom'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -79,7 +80,11 @@ export default function RootLayout({
 }): ReactElement {
   return (
     <html lang="en" className="h-full antialiased">
+      <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      </head>
       <body className={inter.className}>
+        <FathomAnalytics />
         <div className="min-h-screen flex flex-col">
           <main className="flex-grow">
             {children}

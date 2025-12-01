@@ -4,7 +4,7 @@ import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator'
 
 // Create service instances
 const nostrService = new NostrService()
-const feedGenerator = new PodcastFeedGenerator()
+const feedGenerator = new PodcastFeedGenerator(nostrService)
 
 // Initialize NDK connection
 let initialized = false
@@ -27,12 +27,20 @@ export async function GET(
     }
     
     const resolvedParams = await params
-    const npub = resolvedParams.npub
+    let npub = resolvedParams.npub
+    
+    // Decode URL encoding if present
+    try {
+      npub = decodeURIComponent(npub)
+    } catch {
+      // If not URL-encoded, use as-is
+    }
+    
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
     const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
     
-    // Fetch long-form content for show notes
+    // Fetch long-form content for show notes and zap splits
     const longFormEvents = await nostrService.getLongFormEvents(npub)
     
     // Create a map of kind1 event titles to long-form events for quick lookup
@@ -48,7 +56,8 @@ export async function GET(
       )
     }
 
-    const feed = feedGenerator.generateFeed(profile, eventsWithShowNotes, npub)
+    // Use the async version to fetch recipient information
+    const feed = await feedGenerator.generateFeedAsync(profile, eventsWithShowNotes, npub, longFormMap)
     
     return new NextResponse(feed, {
       headers: {
