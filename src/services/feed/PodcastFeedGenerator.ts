@@ -164,24 +164,27 @@ export class PodcastFeedGenerator {
     const audioUrl = this.extractAudioUrl(event.content)
     const videoUrl = this.extractVideoUrl(event.content)
     if (!audioUrl && !videoUrl) return ''
-    
+
     const title = this.extractTitle(event)
     const pubDate = new Date((event.created_at || 0) * 1000).toUTCString()
     const guid = event.id
     const mediaType = videoUrl ? 'video' : 'audio'
     const mediaUrl = videoUrl || audioUrl || ''
-    
+    const imageUrl = this.extractImage(event)
+
     // Extract show notes from long-form content if available
     const showNotes = this.extractShowNotes(event)
     const content = showNotes || event.content
-    
+
     // Convert markdown to HTML and sanitize
     const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
-    
+
+    // Generate itunes:image tag if image exists
+    const imageTag = imageUrl ? `\n      <itunes:image href="${this.escapeXml(imageUrl)}"/>` : ''
+
     // Generate value splits for this item (synchronous version for now)
     const valueSplits = this.generateValueSplitsForEventSync(event, longFormMap)
     const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
-    
     return `    <item>
       <title>${this.escapeXml(title)}</title>
       <link>${this.escapeXml(mediaUrl)}</link>
@@ -194,7 +197,7 @@ export class PodcastFeedGenerator {
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
       <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
       <itunes:duration>00:00:00</itunes:duration>
-      <itunes:explicit>false</itunes:explicit>${valueTag}
+      <itunes:explicit>false</itunes:explicit>${imageTag}${valueTag}
     </item>`
   }
   
@@ -315,7 +318,27 @@ ${keysendRecipients}
 
     return null
   }
-  
+
+  private extractImage(event: NDKEvent): string | undefined {
+    // Try to find an image tag
+    const imageTag = event.tags.find(tag => tag[0] === 'image')
+    if (imageTag) return imageTag[1]
+
+    // Try to find an image URL in r tags (reference/resource tags)
+    const rTags = event.tags.filter(tag => tag[0] === 'r' && tag.length > 1)
+    for (const tag of rTags) {
+      const url = tag[1]
+      if (/\.(?:jpg|jpeg|png|gif|webp)$/i.test(url)) {
+        return url
+      }
+    }
+
+    // Try to find an image URL in the content
+    const imageRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/i
+    const match = event.content.match(imageRegex)
+    return match ? match[0] : undefined
+  }
+
   private escapeXml(unsafe: string): string {
     return unsafe.replace(/[<>&'"]/g, c => {
       switch (c) {
@@ -336,24 +359,28 @@ ${keysendRecipients}
     const audioUrl = this.extractAudioUrl(event.content)
     const videoUrl = this.extractVideoUrl(event.content)
     if (!audioUrl && !videoUrl) return ''
-    
+
     const title = this.extractTitle(event)
     const pubDate = new Date((event.created_at || 0) * 1000).toUTCString()
     const guid = event.id
     const mediaType = videoUrl ? 'video' : 'audio'
     const mediaUrl = videoUrl || audioUrl || ''
-    
+    const imageUrl = this.extractImage(event)
+
     // Extract show notes from long-form content if available
     const showNotes = this.extractShowNotes(event)
     const content = showNotes || event.content
-    
+
     // Convert markdown to HTML and sanitize
     const htmlContent = DOMPurify.sanitize(marked.parse(content, { async: false }) as string)
-    
+
+    // Generate itunes:image tag if image exists
+    const imageTag = imageUrl ? `\n      <itunes:image href="${this.escapeXml(imageUrl)}"/>` : ''
+
     // Generate value splits for this item with recipient information
     const valueSplits = await this.generateValueSplitsForEventAsync(event, longFormMap, profile, npub)
     const valueTag = valueSplits.length > 0 ? this.generateValueTag(valueSplits) : ''
-    
+
     return `    <item>
       <title>${this.escapeXml(title)}</title>
       <link>${this.escapeXml(mediaUrl)}</link>
@@ -366,7 +393,7 @@ ${keysendRecipients}
       <itunes:author>${this.escapeXml(event.pubkey)}</itunes:author>
       <itunes:summary><![CDATA[${htmlContent}]]></itunes:summary>
       <itunes:duration>00:00:00</itunes:duration>
-      <itunes:explicit>false</itunes:explicit>${valueTag}
+      <itunes:explicit>false</itunes:explicit>${imageTag}${valueTag}
     </item>`
   }
   
