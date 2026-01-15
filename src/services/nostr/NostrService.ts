@@ -1,7 +1,25 @@
 import NDK from '@nostr-dev-kit/ndk'
 import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
 import { decode } from 'nostr-tools/nip19'
+import { EventStore } from 'applesauce-core/event-store'
+import { RelayPool } from 'applesauce-relay'
 import type { MediaEvent } from "../../types";
+import { createEventLoaderForStore } from 'applesauce-loaders/loaders'
+
+// Create in-memory event store for holding events
+export const eventStore = new EventStore()
+
+// Create relay connection pool
+export const pool = new RelayPool()
+
+// Setup loaders so event store and load profiles
+export const eventLoader = createEventLoaderForStore(eventStore, pool)
+
+// Periodically prune the event store
+setInterval(() => {
+  // Remove the least used events in the store
+  eventStore.prune()
+}, 1000 * 60 * 30) // 30 Minutes
 
 export interface NostrProfile {
   name?: string
@@ -82,7 +100,7 @@ export class NostrService {
           }
         }
       }
-      
+
       this.ndk = new NDK({
         explicitRelayUrls: this.defaultRelays,
         cacheAdapter,
@@ -110,7 +128,7 @@ export class NostrService {
     try {
       // Ignore favicon.ico requests
       if (identifier === 'favicon.ico') return null;
-      
+
       // Decode URL encoding first (Next.js may URL-encode the path parameter)
       let decodedIdentifier: string;
       try {
@@ -119,14 +137,14 @@ export class NostrService {
         // If it's not URL-encoded, use as-is
         decodedIdentifier = identifier;
       }
-      
+
       const decoded = decode(decodedIdentifier.trim());
-      
+
       switch (decoded.type) {
         case 'npub':
           return { pubkey: decoded.data };
         case 'nprofile':
-          return { 
+          return {
             pubkey: decoded.data.pubkey,
             relays: decoded.data.relays // Extract relay hints from nprofile
           };
@@ -165,7 +183,7 @@ export class NostrService {
       if (!data) return []
       const { pubkey, relays } = data
       // Combine relay hints with default relays for better coverage
-      const relayUrls = relays?.length 
+      const relayUrls = relays?.length
         ? Array.from(new Set([...relays, ...this.defaultRelays]))
         : this.defaultRelays
       const events = await this.ndk?.fetchEvents(
@@ -188,7 +206,7 @@ export class NostrService {
       if (!data) return []
       const { pubkey, relays } = data
       // Combine relay hints with default relays for better coverage
-      const relayUrls = relays?.length 
+      const relayUrls = relays?.length
         ? Array.from(new Set([...relays, ...this.defaultRelays]))
         : this.defaultRelays
       const events = await this.ndk?.fetchEvents(
@@ -217,7 +235,7 @@ export class NostrService {
       if (!data) return []
       const { pubkey, relays } = data
       // Combine relay hints with default relays for better coverage
-      const relayUrls = relays?.length 
+      const relayUrls = relays?.length
         ? Array.from(new Set([...relays, ...this.defaultRelays]))
         : this.defaultRelays
       const events = await this.ndk?.fetchEvents(
@@ -243,7 +261,7 @@ export class NostrService {
    */
   matchLongFormShowNotes(mediaEvents: NDKEvent[], longFormEvents: NDKEvent[]): Map<string, NDKEvent> {
     const longFormMap = new Map<string, NDKEvent>()
-    
+
     for (const event of mediaEvents) {
       const kind1Title = event.content.split('\n')[0].trim()
       // First try to find a matching long-form event by title
@@ -268,7 +286,7 @@ export class NostrService {
         longFormMap.set(kind1Title, matchingLongForm)
       }
     }
-    
+
     return longFormMap
   }
 
@@ -282,12 +300,12 @@ export class NostrService {
     return mediaEvents.map(event => {
       const kind1Title = event.content.split('\n')[0].trim()
       const longFormEvent = longFormMap.get(kind1Title)
-      
+
       if (longFormEvent) {
         // Add show notes tag to the event
         event.tags.push(['show_notes', longFormEvent.content])
       }
-      
+
       return event
     })
   }
@@ -332,7 +350,7 @@ export class NostrService {
     try {
       // Get the title from the kind1 event
       const title = this.extractTitle(kind1Event);
-      
+
       // If longFormEvents is provided, search through them
       if (longFormEvents && longFormEvents.length > 0) {
         // First try exact title match
@@ -356,21 +374,21 @@ export class NostrService {
         }
         return null;
       }
-      
+
       // Otherwise, fetch long-form content events from the same author
       const pubkey = kind1Event.pubkey;
-      
+
       // Fetch long-form content events (kind 30023) from the same author
       const events = await this.ndk?.fetchEvents({
         kinds: [30023], // NIP-23 long-form content
         authors: [pubkey] as string[],
         limit: 100, // Limit to avoid too many results
       });
-      
+
       if (!events || events.size === 0) {
         return null;
       }
-      
+
       // Find an event with a matching title
       const eventsArray = Array.from(events);
       for (const event of eventsArray) {
@@ -391,7 +409,7 @@ export class NostrService {
           }
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error finding matching long-form content:', error);
@@ -426,7 +444,7 @@ export class NostrService {
     const audioUrl = this.extractAudioUrl(event.content);
     const videoUrl = this.extractVideoUrl(event.content);
     const mediaType = videoUrl ? 'video' : audioUrl ? 'audio' : undefined;
-    
+
     return {
       id: event.id,
       pubkey: event.pubkey,
@@ -474,7 +492,7 @@ export class NostrService {
       // Handle both nevent and naddr formats
       let pubkey: string | null = null;
       let identifier: string | null = null;
-      
+
       if (eventId.startsWith('nevent1')) {
         // For nevent format, we need to extract the event ID
         const decoded = decode(eventId);
@@ -486,16 +504,16 @@ export class NostrService {
         if (decoded.type !== 'naddr') return null;
         pubkey = decoded.data.pubkey;
         identifier = decoded.data.identifier;
-        
+
         // Fetch events with the matching pubkey and identifier
         const events = await this.ndk?.fetchEvents({
           kinds: [30023], // NIP-23 long-form content
           authors: [pubkey] as string[],
           limit: 1,
         });
-        
+
         if (!events || events.size === 0) return null;
-        
+
         // Find the event with the matching identifier
         for (const event of Array.from(events)) {
           // Check if the event has a d tag with the identifier
@@ -504,7 +522,7 @@ export class NostrService {
             return event;
           }
         }
-        
+
         return null;
       } else {
         // Assume it's a raw event ID
@@ -525,11 +543,11 @@ export class NostrService {
     // Zap tags typically have the format ['zap', pubkey, ...]
     const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length > 1);
     const pubkeys = zapTags.map(tag => tag[1]);
-    
+
     // Remove duplicates
     return Array.from(new Set(pubkeys));
   }
-  
+
   /**
    * Fetches user profiles for pubkeys from zap tags
    * @param event The event containing zap tags
@@ -539,7 +557,7 @@ export class NostrService {
     try {
       const pubkeys = this.extractZapPubkeysFromEvent(event);
       const profileMap = new Map<string, NostrProfile>();
-      
+
       for (const pubkey of pubkeys) {
         if (this.ndk) {
           const user = this.ndk.getUser({ pubkey });
@@ -549,7 +567,7 @@ export class NostrService {
           }
         }
       }
-      
+
       return profileMap;
     } catch (error) {
       console.error('Error fetching zap profiles:', error);
@@ -565,16 +583,16 @@ export class NostrService {
   extractZapSplitsFromEvent(event: NDKEvent): Array<{ pubkey: string; weight: number }> {
     const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2);
     const splits: Array<{ pubkey: string; weight: number }> = [];
-    
+
     for (const tag of zapTags) {
       const pubkey = tag[1];
       const weight = tag.length >= 4 ? parseFloat(tag[3]) : 1; // Default weight is 1 if not specified
-      
+
       if (!isNaN(weight) && weight > 0) {
         splits.push({ pubkey, weight });
       }
     }
-    
+
     return splits;
   }
 
@@ -586,14 +604,14 @@ export class NostrService {
   extractValueSplitFromEvent(event: NDKEvent): Map<string, number> {
     const valueSplitMap = new Map<string, number>();
     const splits = this.extractZapSplitsFromEvent(event);
-    
+
     if (splits.length === 0) {
       return valueSplitMap;
     }
-    
+
     // Calculate total weight
     const totalWeight = splits.reduce((sum, split) => sum + split.weight, 0);
-    
+
     // Calculate percentages
     if (totalWeight > 0) {
       splits.forEach(({ pubkey, weight }) => {
@@ -604,13 +622,13 @@ export class NostrService {
       // If no weights specified, distribute equally
       const equalPercentage = Math.round(100 / splits.length);
       splits.forEach(({ pubkey }, index) => {
-        const percentage = index === splits.length - 1 
-          ? 100 - (equalPercentage * (splits.length - 1)) 
+        const percentage = index === splits.length - 1
+          ? 100 - (equalPercentage * (splits.length - 1))
           : equalPercentage;
         valueSplitMap.set(pubkey, percentage);
       });
     }
-    
+
     return valueSplitMap;
   }
 
@@ -621,14 +639,14 @@ export class NostrService {
    */
   extractZapSplitsWithPercentages(event: NDKEvent): Array<{ pubkey: string; percentage: number }> {
     const splits = this.extractZapSplitsFromEvent(event);
-    
+
     if (splits.length === 0) {
       return [];
     }
-    
+
     // Calculate total weight
     const totalWeight = splits.reduce((sum, split) => sum + split.weight, 0);
-    
+
     // Calculate percentages
     if (totalWeight > 0) {
       return splits.map(({ pubkey, weight }) => ({
@@ -640,8 +658,8 @@ export class NostrService {
       const equalPercentage = Math.round(100 / splits.length);
       return splits.map(({ pubkey }, index) => ({
         pubkey,
-        percentage: index === splits.length - 1 
-          ? 100 - (equalPercentage * (splits.length - 1)) 
+        percentage: index === splits.length - 1
+          ? 100 - (equalPercentage * (splits.length - 1))
           : equalPercentage
       }));
     }
@@ -660,23 +678,23 @@ export class NostrService {
     nodeId?: string;
   }>> {
     const splits = this.extractZapSplitsWithPercentages(event);
-    
+
     if (splits.length === 0) {
       return [];
     }
-    
+
     // Fetch lightning addresses and profiles for all recipients
     const pubkeys = splits.map(split => split.pubkey);
     const lightningAddresses = await this.fetchLightningAddresses(pubkeys);
     const recipientProfiles = await this.fetchZapProfiles(event);
-    
+
     // Combine the data
     return splits.map(split => {
       const lightningAddress = lightningAddresses.get(split.pubkey);
       const profile = recipientProfiles.get(split.pubkey);
       const name = profile?.name || `Recipient ${split.pubkey.substring(0, 8)}`;
       const nodeId = profile?.nodeid;
-      
+
       return {
         ...split,
         lightningAddress,
@@ -693,7 +711,7 @@ export class NostrService {
    */
   async fetchLightningAddresses(pubkeys: string[]): Promise<Map<string, string>> {
     const addressMap = new Map<string, string>();
-    
+
     try {
       for (const pubkey of pubkeys) {
         if (this.ndk) {
@@ -707,7 +725,7 @@ export class NostrService {
     } catch (error) {
       console.error('Error fetching lightning addresses:', error);
     }
-    
+
     return addressMap;
   }
-} 
+}

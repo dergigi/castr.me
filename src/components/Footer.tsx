@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { HTTP_NOSTR_GATEWAY } from '@/config/env';
 
 const Footer: React.FC = () => {
   return (
@@ -21,9 +22,9 @@ const Footer: React.FC = () => {
           </div>
           <p className="text-sm text-gray-500">
             Made with love by{' '}
-            <a 
-              href="https://npub.world/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc" 
-              target="_blank" 
+            <a
+              href="https://npub.world/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:text-blue-800 hover:underline"
             >
@@ -31,27 +32,27 @@ const Footer: React.FC = () => {
             </a> - okay... vibed with love.
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            <a 
-              href="https://github.com/dergigi/pubcaster" 
-              target="_blank" 
+            <a
+              href="https://github.com/dergigi/pubcaster"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 hover:text-gray-700 hover:underline"
             >
               GitHub
             </a>{' '}
             &middot;{' '}
-            <a 
-              href={`${process.env.HTTP_NOSTR_GATEWAY || 'https://njump.to'}/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme`} 
-              target="_blank" 
+            <a
+              href={`${HTTP_NOSTR_GATEWAY}/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme`}
+              target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 hover:text-gray-700 hover:underline"
             >
               Nostr
             </a>{' '}
             &middot;{' '}
-            <a 
-              href="https://sovereignengineering.io/" 
-              target="_blank" 
+            <a
+              href="https://sovereignengineering.io/"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 hover:text-gray-700 hover:underline"
             >
@@ -64,4 +65,4 @@ const Footer: React.FC = () => {
   );
 };
 
-export default Footer; 
+export default Footer;

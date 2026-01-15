@@ -6,6 +6,7 @@ import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 import CopyButton from '@/components/CopyButton'
 import type { Metadata } from 'next'
+import { HTTP_NOSTR_GATEWAY, NEXT_PUBLIC_BASE_URL } from '@/config/env'
 
 // Define the profile interface
 interface NostrProfile {
@@ -50,18 +51,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const resolvedParams = await params
   const npub = resolvedParams.npub
-  
+
   // Initialize NDK if not already initialized
   if (!initialized) {
     await nostrService.initialize()
     initialized = true
   }
-  
+
   try {
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
     const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
-    
+
     if (!profile) {
       return {
         title: `Profile Not Found - castr.me`,
@@ -78,14 +79,14 @@ export async function generateMetadata({
         },
       }
     }
-    
+
     const profileName = profile.name || npub.slice(0, 16) + '...'
     const profileDescription = profile.about || `Listen to ${profileName}'s Nostr content as a podcast feed`
     const mediaCount = mediaEvents.length
-    
+
     const title = `${profileName} - Podcast Feed | castr.me`
     const description = `${profileDescription}${mediaCount > 0 ? ` (${mediaCount} episodes available)` : ''}`
-    
+
     const ogImages = []
     if (profile.image) {
       ogImages.push({
@@ -95,7 +96,7 @@ export async function generateMetadata({
         alt: `${profileName}'s profile picture`,
       })
     }
-    
+
     // Add dynamic OG image
     const ogImageUrl = `/api/og?title=${encodeURIComponent(profileName)}&subtitle=${encodeURIComponent(profileDescription)}&type=profile`
     ogImages.push({
@@ -104,7 +105,7 @@ export async function generateMetadata({
       height: 630,
       alt: `${profileName} - Podcast Feed | castr.me`,
     })
-    
+
     return {
       title,
       description,
@@ -163,18 +164,18 @@ export default async function NpubPage({
     initialized = true
     console.log('NDK initialized successfully')
   }
-  
+
   // Get the npub/nprofile from params (may be URL-encoded)
   const resolvedParams = await params
   let npub = resolvedParams.npub
-  
+
   // Decode URL encoding if present
   try {
     npub = decodeURIComponent(npub)
   } catch {
     // If not URL-encoded, use as-is
   }
-  
+
   if (!npub) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -190,25 +191,25 @@ export default async function NpubPage({
   const events = await nostrService.getKind1Events(npub)
   const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
     .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
-  
+
   // Fetch all long-form posts for the user
   const longFormEvents = await nostrService.getLongFormEvents(npub)
-  
+
   // Create a map of kind1 event titles to long-form events for quick lookup
   const longFormMap = nostrService.matchLongFormShowNotes(mediaEvents, longFormEvents)
-  
+
   // Create a map to store zap profiles for each long-form event
   const zapProfilesMap = new Map<string, Map<string, NostrProfile>>()
-  
+
   // Create a map to store value split information for each long-form event
   const valueSplitMap = new Map<string, Map<string, number>>()
-  
+
   // Create a map to store zap profiles for kind:1 events
   const kind1ZapProfilesMap = new Map<string, Map<string, NostrProfile>>()
-  
+
   // Create a map to store value split information for kind:1 events
   const kind1ValueSplitMap = new Map<string, Map<string, number>>()
-  
+
   // Helper function to get zap splits for an event (long-form takes priority)
   const getZapSplitsForEvent = (event: NDKEvent, longFormEvent?: NDKEvent): { zapProfiles: Map<string, NostrProfile>; valueSplit: Map<string, number>; lightningAddresses: Map<string, string> } | null => {
     // Priority 1: Check long-form content first
@@ -220,7 +221,7 @@ export default async function NpubPage({
         return { zapProfiles: longFormZapProfiles, valueSplit: longFormValueSplit, lightningAddresses }
       }
     }
-    
+
     // Priority 2: Fall back to kind:1 event
     const kind1ZapProfiles = kind1ZapProfilesMap.get(event.id)
     const kind1ValueSplit = kind1ValueSplitMap.get(event.id)
@@ -228,26 +229,26 @@ export default async function NpubPage({
       console.log(`Using kind:1 zap splits for event ${event.id}`)
       return { zapProfiles: kind1ZapProfiles, valueSplit: kind1ValueSplit, lightningAddresses }
     }
-    
+
     // Priority 3: Use profile's lightning address as default (100% to profile owner)
     if (profile && profile.lud16) {
       console.log(`Using profile lightning address as default zap split for event ${event.id}`)
       const defaultZapProfiles = new Map<string, NostrProfile>()
       const defaultValueSplit = new Map<string, number>()
       const defaultLightningAddresses = new Map<string, string>()
-      
+
       // Add the profile owner as the default recipient
       defaultZapProfiles.set(npub, profile)
       defaultValueSplit.set(npub, 100)
       defaultLightningAddresses.set(npub, profile.lud16)
-      
+
       return { zapProfiles: defaultZapProfiles, valueSplit: defaultValueSplit, lightningAddresses: defaultLightningAddresses }
     }
-    
+
     console.log(`No zap splits found for event ${event.id} and no profile lightning address`)
     return null
   }
-  
+
   // Fetch zap profiles and value splits for each long-form event
   for (const longFormEvent of Array.from(longFormMap.values())) {
     const zapProfiles = await nostrService.fetchZapProfiles(longFormEvent)
@@ -255,7 +256,7 @@ export default async function NpubPage({
       zapProfilesMap.set(longFormEvent.id, zapProfiles)
       console.log(`Found ${zapProfiles.size} zap profiles in long-form event ${longFormEvent.id}`)
     }
-    
+
     // Extract value split information
     const valueSplit = nostrService.extractValueSplitFromEvent(longFormEvent)
     if (valueSplit.size > 0) {
@@ -263,7 +264,7 @@ export default async function NpubPage({
       console.log(`Found value split in long-form event ${longFormEvent.id}:`, Array.from(valueSplit.entries()))
     }
   }
-  
+
   // Fetch zap profiles and value splits for kind:1 events that have zap splits
   for (const event of mediaEvents) {
     const zapProfiles = await nostrService.fetchZapProfiles(event)
@@ -271,7 +272,7 @@ export default async function NpubPage({
       kind1ZapProfilesMap.set(event.id, zapProfiles)
       console.log(`Found ${zapProfiles.size} zap profiles in kind:1 event ${event.id}`)
     }
-    
+
     // Extract value split information
     const valueSplit = nostrService.extractValueSplitFromEvent(event)
     if (valueSplit.size > 0) {
@@ -279,10 +280,10 @@ export default async function NpubPage({
       console.log(`Found value split in kind:1 event ${event.id}:`, Array.from(valueSplit.entries()))
     }
   }
-  
+
   // Fetch lightning addresses for all recipients to ensure we have them as fallback
   const allPubkeys = new Set<string>()
-  
+
   // Collect all pubkeys from zap splits
   for (const valueSplit of Array.from(valueSplitMap.values())) {
     for (const pubkey of Array.from(valueSplit.keys())) {
@@ -294,11 +295,11 @@ export default async function NpubPage({
       allPubkeys.add(pubkey)
     }
   }
-  
+
   // Fetch lightning addresses for all pubkeys
   const lightningAddresses = await nostrService.fetchLightningAddresses(Array.from(allPubkeys))
   console.log(`Fetched lightning addresses for ${lightningAddresses.size} pubkeys`)
-  
+
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -325,7 +326,7 @@ export default async function NpubPage({
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/10 via-gray-900/50 to-gray-900/80" />
-        
+
         {/* Back Button */}
         <div className="absolute top-4 left-4">
           <a
@@ -341,11 +342,11 @@ export default async function NpubPage({
           </a>
         </div>
       </div>
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-40">
         {/* Profile Info */}
         <div className="relative flex flex-col items-center text-center mb-16">
-          <a href={`${process.env.HTTP_NOSTR_GATEWAY}/${npub}`} className="relative w-40 h-40 rounded-full ring-4 ring-white bg-white shadow-xl overflow-hidden mb-6">
+          <a href={`${HTTP_NOSTR_GATEWAY}/${npub}`} className="relative w-40 h-40 rounded-full ring-4 ring-white bg-white shadow-xl overflow-hidden mb-6">
             {profile.image && (
               <Image
                 src={profile.image}
@@ -375,7 +376,7 @@ export default async function NpubPage({
               </svg>
               Subscribe to RSS Feed
             </a>
-            <CopyButton url={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://castr.me'}/${npub}/rss.xml`} />
+            <CopyButton url={`${NEXT_PUBLIC_BASE_URL}/${npub}/rss.xml`} />
           </div>
         </div>
 
@@ -387,13 +388,13 @@ export default async function NpubPage({
             const cleanContent = event.content.replace(audioUrl || videoUrl || '', '').trim()
             const [headline, ...rest] = cleanContent.split('\n')
             const bodyContent = rest.join('\n').trim()
-            
+
             // Find matching long-form content
             const longFormEvent = longFormMap.get(headline)
-            
+
             // Get zap splits for this event (long-form takes priority)
             const zapSplitsData = getZapSplitsForEvent(event, longFormEvent)
-            
+
             return (
               <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md">
                 <div className="p-6">
@@ -421,8 +422,8 @@ export default async function NpubPage({
                         )}
                       </div>
                     </div>
-                    <a 
-                      href={`${process.env.HTTP_NOSTR_GATEWAY}/${event.id}`}
+                    <a
+                      href={`${HTTP_NOSTR_GATEWAY}/${event.id}`}
                       className="text-sm text-gray-500 whitespace-nowrap hover:text-gray-700 hover:underline"
                     >
                       {((): string => {
@@ -460,7 +461,7 @@ export default async function NpubPage({
                       </video>
                     </div>
                   )}
-                  
+
                   {/* Show Notes (Long-form Content) */}
                   {longFormEvent && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
@@ -479,8 +480,8 @@ export default async function NpubPage({
                             return (
                               <>
                                 <div className="text-xs text-gray-500 mb-3 text-right">
-                                  <a 
-                                    href={`${process.env.HTTP_NOSTR_GATEWAY}/${longFormEvent.id}`}
+                                  <a
+                                    href={`${HTTP_NOSTR_GATEWAY}/${longFormEvent.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="hover:text-gray-700"
@@ -489,8 +490,8 @@ export default async function NpubPage({
                                   </a>
                                   {' · '}{linkCount} links
                                 </div>
-                                <div 
-                                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parsedHtml) }} 
+                                <div
+                                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parsedHtml) }}
                                 />
                               </>
                             );
@@ -499,7 +500,7 @@ export default async function NpubPage({
                       </details>
                     </div>
                   )}
-                  
+
                   {/* Zap Splits Section - Always show if zap splits exist */}
                   {zapSplitsData && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
@@ -509,9 +510,9 @@ export default async function NpubPage({
                           <div className="flex items-center">
                             <div className="flex items-center mr-3 -space-x-2 overflow-hidden">
                               {Array.from(zapSplitsData.zapProfiles.entries()).map(([pubkey, profile]) => (
-                                <a 
+                                <a
                                   key={pubkey}
-                                  href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
+                                  href={`${HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="w-6 h-6 rounded-full ring-2 ring-white overflow-hidden relative hover:ring-blue-300 transition-all"
@@ -545,8 +546,8 @@ export default async function NpubPage({
                               return (
                                 <div key={pubkey} className="flex items-center justify-between py-1">
                                   <div className="flex items-center">
-                                    <a 
-                                      href={`${process.env.HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
+                                    <a
+                                      href={`${HTTP_NOSTR_GATEWAY}/p/${pubkey}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="flex items-center hover:text-blue-600"
@@ -586,7 +587,7 @@ export default async function NpubPage({
                             })}
                             {/* Help link - only shown when expanded */}
                             <div className="py-2 mt-2">
-                              <a 
+                              <a
                                 href="https://github.com/dergigi/castr.me/#zap-splits--value-splits"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -602,7 +603,7 @@ export default async function NpubPage({
                       </details>
                     </div>
                   )}
-                  
+
                   {/* Zap Splits Info - Show when no zap splits are configured */}
                   {!zapSplitsData && (
                     <div className="mt-6 border-t border-gray-100 pt-4">
@@ -618,7 +619,7 @@ export default async function NpubPage({
                             <p>No zap splits configured for this episode.</p>
                             {/* Help link - only shown when expanded */}
                             <div className="py-2 mt-2">
-                              <a 
+                              <a
                                 href="https://github.com/dergigi/castr.me/#zap-splits--value-splits"
                                 target="_blank"
                                 rel="noopener noreferrer"

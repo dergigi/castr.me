@@ -4,6 +4,7 @@ import type { ReactElement } from 'react'
 import { Inter } from 'next/font/google'
 import Footer from '@/components/Footer'
 import { FathomAnalytics } from './fathom'
+import { NEXT_PUBLIC_BASE_URL } from '../config/env'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://castr.me'),
+  metadataBase: new URL(NEXT_PUBLIC_BASE_URL),
   alternates: {
     canonical: '/',
   },
@@ -94,4 +95,4 @@ export default function RootLayout({
       </body>
     </html>
   )
-} 
+}
