@@ -23,32 +23,32 @@ export async function GET(
     if (!initialized) {
       await nostrService.initialize()
       initialized = true
-      console.log('NDK initialized successfully')
+      console.log('NostrService initialized successfully')
     }
-    
+
     const resolvedParams = await params
     let npub = resolvedParams.npub
-    
+
     // Decode URL encoding if present
     try {
       npub = decodeURIComponent(npub)
     } catch {
       // If not URL-encoded, use as-is
     }
-    
+
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
     const mediaEvents = events.filter(event => nostrService.isMediaEvent(event))
-    
+
     // Fetch long-form content for show notes and zap splits
     const longFormEvents = await nostrService.getLongFormEvents(npub)
-    
+
     // Create a map of kind1 event titles to long-form events for quick lookup
     const longFormMap = nostrService.matchLongFormShowNotes(mediaEvents, longFormEvents)
-    
+
     // Add long-form content to media events
     const eventsWithShowNotes = nostrService.addShowNotesToEvents(mediaEvents, longFormMap)
-    
+
     if (!profile) {
       return NextResponse.json(
         { error: 'Profile not found' },
@@ -58,7 +58,7 @@ export async function GET(
 
     // Use the async version to fetch recipient information
     const feed = await feedGenerator.generateFeedAsync(profile, eventsWithShowNotes, npub, longFormMap)
-    
+
     return new NextResponse(feed, {
       headers: {
         'Content-Type': 'application/xml',
@@ -71,4 +71,4 @@ export async function GET(
       { status: 500 }
     )
   }
-} 
+}

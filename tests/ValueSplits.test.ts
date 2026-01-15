@@ -1,7 +1,6 @@
+import { NostrEvent } from 'applesauce-core/helpers/event'
 import { PodcastFeedGenerator } from '../src/services/feed/PodcastFeedGenerator'
 import { NostrService } from '../src/services/nostr/NostrService'
-import { NDKEvent } from '@nostr-dev-kit/ndk'
-import { NostrProfile } from '../src/services/nostr/NostrService'
 
 describe('Value Splits', () => {
   let feedGenerator: PodcastFeedGenerator
@@ -19,10 +18,10 @@ describe('Value Splits', () => {
           ['zap', 'pubkey1', 'wss://relay.example.com'],
           ['zap', 'pubkey2', 'wss://relay.example.com']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
-      
+
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey1', weight: 1 })
       expect(splits[1]).toEqual({ pubkey: 'pubkey2', weight: 1 })
@@ -34,10 +33,10 @@ describe('Value Splits', () => {
           ['zap', 'pubkey1', 'wss://relay.example.com', '2'],
           ['zap', 'pubkey2', 'wss://relay.example.com', '1']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
-      
+
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey1', weight: 2 })
       expect(splits[1]).toEqual({ pubkey: 'pubkey2', weight: 1 })
@@ -49,10 +48,10 @@ describe('Value Splits', () => {
           ['zap', 'pubkey1', 'wss://relay.example.com', 'invalid'],
           ['zap', 'pubkey2', 'wss://relay.example.com', '1']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
-      
+
       expect(splits).toHaveLength(1)
       expect(splits[0]).toEqual({ pubkey: 'pubkey2', weight: 1 })
     })
@@ -60,10 +59,10 @@ describe('Value Splits', () => {
     it('should return empty array when no zap tags exist', () => {
       const mockEvent = {
         tags: [['p', 'somepubkey']]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = nostrService.extractZapSplitsFromEvent(mockEvent)
-      
+
       expect(splits).toHaveLength(0)
     })
   })
@@ -75,10 +74,10 @@ describe('Value Splits', () => {
           ['zap', 'pubkey1', 'wss://relay.example.com'],
           ['zap', 'pubkey2', 'wss://relay.example.com']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = nostrService.extractZapSplitsWithPercentages(mockEvent)
-      
+
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey1', percentage: 50 })
       expect(splits[1]).toEqual({ pubkey: 'pubkey2', percentage: 50 })
@@ -90,10 +89,10 @@ describe('Value Splits', () => {
           ['zap', 'pubkey1', 'wss://relay.example.com', '2'],
           ['zap', 'pubkey2', 'wss://relay.example.com', '1']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = nostrService.extractZapSplitsWithPercentages(mockEvent)
-      
+
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey1', percentage: 67 })
       expect(splits[1]).toEqual({ pubkey: 'pubkey2', percentage: 33 })
@@ -108,7 +107,7 @@ describe('Value Splits', () => {
       ]
 
       const xml = (feedGenerator as any).generateValueTag(splits)
-      
+
       expect(xml).toContain('<podcast:value type="lightning" method="lnaddress" suggested="0.00021">')
       expect(xml).toContain('name="Recipient pubkey1"')
       expect(xml).toContain('address="recipient@pubkey1.ln"')
@@ -131,7 +130,7 @@ describe('Value Splits', () => {
         tags: [
           ['zap', 'pubkey1', 'wss://relay.example.com', '1']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const mockLongFormEvent = {
         content: 'Show notes content',
@@ -139,12 +138,12 @@ describe('Value Splits', () => {
           ['zap', 'pubkey2', 'wss://relay.example.com', '2'],
           ['zap', 'pubkey3', 'wss://relay.example.com', '1']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const longFormMap = new Map([['Episode Title', mockLongFormEvent]])
 
       const splits = (feedGenerator as any).generateValueSplitsForEventSync(mockEvent, longFormMap)
-      
+
       // Should use long-form splits (67/33) instead of kind:1 splits (100)
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey2', percentage: 67 })
@@ -158,10 +157,10 @@ describe('Value Splits', () => {
           ['zap', 'pubkey1', 'wss://relay.example.com', '1'],
           ['zap', 'pubkey2', 'wss://relay.example.com', '1']
         ]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = (feedGenerator as any).generateValueSplitsForEventSync(mockEvent, new Map())
-      
+
       expect(splits).toHaveLength(2)
       expect(splits[0]).toEqual({ pubkey: 'pubkey1', percentage: 50 })
       expect(splits[1]).toEqual({ pubkey: 'pubkey2', percentage: 50 })
@@ -171,10 +170,10 @@ describe('Value Splits', () => {
       const mockEvent = {
         content: 'Episode Title\nAudio content',
         tags: [['p', 'somepubkey']]
-      } as NDKEvent
+      } as NostrEvent
 
       const splits = (feedGenerator as any).generateValueSplitsForEventSync(mockEvent, new Map())
-      
+
       expect(splits).toHaveLength(0)
     })
   })

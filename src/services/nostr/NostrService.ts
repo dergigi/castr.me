@@ -1,122 +1,54 @@
-import NDK from '@nostr-dev-kit/ndk'
-import { NDKEvent, NDKCacheAdapter, NDKSubscription, NDKFilter, NDKRelay, NDKEventId } from '@nostr-dev-kit/ndk'
-import { decode } from 'nostr-tools/nip19'
+import { castUser, User } from 'applesauce-common/casts'
 import { EventStore } from 'applesauce-core/event-store'
-import { RelayPool } from 'applesauce-relay'
-import type { MediaEvent } from "../../types";
+import { decodePointer, DecodeResult, isHex, kinds, normalizeToProfilePointer, NostrEvent, ProfileContent, relaySet } from 'applesauce-core/helpers'
+import { firstValueFrom, lastValueFrom, mapEventsToTimeline, simpleTimeout } from 'applesauce-core/observable'
 import { createEventLoaderForStore } from 'applesauce-loaders/loaders'
+import { onlyEvents, RelayPool } from 'applesauce-relay'
+import { decode } from 'nostr-tools/nip19'
+import { EXTRA_RELAYS, LOOKUP_RELAYS } from '../../config/env'
+import type { MediaEvent } from "../../types"
 
-// Create in-memory event store for holding events
-export const eventStore = new EventStore()
-
-// Create relay connection pool
-export const pool = new RelayPool()
-
-// Setup loaders so event store and load profiles
-export const eventLoader = createEventLoaderForStore(eventStore, pool)
-
-// Periodically prune the event store
-setInterval(() => {
-  // Remove the least used events in the store
-  eventStore.prune()
-}, 1000 * 60 * 30) // 30 Minutes
-
-export interface NostrProfile {
-  name?: string
-  about?: string
-  picture?: string
-  banner?: string
-  image?: string
-  nip05?: string
-  lud16?: string
-  lud06?: string
+/** Extended profile content with nodeid */
+export interface NostrProfile extends ProfileContent {
   nodeid?: string
 }
 
-/**
- * Simple in-memory cache adapter for server-side use
- * Prevents NDK from trying to use localStorage during SSR
- */
-class InMemoryCacheAdapter implements NDKCacheAdapter {
-  locking = false
-  ready = true
-  private cache = new Map<string, NDKEvent[]>()
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  query(_subscription: NDKSubscription): NDKEvent[] {
-    // Return empty array - we'll rely on relay queries
-    return []
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async setEvent(event: NDKEvent, _filters: NDKFilter[], _relay?: NDKRelay): Promise<void> {
-    // Simple in-memory caching - could be enhanced if needed
-    const key = event.id
-    if (!this.cache.has(key)) {
-      this.cache.set(key, [event])
-    }
-  }
-
-  async deleteEventIds(eventIds: NDKEventId[]): Promise<void> {
-    for (const eventId of eventIds) {
-      this.cache.delete(eventId)
-    }
-  }
-}
-
 export class NostrService {
-  private ndk: NDK | null = null
-  private readonly defaultRelaysRaw = [
-    'wss://relay.nostr.band',
-    'wss://wot.dergigi.com/',
-    'wss://wot.utxo.one',
-    'wss://relay.damus.io'
-  ]
-  private readonly defaultRelays = Array.from(new Set(this.defaultRelaysRaw.map(url => url.replace(/\/$/, ''))))
+  /** Create relay connection pool */
+  private pool = new RelayPool()
+
+  /** Create in-memory event store for holding events */
+  private eventStore = new EventStore()
+
+  /** Create event loader for the event store */
+  private eventLoader = createEventLoaderForStore(this.eventStore, this.pool, {
+    // Always request events from extra relays
+    extraRelays: EXTRA_RELAYS,
+    // Lookup relays for nprofile and nevent links
+    lookupRelays: LOOKUP_RELAYS,
+    // Connect to extra relays in nprofile and nevent links
+    followRelayHints: true,
+  })
+
+  /** Prune the event store periodically */
+  private pruneInterval = setInterval(() => {
+    this.eventStore.prune()
+  }, 1000 * 60 * 30) // 30 Minutes
+
+  private readonly defaultRelays = EXTRA_RELAYS
   private readonly defaultIdentifier = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
   async initialize(): Promise<void> {
-    if (!this.ndk) {
-      // Use in-memory cache adapter to avoid localStorage issues during SSR
-      const isServer = typeof window === 'undefined'
-      const cacheAdapter = isServer ? new InMemoryCacheAdapter() : undefined
-
-      // Provide a minimal localStorage shim on the server to satisfy libraries that expect it
-      if (isServer) {
-        interface GlobalWithStorage extends Omit<typeof globalThis, 'localStorage'> {
-          localStorage?: Storage
-        }
-        const g = globalThis as GlobalWithStorage
-        const needsShim = !g.localStorage || typeof g.localStorage.getItem !== 'function'
-        if (needsShim) {
-          const store = new Map<string, string>()
-          g.localStorage = {
-            getItem(key: string): string | null { return store.has(key) ? store.get(key)! : null },
-            setItem(key: string, value: string): void { store.set(key, String(value)) },
-            removeItem(key: string): void { store.delete(key) },
-            clear(): void { store.clear() },
-            key(index: number): string | null { return Array.from(store.keys())[index] ?? null },
-            get length(): number { return store.size },
-          }
-        }
-      }
-
-      this.ndk = new NDK({
-        explicitRelayUrls: this.defaultRelays,
-        cacheAdapter,
-      })
-      await this.ndk.connect()
-    }
+    // Nothing to setup
   }
 
-  /**
-   * Extracts pubkey from npub or nprofile identifier following NDK best practices
-   * @param identifier npub or nprofile string (may be URL-encoded)
-   * @returns hex pubkey or null if invalid
-   */
-  private getPubkeyFromIdentifier(identifier: string): string | null {
-    const data = this.getIdentifierData(identifier)
-    return data?.pubkey || null
+  async shutdown(): Promise<void> {
+    clearInterval(this.pruneInterval)
+
+    // Close all relay connections
+    for (const [, relay] of Array.from(this.pool.relays.entries())) {
+      await relay.close()
+    }
   }
 
   /**
@@ -157,71 +89,90 @@ export class NostrService {
     }
   }
 
+  /** Gets a user class for an identifier */
+  getUser(identifier: string = this.defaultIdentifier): User | null {
+    const pointer = normalizeToProfilePointer(identifier);
+    if (!pointer) return null;
+    return castUser(pointer, this.eventStore);
+  }
+
   /**
    * Fetches user profile from npub or nprofile identifier
    * @param identifier npub, nprofile, hex pubkey, or NIP-05 identifier
    * @returns User profile or null if not found
    */
   async getUserProfile(identifier: string = this.defaultIdentifier): Promise<NostrProfile | null> {
-    try {
-      // Extract pubkey from identifier (handles npub, nprofile, or use hex/NIP-05 directly)
-      const pubkey = this.getPubkeyFromIdentifier(identifier) || identifier
-      if (!pubkey) return null
-      const user = this.ndk?.getUser({ pubkey })
-      if (!user) return null
-      const profile = await user.fetchProfile()
-      return profile
-    } catch (error) {
+    const pointer = normalizeToProfilePointer(identifier);
+    if (!pointer) return null;
+
+    const timeLabel = `[NostrService] getUserProfile ${identifier.substring(0, 16)}...`;
+    console.time(timeLabel);
+
+    const user = castUser(pointer, this.eventStore);
+
+    // Return user profile with a timeout of 5 seconds
+    return user.profile$.$first(5_000).then((profile) => {
+      if (profile) {
+        console.timeEnd(timeLabel);
+      } else {
+        console.timeEnd(timeLabel);
+      }
+      return profile;
+    }).catch((error) => {
+      console.timeEnd(timeLabel);
       console.error('Error fetching user profile:', error)
       return null
-    }
+    }) as Promise<NostrProfile | null>;
   }
 
   async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
-    try {
-      const data = this.getIdentifierData(identifier)
-      if (!data) return []
-      const { pubkey, relays } = data
-      // Combine relay hints with default relays for better coverage
-      const relayUrls = relays?.length
-        ? Array.from(new Set([...relays, ...this.defaultRelays]))
-        : this.defaultRelays
-      const events = await this.ndk?.fetchEvents(
-        {
-          kinds: [31990],
-          authors: [pubkey] as string[],
-        },
-        relayUrls ? { relayUrls } : undefined
-      )
-      return events ? Array.from(events).map(event => this.transformToMediaEvent(event)) : []
-    } catch (error) {
-      console.error('Error fetching media events:', error)
-      return []
-    }
+    const pointer = normalizeToProfilePointer(identifier);
+    if(!pointer) return []
+
+    const timeLabel = `[NostrService] getMediaEvents ${identifier.substring(0, 16)}...`;
+    console.time(timeLabel);
+
+    const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
+      {
+        kinds: [31990],
+        authors: [pointer.pubkey],
+      },
+
+    ).pipe(
+      // ignore EOSE
+      onlyEvents(),
+      // Gather events into a timeline
+      mapEventsToTimeline(),
+      // Add a 60 second timeout for safety
+      simpleTimeout(60_000)
+    ));
+
+    console.timeEnd(timeLabel);
+    console.log(`[NostrService] Loaded ${events.length} media events for ${identifier.substring(0, 16)}...`);
+    return events.map(event => this.transformToMediaEvent(event))
   }
 
-  async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
-    try {
-      const data = this.getIdentifierData(identifier)
-      if (!data) return []
-      const { pubkey, relays } = data
-      // Combine relay hints with default relays for better coverage
-      const relayUrls = relays?.length
-        ? Array.from(new Set([...relays, ...this.defaultRelays]))
-        : this.defaultRelays
-      const events = await this.ndk?.fetchEvents(
-        {
-          kinds: [1],
-          authors: [pubkey] as string[],
-          limit: 420,
-        },
-        relayUrls ? { relayUrls } : undefined
-      )
-      return events ? Array.from(events) : []
-    } catch (error) {
-      console.error('Error fetching kind1 events:', error)
-      return []
-    }
+  async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NostrEvent[]> {
+    const pointer = normalizeToProfilePointer(identifier);
+    if(!pointer) return []
+
+    const timeLabel = `[NostrService] getKind1Events ${identifier.substring(0, 16)}...`;
+    console.time(timeLabel);
+
+    const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
+      {
+        kinds: [kinds.ShortTextNote],
+        authors: [pointer.pubkey],
+      },
+    ).pipe(
+      onlyEvents(),
+      mapEventsToTimeline(),
+      simpleTimeout(60_000))
+    );
+
+    console.timeEnd(timeLabel);
+    console.log(`[NostrService] Loaded ${events.length} kind 1 events for ${identifier.substring(0, 16)}...`);
+    return events
   }
 
   /**
@@ -229,28 +180,28 @@ export class NostrService {
    * @param identifier npub or nprofile identifier of the user
    * @returns An array of long-form content events
    */
-  async getLongFormEvents(identifier: string = this.defaultIdentifier): Promise<NDKEvent[]> {
-    try {
-      const data = this.getIdentifierData(identifier)
-      if (!data) return []
-      const { pubkey, relays } = data
-      // Combine relay hints with default relays for better coverage
-      const relayUrls = relays?.length
-        ? Array.from(new Set([...relays, ...this.defaultRelays]))
-        : this.defaultRelays
-      const events = await this.ndk?.fetchEvents(
-        {
-          kinds: [30023], // NIP-23 long-form content
-          authors: [pubkey] as string[],
-          limit: 100, // Limit to avoid too many results
-        },
-        relayUrls ? { relayUrls } : undefined
-      )
-      return events ? Array.from(events) : []
-    } catch (error) {
-      console.error('Error fetching long-form events:', error)
-      return []
-    }
+  async getLongFormEvents(identifier: string = this.defaultIdentifier): Promise<NostrEvent[]> {
+    const pointer = normalizeToProfilePointer(identifier);
+    if(!pointer) return []
+
+    const timeLabel = `[NostrService] getLongFormEvents ${identifier.substring(0, 16)}...`;
+    console.time(timeLabel);
+
+    const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
+      {
+        kinds: [kinds.LongFormArticle],
+        authors: [pointer.pubkey],
+        limit: 100,
+      },
+    ).pipe(
+      onlyEvents(),
+      mapEventsToTimeline(),
+      simpleTimeout(60_000))
+    );
+
+    console.timeEnd(timeLabel);
+    console.log(`[NostrService] Loaded ${events.length} long-form events for ${identifier.substring(0, 16)}...`);
+    return events
   }
 
   /**
@@ -259,8 +210,8 @@ export class NostrService {
    * @param longFormEvents Array of long-form content events (kind:30023)
    * @returns A Map with media event titles as keys and matching long-form events as values
    */
-  matchLongFormShowNotes(mediaEvents: NDKEvent[], longFormEvents: NDKEvent[]): Map<string, NDKEvent> {
-    const longFormMap = new Map<string, NDKEvent>()
+  matchLongFormShowNotes(mediaEvents: MediaEvent[], longFormEvents: NostrEvent[]): Map<string, NostrEvent> {
+    const longFormMap = new Map<string, NostrEvent>()
 
     for (const event of mediaEvents) {
       const kind1Title = event.content.split('\n')[0].trim()
@@ -296,7 +247,7 @@ export class NostrService {
    * @param longFormMap Map of media event titles to their matching long-form events
    * @returns The enhanced media events with show notes added as tags
    */
-  addShowNotesToEvents(mediaEvents: NDKEvent[], longFormMap: Map<string, NDKEvent>): NDKEvent[] {
+  addShowNotesToEvents(mediaEvents: NostrEvent[], longFormMap: Map<string, NostrEvent>): NostrEvent[] {
     return mediaEvents.map(event => {
       const kind1Title = event.content.split('\n')[0].trim()
       const longFormEvent = longFormMap.get(kind1Title)
@@ -310,7 +261,7 @@ export class NostrService {
     })
   }
 
-  extractTitle(event: NDKEvent): string {
+  extractTitle(event: NostrEvent): string {
     // Try to find a title tag
     const titleTag = event.tags.find(tag => tag[0] === 'title');
     if (titleTag) return titleTag[1];
@@ -346,7 +297,7 @@ export class NostrService {
    * @param longFormEvents Optional array of long-form events to search through
    * @returns The matching long-form content event or null if not found
    */
-  async findMatchingLongFormContent(kind1Event: NDKEvent, longFormEvents?: NDKEvent[]): Promise<NDKEvent | null> {
+  async findMatchingLongFormContent(kind1Event: NostrEvent, longFormEvents?: NostrEvent[]): Promise<NostrEvent | null> {
     try {
       // Get the title from the kind1 event
       const title = this.extractTitle(kind1Event);
@@ -379,13 +330,9 @@ export class NostrService {
       const pubkey = kind1Event.pubkey;
 
       // Fetch long-form content events (kind 30023) from the same author
-      const events = await this.ndk?.fetchEvents({
-        kinds: [30023], // NIP-23 long-form content
-        authors: [pubkey] as string[],
-        limit: 100, // Limit to avoid too many results
-      });
+      const events = await this.getLongFormEvents(pubkey);
 
-      if (!events || events.size === 0) {
+      if (!events || events.length === 0) {
         return null;
       }
 
@@ -417,7 +364,7 @@ export class NostrService {
     }
   }
 
-  isAudioEvent(event: NDKEvent): boolean {
+  isAudioEvent(event: NostrEvent): boolean {
     const content = event.content;
     return (
       content.includes('.mp3') ||
@@ -427,7 +374,7 @@ export class NostrService {
     );
   }
 
-  isMediaEvent(event: NDKEvent): boolean {
+  isMediaEvent(event: NostrEvent): boolean {
     const content = event.content;
     return (
       content.includes('.mp3') ||
@@ -440,7 +387,7 @@ export class NostrService {
     );
   }
 
-  protected transformToMediaEvent(event: NDKEvent): MediaEvent {
+  protected transformToMediaEvent(event: NostrEvent): MediaEvent {
     const audioUrl = this.extractAudioUrl(event.content);
     const videoUrl = this.extractVideoUrl(event.content);
     const mediaType = videoUrl ? 'video' : audioUrl ? 'audio' : undefined;
@@ -471,7 +418,7 @@ export class NostrService {
     return match ? match[0] : undefined;
   }
 
-  extractImage(event: NDKEvent): string | undefined {
+  extractImage(event: NostrEvent): string | undefined {
     // Try to find an image tag
     const imageTag = event.tags.find(tag => tag[0] === 'image');
     if (imageTag) return imageTag[1];
@@ -487,47 +434,15 @@ export class NostrService {
    * @param eventId The ID of the event to fetch
    * @returns The event or null if not found
    */
-  async getEventById(eventId: string): Promise<NDKEvent | null> {
+  async getEventById(eventId: string): Promise<NostrEvent | null> {
     try {
-      // Handle both nevent and naddr formats
-      let pubkey: string | null = null;
-      let identifier: string | null = null;
+      const decoded: DecodeResult = isHex(eventId) ? {type: 'nevent', data: {id: eventId} }: decodePointer(eventId);
 
-      if (eventId.startsWith('nevent1')) {
-        // For nevent format, we need to extract the event ID
-        const decoded = decode(eventId);
-        if (decoded.type !== 'nevent') return null;
-        return await this.ndk?.fetchEvent(decoded.data.id) || null;
-      } else if (eventId.startsWith('naddr1')) {
-        // For naddr format, we need to extract the pubkey and identifier
-        const decoded = decode(eventId);
-        if (decoded.type !== 'naddr') return null;
-        pubkey = decoded.data.pubkey;
-        identifier = decoded.data.identifier;
+      // Ensure the pointer is to an event
+      if(decoded.type !== 'nevent' && decoded.type !== 'naddr' && decoded.type !== 'note') return null;
 
-        // Fetch events with the matching pubkey and identifier
-        const events = await this.ndk?.fetchEvents({
-          kinds: [30023], // NIP-23 long-form content
-          authors: [pubkey] as string[],
-          limit: 1,
-        });
-
-        if (!events || events.size === 0) return null;
-
-        // Find the event with the matching identifier
-        for (const event of Array.from(events)) {
-          // Check if the event has a d tag with the identifier
-          const dTag = event.tags.find(tag => tag[0] === 'd');
-          if (dTag && dTag[1] === identifier) {
-            return event;
-          }
-        }
-
-        return null;
-      } else {
-        // Assume it's a raw event ID
-        return await this.ndk?.fetchEvent(eventId) || null;
-      }
+      return firstValueFrom(this.eventStore.event(decoded.data).pipe(simpleTimeout(60_000)))
+        .then(v => v ?? null)
     } catch (error) {
       console.error('Error fetching event by ID:', error);
       return null;
@@ -539,7 +454,7 @@ export class NostrService {
    * @param event The event to extract zap tags from
    * @returns An array of pubkeys from zap tags
    */
-  extractZapPubkeysFromEvent(event: NDKEvent): string[] {
+  extractZapPubkeysFromEvent(event: NostrEvent): string[] {
     // Zap tags typically have the format ['zap', pubkey, ...]
     const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length > 1);
     const pubkeys = zapTags.map(tag => tag[1]);
@@ -548,31 +463,35 @@ export class NostrService {
     return Array.from(new Set(pubkeys));
   }
 
+  /** Fetches user profiles and returns a map */
+  async fetchUserProfiles(pubkeys: string[]): Promise<Map<string, NostrProfile>> {
+    const timeLabel = `[NostrService] fetchUserProfiles (${pubkeys.length} profiles)`;
+    console.time(timeLabel);
+
+    try {
+      const promises = pubkeys.map(async pubkey => [pubkey, await this.getUserProfile(pubkey)] as const)
+      const profiles = new Map<string, NostrProfile>(
+        (await Promise.all(promises))
+        .filter(v => v[1] !== null)
+        .map(v => [v[0], v[1]!] as const)
+      );
+      console.timeEnd(timeLabel);
+      console.log(`[NostrService] Loaded ${profiles.size} profiles (requested ${pubkeys.length})`);
+      return profiles;
+    } catch (error) {
+      console.timeEnd(timeLabel);
+      console.error('Error fetching user profiles:', error);
+      return new Map();
+    }
+  }
+
   /**
    * Fetches user profiles for pubkeys from zap tags
    * @param event The event containing zap tags
    * @returns A map of pubkeys to user profiles
    */
-  async fetchZapProfiles(event: NDKEvent): Promise<Map<string, NostrProfile>> {
-    try {
-      const pubkeys = this.extractZapPubkeysFromEvent(event);
-      const profileMap = new Map<string, NostrProfile>();
-
-      for (const pubkey of pubkeys) {
-        if (this.ndk) {
-          const user = this.ndk.getUser({ pubkey });
-          const profile = await user.fetchProfile();
-          if (profile) {
-            profileMap.set(pubkey, profile);
-          }
-        }
-      }
-
-      return profileMap;
-    } catch (error) {
-      console.error('Error fetching zap profiles:', error);
-      return new Map();
-    }
+  async fetchZapProfiles(event: NostrEvent): Promise<Map<string, NostrProfile>> {
+    return this.fetchUserProfiles(this.extractZapPubkeysFromEvent(event))
   }
 
   /**
@@ -580,7 +499,7 @@ export class NostrService {
    * @param event The event containing zap tags
    * @returns Array of zap split information with pubkeys and weights
    */
-  extractZapSplitsFromEvent(event: NDKEvent): Array<{ pubkey: string; weight: number }> {
+  extractZapSplitsFromEvent(event: NostrEvent): Array<{ pubkey: string; weight: number }> {
     const zapTags = event.tags.filter(tag => tag[0] === 'zap' && tag.length >= 2);
     const splits: Array<{ pubkey: string; weight: number }> = [];
 
@@ -601,7 +520,7 @@ export class NostrService {
    * @param event The event containing zap tags
    * @returns A map of pubkeys to their percentage of the value split
    */
-  extractValueSplitFromEvent(event: NDKEvent): Map<string, number> {
+  extractValueSplitFromEvent(event: NostrEvent): Map<string, number> {
     const valueSplitMap = new Map<string, number>();
     const splits = this.extractZapSplitsFromEvent(event);
 
@@ -637,7 +556,7 @@ export class NostrService {
    * @param event The event containing zap tags
    * @returns Array of zap splits with calculated percentages
    */
-  extractZapSplitsWithPercentages(event: NDKEvent): Array<{ pubkey: string; percentage: number }> {
+  extractZapSplitsWithPercentages(event: NostrEvent): Array<{ pubkey: string; percentage: number }> {
     const splits = this.extractZapSplitsFromEvent(event);
 
     if (splits.length === 0) {
@@ -670,7 +589,7 @@ export class NostrService {
    * @param event The event containing zap tags
    * @returns Array of zap splits with recipient information
    */
-  async fetchZapSplitsWithRecipients(event: NDKEvent): Promise<Array<{
+  async fetchZapSplitsWithRecipients(event: NostrEvent): Promise<Array<{
     pubkey: string;
     percentage: number;
     lightningAddress?: string;
@@ -710,22 +629,16 @@ export class NostrService {
    * @returns A map of pubkeys to their lightning addresses
    */
   async fetchLightningAddresses(pubkeys: string[]): Promise<Map<string, string>> {
-    const addressMap = new Map<string, string>();
+    const profiles = await this.fetchUserProfiles(pubkeys)
 
-    try {
-      for (const pubkey of pubkeys) {
-        if (this.ndk) {
-          const user = this.ndk.getUser({ pubkey });
-          const profile = await user.fetchProfile();
-          if (profile && profile.lud16) {
-            addressMap.set(pubkey, profile.lud16);
-          }
-        }
+    const addresses = new Map<string,string>()
+
+    for (const [pubkey, profile] of Array.from(profiles.entries())) {
+      if (profile.lud16) {
+        addresses.set(pubkey, profile.lud16)
       }
-    } catch (error) {
-      console.error('Error fetching lightning addresses:', error);
     }
 
-    return addressMap;
+    return addresses
   }
 }

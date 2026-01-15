@@ -18,23 +18,23 @@ export async function GET(
     if (!initialized) {
       await nostrService.initialize()
       initialized = true
-      console.log('NDK initialized successfully')
+      console.log('NostrService initialized successfully')
     }
-    
+
     const resolvedParams = await params
     let npub = resolvedParams.npub
-    
+
     // Decode URL encoding if present
     try {
       npub = decodeURIComponent(npub)
     } catch {
       // If not URL-encoded, use as-is
     }
-    
+
     const profile = await nostrService.getUserProfile(npub)
     const events = await nostrService.getKind1Events(npub)
     const audioEvents = events.filter(event => nostrService.isMediaEvent(event))
-    
+
     if (!profile) {
       return NextResponse.json(
         { error: 'Profile not found' },
@@ -43,7 +43,7 @@ export async function GET(
     }
 
     const feed = feedGenerator.generateFeed(profile, audioEvents, npub)
-    
+
     return new NextResponse(feed, {
       headers: {
         'Content-Type': 'application/xml',
@@ -56,4 +56,4 @@ export async function GET(
       { status: 500 }
     )
   }
-} 
+}

@@ -1,9 +1,7 @@
-import express from 'express';
-import { NostrService } from '@/services/nostr/NostrService';
-import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator';
-import { NDKEvent } from '@nostr-dev-kit/ndk';
-import { NostrProfile } from '@/services/nostr/NostrService';
 import { PORT } from '@/config/env';
+import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator';
+import { NostrProfile, NostrService } from '@/services/nostr/NostrService';
+import express from 'express';
 
 const app = express();
 const port = PORT;
@@ -64,7 +62,7 @@ app.get('/:npub', async (req, res) => {
           </div>
         </div>
         <h2>Episodes</h2>
-        ${audioEvents.map((event: NDKEvent) => {
+        ${audioEvents.map((event) => {
           const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0];
           const title = nostrService.extractTitle(event);
           return `

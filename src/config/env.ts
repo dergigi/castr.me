@@ -1,3 +1,5 @@
+import { relaySet } from "applesauce-core/helpers";
+
 /** Port number for the Express server (server-side only) */
 export const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
@@ -9,3 +11,20 @@ export const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https:/
 
 /** Fathom Analytics site ID for tracking page views (optional, client-side only) */
 export const NEXT_PUBLIC_FATHOM_ID = process.env.NEXT_PUBLIC_FATHOM_ID || '';
+
+/** Extra relays to use for the Nostr service */
+export const EXTRA_RELAYS = relaySet(process.env.EXTRA_RELAYS ? process.env.EXTRA_RELAYS.split(',') : [
+	'wss://relay.nostr.band',
+	'wss://wot.dergigi.com/',
+	'wss://wot.utxo.one',
+	'wss://relay.damus.io'
+])
+
+/** Extra relays used for looking up user profiles and mailboxes */
+export const LOOKUP_RELAYS = relaySet(process.env.LOOKUP_RELAYS ? process.env.LOOKUP_RELAYS.split(',') : [
+	'wss://purplepag.es',
+	'wss://indexer.coracle.social',
+])
+
+/** Default identifier to use for the Nostr service */
+export const DEFAULT_IDENTIFIER = process.env.DEFAULT_IDENTIFIER || 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n';

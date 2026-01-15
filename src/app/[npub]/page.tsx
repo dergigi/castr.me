@@ -1,23 +1,12 @@
-import { NostrService } from '@/services/nostr/NostrService'
-import { NDKEvent } from '@nostr-dev-kit/ndk'
+import CopyButton from '@/components/CopyButton'
+import { HTTP_NOSTR_GATEWAY, NEXT_PUBLIC_BASE_URL } from '@/config/env'
+import { NostrProfile, NostrService } from '@/services/nostr/NostrService'
+import { NostrEvent } from 'applesauce-core/helpers/event'
+import DOMPurify from 'isomorphic-dompurify'
+import { marked } from 'marked'
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import type { ReactElement } from 'react'
-import { marked } from 'marked'
-import DOMPurify from 'isomorphic-dompurify'
-import CopyButton from '@/components/CopyButton'
-import type { Metadata } from 'next'
-import { HTTP_NOSTR_GATEWAY, NEXT_PUBLIC_BASE_URL } from '@/config/env'
-
-// Define the profile interface
-interface NostrProfile {
-  name?: string;
-  picture?: string;
-  about?: string;
-  nip05?: string;
-  lud16?: string;
-  lud06?: string;
-  nodeid?: string;
-}
 
 // Function to count words in a string
 function countWords(str: string): number {
@@ -162,7 +151,7 @@ export default async function NpubPage({
   if (!initialized) {
     await nostrService.initialize()
     initialized = true
-    console.log('NDK initialized successfully')
+    console.log('NostrService initialized successfully')
   }
 
   // Get the npub/nprofile from params (may be URL-encoded)
@@ -211,7 +200,7 @@ export default async function NpubPage({
   const kind1ValueSplitMap = new Map<string, Map<string, number>>()
 
   // Helper function to get zap splits for an event (long-form takes priority)
-  const getZapSplitsForEvent = (event: NDKEvent, longFormEvent?: NDKEvent): { zapProfiles: Map<string, NostrProfile>; valueSplit: Map<string, number>; lightningAddresses: Map<string, string> } | null => {
+  const getZapSplitsForEvent = (event: NostrEvent, longFormEvent?: NostrEvent): { zapProfiles: Map<string, NostrProfile>; valueSplit: Map<string, number>; lightningAddresses: Map<string, string> } | null => {
     // Priority 1: Check long-form content first
     if (longFormEvent) {
       const longFormZapProfiles = zapProfilesMap.get(longFormEvent.id)
@@ -382,7 +371,7 @@ export default async function NpubPage({
 
         {/* Media Posts */}
         <div className="space-y-6">
-          {mediaEvents.map((event: NDKEvent) => {
+          {mediaEvents.map((event: NostrEvent) => {
             const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0]
             const videoUrl = event.content.match(/https?:\/\/[^\s]+\.(mp4|webm|mov)/)?.[0]
             const cleanContent = event.content.replace(audioUrl || videoUrl || '', '').trim()
