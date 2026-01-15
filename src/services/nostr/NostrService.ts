@@ -4,7 +4,7 @@ import { decodePointer, DecodeResult, isHex, kinds, normalizeToProfilePointer, N
 import { firstValueFrom, lastValueFrom, mapEventsToTimeline, simpleTimeout } from 'applesauce-core/observable'
 import { createEventLoaderForStore } from 'applesauce-loaders/loaders'
 import { onlyEvents, RelayPool } from 'applesauce-relay'
-import { decode } from 'nostr-tools/nip19'
+import { decode, ProfilePointer } from 'nostr-tools/nip19'
 import { EXTRA_RELAYS, LOOKUP_RELAYS } from '../../config/env'
 import type { MediaEvent } from "../../types"
 
@@ -102,24 +102,21 @@ export class NostrService {
    * @returns User profile or null if not found
    */
   async getUserProfile(identifier: string = this.defaultIdentifier): Promise<NostrProfile | null> {
-    const pointer = normalizeToProfilePointer(identifier);
+    let pointer: ProfilePointer | null = null;
+    try {
+      pointer = normalizeToProfilePointer(identifier);
+    }
+    catch(err) {
+      console.error('Error normalizing profile pointer:', identifier)
+      console.error(err)
+      return null;
+    }
     if (!pointer) return null;
-
-    const timeLabel = `[NostrService] getUserProfile ${identifier.substring(0, 16)}...`;
-    console.time(timeLabel);
 
     const user = castUser(pointer, this.eventStore);
 
     // Return user profile with a timeout of 5 seconds
-    return user.profile$.$first(5_000).then((profile) => {
-      if (profile) {
-        console.timeEnd(timeLabel);
-      } else {
-        console.timeEnd(timeLabel);
-      }
-      return profile;
-    }).catch((error) => {
-      console.timeEnd(timeLabel);
+    return user.profile$.$first(5_000).catch((error) => {
       console.error('Error fetching user profile:', error)
       return null
     }) as Promise<NostrProfile | null>;
@@ -128,9 +125,6 @@ export class NostrService {
   async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
     const pointer = normalizeToProfilePointer(identifier);
     if(!pointer) return []
-
-    const timeLabel = `[NostrService] getMediaEvents ${identifier.substring(0, 16)}...`;
-    console.time(timeLabel);
 
     const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
       {
@@ -147,17 +141,21 @@ export class NostrService {
       simpleTimeout(60_000)
     ));
 
-    console.timeEnd(timeLabel);
-    console.log(`[NostrService] Loaded ${events.length} media events for ${identifier.substring(0, 16)}...`);
+    console.log(`[NostrService] Loaded ${events.length} media events for ${identifier.substring(0, 16)}`);
     return events.map(event => this.transformToMediaEvent(event))
   }
 
   async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NostrEvent[]> {
-    const pointer = normalizeToProfilePointer(identifier);
+    let pointer: ProfilePointer | null = null;
+    try {
+      pointer = normalizeToProfilePointer(identifier);
+    }
+    catch(err) {
+      console.error('Error normalizing profile pointer:', identifier)
+      console.error(err)
+      return []
+    }
     if(!pointer) return []
-
-    const timeLabel = `[NostrService] getKind1Events ${identifier.substring(0, 16)}...`;
-    console.time(timeLabel);
 
     const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
       {
@@ -170,7 +168,6 @@ export class NostrService {
       simpleTimeout(60_000))
     );
 
-    console.timeEnd(timeLabel);
     console.log(`[NostrService] Loaded ${events.length} kind 1 events for ${identifier.substring(0, 16)}...`);
     return events
   }
@@ -184,8 +181,6 @@ export class NostrService {
     const pointer = normalizeToProfilePointer(identifier);
     if(!pointer) return []
 
-    const timeLabel = `[NostrService] getLongFormEvents ${identifier.substring(0, 16)}...`;
-    console.time(timeLabel);
 
     const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
       {
@@ -199,7 +194,6 @@ export class NostrService {
       simpleTimeout(60_000))
     );
 
-    console.timeEnd(timeLabel);
     console.log(`[NostrService] Loaded ${events.length} long-form events for ${identifier.substring(0, 16)}...`);
     return events
   }
@@ -465,8 +459,7 @@ export class NostrService {
 
   /** Fetches user profiles and returns a map */
   async fetchUserProfiles(pubkeys: string[]): Promise<Map<string, NostrProfile>> {
-    const timeLabel = `[NostrService] fetchUserProfiles (${pubkeys.length} profiles)`;
-    console.time(timeLabel);
+    if(pubkeys.length === 0) return new Map();
 
     try {
       const promises = pubkeys.map(async pubkey => [pubkey, await this.getUserProfile(pubkey)] as const)
@@ -475,11 +468,9 @@ export class NostrService {
         .filter(v => v[1] !== null)
         .map(v => [v[0], v[1]!] as const)
       );
-      console.timeEnd(timeLabel);
       console.log(`[NostrService] Loaded ${profiles.size} profiles (requested ${pubkeys.length})`);
       return profiles;
     } catch (error) {
-      console.timeEnd(timeLabel);
       console.error('Error fetching user profiles:', error);
       return new Map();
     }
