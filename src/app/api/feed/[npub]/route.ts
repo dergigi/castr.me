@@ -6,21 +6,11 @@ import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator'
 const nostrService = new NostrService()
 const feedGenerator = new PodcastFeedGenerator()
 
-// Initialize NDK connection
-let initialized = false
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ npub: string }> }
 ): Promise<NextResponse> {
   try {
-    // Initialize NDK if not already initialized
-    if (!initialized) {
-      await nostrService.initialize()
-      initialized = true
-      console.log('NostrService initialized successfully')
-    }
-
     const resolvedParams = await params
     let npub = resolvedParams.npub
 

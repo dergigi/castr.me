@@ -14,7 +14,6 @@ export const NEXT_PUBLIC_FATHOM_ID = process.env.NEXT_PUBLIC_FATHOM_ID || '';
 
 /** Extra relays to use for the Nostr service */
 export const EXTRA_RELAYS = relaySet(process.env.EXTRA_RELAYS ? process.env.EXTRA_RELAYS.split(',') : [
-	'wss://relay.nostr.band',
 	'wss://wot.dergigi.com/',
 	'wss://wot.utxo.one',
 	'wss://relay.damus.io'

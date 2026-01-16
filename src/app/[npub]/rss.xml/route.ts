@@ -6,9 +6,6 @@ import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator'
 const nostrService = new NostrService()
 const feedGenerator = new PodcastFeedGenerator(nostrService)
 
-// Initialize NDK connection
-let initialized = false
-
 /**
  * Generates an RSS feed for audio podcasts.
  * Note: This endpoint only includes audio content and excludes video content,
@@ -19,13 +16,6 @@ export async function GET(
   { params }: { params: Promise<{ npub: string }> }
 ): Promise<NextResponse> {
   try {
-    // Initialize NDK if not already initialized
-    if (!initialized) {
-      await nostrService.initialize()
-      initialized = true
-      console.log('NostrService initialized successfully')
-    }
-
     const resolvedParams = await params
     let npub = resolvedParams.npub
 

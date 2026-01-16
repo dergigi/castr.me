@@ -4,7 +4,7 @@ import { decodePointer, DecodeResult, isHex, kinds, normalizeToProfilePointer, N
 import { firstValueFrom, lastValueFrom, mapEventsToTimeline, simpleTimeout } from 'applesauce-core/observable'
 import { createEventLoaderForStore } from 'applesauce-loaders/loaders'
 import { onlyEvents, RelayPool } from 'applesauce-relay'
-import { decode, ProfilePointer } from 'nostr-tools/nip19'
+import { ProfilePointer } from 'nostr-tools/nip19'
 import { EXTRA_RELAYS, LOOKUP_RELAYS } from '../../config/env'
 import type { MediaEvent } from "../../types"
 
@@ -38,54 +38,24 @@ export class NostrService {
   private readonly defaultRelays = EXTRA_RELAYS
   private readonly defaultIdentifier = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n'
 
-  async initialize(): Promise<void> {
-    // Nothing to setup
-  }
+  /** In-flight request deduplication maps */
+  private inFlightKind1Events = new Map<string, Promise<NostrEvent[]>>()
+  private inFlightLongFormEvents = new Map<string, Promise<NostrEvent[]>>()
+  private inFlightMediaEvents = new Map<string, Promise<MediaEvent[]>>()
+  private inFlightUserProfiles = new Map<string, Promise<NostrProfile | null>>()
 
   async shutdown(): Promise<void> {
     clearInterval(this.pruneInterval)
 
+    // Clear in-flight request maps
+    this.inFlightKind1Events.clear()
+    this.inFlightLongFormEvents.clear()
+    this.inFlightMediaEvents.clear()
+    this.inFlightUserProfiles.clear()
+
     // Close all relay connections
     for (const [, relay] of Array.from(this.pool.relays.entries())) {
       await relay.close()
-    }
-  }
-
-  /**
-   * Extracts pubkey and optional relay hints from npub or nprofile identifier
-   * @param identifier npub or nprofile string (may be URL-encoded)
-   * @returns Object with pubkey and optional relays array, or null if invalid
-   */
-  private getIdentifierData(identifier: string): { pubkey: string; relays?: string[] } | null {
-    try {
-      // Ignore favicon.ico requests
-      if (identifier === 'favicon.ico') return null;
-
-      // Decode URL encoding first (Next.js may URL-encode the path parameter)
-      let decodedIdentifier: string;
-      try {
-        decodedIdentifier = decodeURIComponent(identifier);
-      } catch {
-        // If it's not URL-encoded, use as-is
-        decodedIdentifier = identifier;
-      }
-
-      const decoded = decode(decodedIdentifier.trim());
-
-      switch (decoded.type) {
-        case 'npub':
-          return { pubkey: decoded.data };
-        case 'nprofile':
-          return {
-            pubkey: decoded.data.pubkey,
-            relays: decoded.data.relays // Extract relay hints from nprofile
-          };
-        default:
-          return null;
-      }
-    } catch (error) {
-      console.error('Error decoding identifier:', error)
-      return null
     }
   }
 
@@ -102,74 +72,122 @@ export class NostrService {
    * @returns User profile or null if not found
    */
   async getUserProfile(identifier: string = this.defaultIdentifier): Promise<NostrProfile | null> {
-    let pointer: ProfilePointer | null = null;
-    try {
-      pointer = normalizeToProfilePointer(identifier);
+    // Check if there's already an in-flight request for this identifier
+    const existingRequest = this.inFlightUserProfiles.get(identifier);
+    if (existingRequest) {
+      return existingRequest;
     }
-    catch(err) {
-      console.error('Error normalizing profile pointer:', identifier)
-      console.error(err)
-      return null;
-    }
-    if (!pointer) return null;
 
-    const user = castUser(pointer, this.eventStore);
+    // Create new request
+    const requestPromise = (async () => {
+      let pointer: ProfilePointer | null = null;
+      try {
+        pointer = normalizeToProfilePointer(identifier);
+      }
+      catch(err) {
+        console.error('Error normalizing profile pointer:', identifier)
+        console.error(err)
+        return null;
+      }
+      if (!pointer) return null;
 
-    // Return user profile with a timeout of 5 seconds
-    return user.profile$.$first(5_000).catch((error) => {
-      console.error('Error fetching user profile:', error)
-      return null
-    }) as Promise<NostrProfile | null>;
+      const user = castUser(pointer, this.eventStore);
+
+      // Return user profile with a timeout of 5 seconds
+      return user.profile$.$first(5_000).catch((error) => {
+        console.error('Error fetching user profile:', error)
+        return null
+      }) as Promise<NostrProfile | null>;
+    })().finally(() => {
+      // Remove from in-flight map when done
+      this.inFlightUserProfiles.delete(identifier);
+    });
+
+    // Store the promise
+    this.inFlightUserProfiles.set(identifier, requestPromise);
+    return requestPromise;
   }
 
   async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
-    const pointer = normalizeToProfilePointer(identifier);
-    if(!pointer) return []
+    // Check if there's already an in-flight request for this identifier
+    const existingRequest = this.inFlightMediaEvents.get(identifier);
+    if (existingRequest) {
+      return existingRequest;
+    }
 
-    const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
-      {
-        kinds: [31990],
-        authors: [pointer.pubkey],
-      },
+    // Create new request
+    const requestPromise = (async () => {
+      const pointer = normalizeToProfilePointer(identifier);
+      if(!pointer) return []
 
-    ).pipe(
-      // ignore EOSE
-      onlyEvents(),
-      // Gather events into a timeline
-      mapEventsToTimeline(),
-      // Add a 60 second timeout for safety
-      simpleTimeout(60_000)
-    ));
+      const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
+        {
+          kinds: [31990],
+          authors: [pointer.pubkey],
+        },
 
-    console.log(`[NostrService] Loaded ${events.length} media events for ${identifier.substring(0, 16)}`);
-    return events.map(event => this.transformToMediaEvent(event))
+      ).pipe(
+        // ignore EOSE
+        onlyEvents(),
+        // Gather events into a timeline
+        mapEventsToTimeline(),
+        // Add a 60 second timeout for safety
+        simpleTimeout(60_000)
+      ));
+
+      console.log(`[NostrService] Loaded ${events.length} media events for ${identifier.substring(0, 16)}`);
+      return events.map(event => this.transformToMediaEvent(event))
+    })().finally(() => {
+      // Remove from in-flight map when done
+      this.inFlightMediaEvents.delete(identifier);
+    });
+
+    // Store the promise
+    this.inFlightMediaEvents.set(identifier, requestPromise);
+    return requestPromise;
   }
 
   async getKind1Events(identifier: string = this.defaultIdentifier): Promise<NostrEvent[]> {
-    let pointer: ProfilePointer | null = null;
-    try {
-      pointer = normalizeToProfilePointer(identifier);
+    // Check if there's already an in-flight request for this identifier
+    const existingRequest = this.inFlightKind1Events.get(identifier);
+    if (existingRequest) {
+      return existingRequest;
     }
-    catch(err) {
-      console.error('Error normalizing profile pointer:', identifier)
-      console.error(err)
-      return []
-    }
-    if(!pointer) return []
 
-    const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
-      {
-        kinds: [kinds.ShortTextNote],
-        authors: [pointer.pubkey],
-      },
-    ).pipe(
-      onlyEvents(),
-      mapEventsToTimeline(),
-      simpleTimeout(60_000))
-    );
+    // Create new request
+    const requestPromise = (async () => {
+      let pointer: ProfilePointer | null = null;
+      try {
+        pointer = normalizeToProfilePointer(identifier);
+      }
+      catch(err) {
+        console.error('Error normalizing profile pointer:', identifier)
+        console.error(err)
+        return []
+      }
+      if(!pointer) return []
 
-    console.log(`[NostrService] Loaded ${events.length} kind 1 events for ${identifier.substring(0, 16)}...`);
-    return events
+      const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
+        {
+          kinds: [kinds.ShortTextNote],
+          authors: [pointer.pubkey],
+        },
+      ).pipe(
+        onlyEvents(),
+        mapEventsToTimeline(),
+        simpleTimeout(60_000))
+      );
+
+      console.log(`[NostrService] Loaded ${events.length} kind 1 events for ${identifier.substring(0, 16)}...`);
+      return events
+    })().finally(() => {
+      // Remove from in-flight map when done
+      this.inFlightKind1Events.delete(identifier);
+    });
+
+    // Store the promise
+    this.inFlightKind1Events.set(identifier, requestPromise);
+    return requestPromise;
   }
 
   /**
@@ -178,24 +196,39 @@ export class NostrService {
    * @returns An array of long-form content events
    */
   async getLongFormEvents(identifier: string = this.defaultIdentifier): Promise<NostrEvent[]> {
-    const pointer = normalizeToProfilePointer(identifier);
-    if(!pointer) return []
+    // Check if there's already an in-flight request for this identifier
+    const existingRequest = this.inFlightLongFormEvents.get(identifier);
+    if (existingRequest) {
+      return existingRequest;
+    }
 
+    // Create new request
+    const requestPromise = (async () => {
+      const pointer = normalizeToProfilePointer(identifier);
+      if(!pointer) return []
 
-    const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
-      {
-        kinds: [kinds.LongFormArticle],
-        authors: [pointer.pubkey],
-        limit: 100,
-      },
-    ).pipe(
-      onlyEvents(),
-      mapEventsToTimeline(),
-      simpleTimeout(60_000))
-    );
+      const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
+        {
+          kinds: [kinds.LongFormArticle],
+          authors: [pointer.pubkey],
+          limit: 100,
+        },
+      ).pipe(
+        onlyEvents(),
+        mapEventsToTimeline(),
+        simpleTimeout(60_000))
+      );
 
-    console.log(`[NostrService] Loaded ${events.length} long-form events for ${identifier.substring(0, 16)}...`);
-    return events
+      console.log(`[NostrService] Loaded ${events.length} long-form events for ${identifier.substring(0, 16)}...`);
+      return events
+    })().finally(() => {
+      // Remove from in-flight map when done
+      this.inFlightLongFormEvents.delete(identifier);
+    });
+
+    // Store the promise
+    this.inFlightLongFormEvents.set(identifier, requestPromise);
+    return requestPromise;
   }
 
   /**

@@ -14,8 +14,6 @@ describe('NostrService', () => {
 
   beforeEach(() => {
     nostrService = new TestNostrService();
-    // Initialize the NDK instance for testing
-    nostrService.initialize();
   });
 
   describe('defaultIdentifier', () => {
@@ -146,9 +144,6 @@ describe('NostrService', () => {
 
   describe('findMatchingLongFormContent', () => {
     it('should find a long-form content event that matches the title of a kind1 event', async () => {
-      // Initialize the NDK instance for testing
-      await nostrService.initialize();
-
       // Use real event IDs
       const kind1EventId = 'nevent1qqszlf337y0lkg4sz5ax9ath4y5vk6rpqn9tfewaln2989zavvqrg4czyzdauss5j8e745dvyx736qtx024egl6vr39wmpmzfnezwwcxegzjkj3qfzd';
       const longFormEventId = 'naddr1qvzqqqr4gupzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftqqvnqd3d235x2t2hd9hxgueddanz6s2f94jnye3kve4sh9v6es';
@@ -180,9 +175,6 @@ describe('NostrService', () => {
     }, 30000);
 
     it('should find a long-form content event by matching episode number', async () => {
-      // Initialize the NDK instance for testing
-      await nostrService.initialize();
-
       // Use real event IDs for episode number matching test
       const kind1EventId = 'nevent1qqsq92p3qgyjnqn9rm7k87fdaq4aqqhwpdteuaam2q0s7dqjsf9lpgqpz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dspzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftnp2759';
       const longFormEventId = 'naddr1qvzqqqr4gupzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftqq24qjmxf5m525zyg3gygemv94q5232rxf9xvdz74hz';
@@ -220,9 +212,6 @@ describe('NostrService', () => {
     }, 30000);
 
     it('should have episode number "01" for the kind1 event', async () => {
-      // Initialize the NDK instance for testing
-      await nostrService.initialize();
-
       // Use the real kind1 event ID
       const kind1EventId = 'nevent1qqsq92p3qgyjnqn9rm7k87fdaq4aqqhwpdteuaam2q0s7dqjsf9lpgqpz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dspzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftnp2759';
 
@@ -243,9 +232,6 @@ describe('NostrService', () => {
     }, 30000);
 
     it('should return null if no matching long-form content is found', async () => {
-      // Initialize the NDK instance for testing
-      await nostrService.initialize();
-
       // Create a kind1 event with a unique title that won't have a matching long-form content
       const mockKind1Event = {
         content: 'This is a unique title that should not have a matching long-form content\nThis is a podcast episode.',
@@ -262,9 +248,6 @@ describe('NostrService', () => {
 
   describe('getEventById', () => {
     it('should fetch a long-form content event by its naddr ID', async () => {
-      // Initialize the NDK instance for testing
-      await nostrService.initialize();
-
       // Use a real naddr event ID
       const longFormEventId = 'naddr1qvzqqqr4gupzpx77gg2frul26xkzr0gaq9n842u50axpcjhdsa3yeu388vrv5pftqqvnqd3d235x2t2hd9hxgueddanz6s2f94jnye3kve4sh9v6es';
 
@@ -286,9 +269,6 @@ describe('NostrService', () => {
 
   describe('getLongFormEvents', () => {
     it('should fetch all long-form content events for a user', async () => {
-      // Initialize the NDK instance for testing
-      await nostrService.initialize();
-
       // Use the default npub
       const npub = 'npub1n00yy9y3704drtpph5wszen64w287nquftkcwcjv7gnnkpk2q54s73000n';
 

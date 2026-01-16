@@ -9,9 +9,6 @@ const port = PORT;
 const nostrService = new NostrService();
 const feedGenerator = new PodcastFeedGenerator();
 
-// Initialize Nostr service
-nostrService.initialize().catch(console.error);
-
 // Content negotiation middleware
 app.use((req, res, next) => {
   const acceptHeader = req.headers.accept || '';

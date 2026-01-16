@@ -29,9 +29,6 @@ marked.setOptions({
 // Create service instance
 const nostrService = new NostrService()
 
-// Initialize NDK connection
-let initialized = false
-
 // Generate metadata for the page
 export async function generateMetadata({
   params,
@@ -40,12 +37,6 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const resolvedParams = await params
   const npub = resolvedParams.npub
-
-  // Initialize NDK if not already initialized
-  if (!initialized) {
-    await nostrService.initialize()
-    initialized = true
-  }
 
   try {
     const profile = await nostrService.getUserProfile(npub)
@@ -147,13 +138,6 @@ export default async function NpubPage({
 }: {
   params: Promise<{ npub: string }>
 }): Promise<ReactElement> {
-  // Initialize NDK if not already initialized
-  if (!initialized) {
-    await nostrService.initialize()
-    initialized = true
-    console.log('NostrService initialized successfully')
-  }
-
   // Get the npub/nprofile from params (may be URL-encoded)
   const resolvedParams = await params
   let npub = resolvedParams.npub
