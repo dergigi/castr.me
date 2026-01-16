@@ -80,15 +80,7 @@ export class NostrService {
 
     // Create new request
     const requestPromise = (async () => {
-      let pointer: ProfilePointer | null = null;
-      try {
-        pointer = normalizeToProfilePointer(identifier);
-      }
-      catch(err) {
-        console.error('Error normalizing profile pointer:', identifier)
-        console.error(err)
-        return null;
-      }
+      const pointer = normalizeToProfilePointer(identifier);
       if (!pointer) return null;
 
       const user = castUser(pointer, this.eventStore);
@@ -156,15 +148,7 @@ export class NostrService {
 
     // Create new request
     const requestPromise = (async () => {
-      let pointer: ProfilePointer | null = null;
-      try {
-        pointer = normalizeToProfilePointer(identifier);
-      }
-      catch(err) {
-        console.error('Error normalizing profile pointer:', identifier)
-        console.error(err)
-        return []
-      }
+      const pointer = normalizeToProfilePointer(identifier);
       if(!pointer) return []
 
       const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
@@ -290,8 +274,10 @@ export class NostrService {
 
   extractTitle(event: NostrEvent): string {
     // Try to find a title tag
-    const titleTag = event.tags.find(tag => tag[0] === 'title');
-    if (titleTag) return titleTag[1];
+    if (event.tags) {
+      const titleTag = event.tags.find(tag => tag[0] === 'title');
+      if (titleTag) return titleTag[1];
+    }
 
     // Otherwise, use the first line of content or a truncated version
     const firstLine = event.content.split('\n')[0];
@@ -463,7 +449,17 @@ export class NostrService {
    */
   async getEventById(eventId: string): Promise<NostrEvent | null> {
     try {
-      const decoded: DecodeResult = isHex(eventId) ? {type: 'nevent', data: {id: eventId} }: decodePointer(eventId);
+      let decoded: DecodeResult;
+      if (isHex(eventId)) {
+        decoded = {type: 'nevent', data: {id: eventId} };
+      } else {
+        try {
+          decoded = decodePointer(eventId);
+        } catch (error) {
+          console.error('Error decoding pointer:', error);
+          return null;
+        }
+      }
 
       // Ensure the pointer is to an event
       if(decoded.type !== 'nevent' && decoded.type !== 'naddr' && decoded.type !== 'note') return null;
