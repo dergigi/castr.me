@@ -4,7 +4,6 @@ import { decodePointer, DecodeResult, isHex, kinds, normalizeToProfilePointer, N
 import { firstValueFrom, lastValueFrom, mapEventsToTimeline, simpleTimeout } from 'applesauce-core/observable'
 import { createEventLoaderForStore } from 'applesauce-loaders/loaders'
 import { onlyEvents, RelayPool } from 'applesauce-relay'
-import { ProfilePointer } from 'nostr-tools/nip19'
 import { EXTRA_RELAYS, LOOKUP_RELAYS } from '../../config/env'
 import type { MediaEvent } from "../../types"
 
