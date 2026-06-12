@@ -1,7 +1,8 @@
 import { castUser, User } from 'applesauce-common/casts'
 import { EventStore } from 'applesauce-core/event-store'
-import { decodePointer, DecodeResult, isHex, kinds, normalizeToProfilePointer, NostrEvent, ProfileContent, relaySet } from 'applesauce-core/helpers'
-import { firstValueFrom, lastValueFrom, mapEventsToTimeline, simpleTimeout } from 'applesauce-core/observable'
+import { decodePointer, DecodeResult, isHex, kinds, normalizeToProfilePointer, NostrEvent, ProfileContent, ProfilePointer, relaySet } from 'applesauce-core/helpers'
+import { Filter } from 'applesauce-core/helpers/filter'
+import { firstValueFrom, lastValueFrom, mapEventsToStore, mapEventsToTimeline, simpleTimeout } from 'applesauce-core/observable'
 import { createEventLoaderForStore } from 'applesauce-loaders/loaders'
 import { onlyEvents, RelayPool } from 'applesauce-relay'
 import { EXTRA_RELAYS, LOOKUP_RELAYS } from '../../config/env'
@@ -99,6 +100,41 @@ export class NostrService {
     return requestPromise;
   }
 
+  /**
+   * Requests events from a single author, routed to their NIP-65 outbox relays.
+   *
+   * Relay selection unions the author's published outbox relays (kind 10002) with
+   * the default relays and any relay hints from the identifier, so we read from
+   * where the user actually publishes instead of a fixed relay set. Falls back to
+   * defaults + hints when the outbox list is missing or slow to load. Events are
+   * added to the event store so concurrent loads dedup and reuse cached data.
+   */
+  private async requestAuthorEvents(
+    pointer: ProfilePointer,
+    filter: Omit<Filter, 'authors'>,
+    timeoutMs = 10_000,
+  ): Promise<NostrEvent[]> {
+    // Resolve the author's outbox relays (NIP-65), tolerating a missing/late list
+    const outboxes = await castUser(pointer, this.eventStore)
+      .outboxes$.$first(2_000, [] as string[])
+      .catch(() => [] as string[])
+
+    const relays = relaySet(this.defaultRelays, pointer.relays, outboxes)
+
+    return lastValueFrom(
+      this.pool.request(relays, { ...filter, authors: [pointer.pubkey] }).pipe(
+        // ignore EOSE
+        onlyEvents(),
+        // cache events in the store so concurrent loads dedup and reuse
+        mapEventsToStore(this.eventStore),
+        // gather events into a timeline
+        mapEventsToTimeline(),
+        // safety timeout so a slow/flaky relay can't hang the request
+        simpleTimeout(timeoutMs),
+      ),
+    )
+  }
+
   async getMediaEvents(identifier: string = this.defaultIdentifier): Promise<MediaEvent[]> {
     // Check if there's already an in-flight request for this identifier
     const existingRequest = this.inFlightMediaEvents.get(identifier);
@@ -111,20 +147,7 @@ export class NostrService {
       const pointer = normalizeToProfilePointer(identifier);
       if(!pointer) return []
 
-      const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
-        {
-          kinds: [31990],
-          authors: [pointer.pubkey],
-        },
-
-      ).pipe(
-        // ignore EOSE
-        onlyEvents(),
-        // Gather events into a timeline
-        mapEventsToTimeline(),
-        // Add a 60 second timeout for safety
-        simpleTimeout(60_000)
-      ));
+      const events = await this.requestAuthorEvents(pointer, { kinds: [31990] })
 
       console.log(`[NostrService] Loaded ${events.length} media events for ${identifier.substring(0, 16)}`);
       return events.map(event => this.transformToMediaEvent(event))
@@ -150,16 +173,7 @@ export class NostrService {
       const pointer = normalizeToProfilePointer(identifier);
       if(!pointer) return []
 
-      const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
-        {
-          kinds: [kinds.ShortTextNote],
-          authors: [pointer.pubkey],
-        },
-      ).pipe(
-        onlyEvents(),
-        mapEventsToTimeline(),
-        simpleTimeout(60_000))
-      );
+      const events = await this.requestAuthorEvents(pointer, { kinds: [kinds.ShortTextNote] })
 
       console.log(`[NostrService] Loaded ${events.length} kind 1 events for ${identifier.substring(0, 16)}...`);
       return events
@@ -190,17 +204,7 @@ export class NostrService {
       const pointer = normalizeToProfilePointer(identifier);
       if(!pointer) return []
 
-      const events = await lastValueFrom(this.pool.request(relaySet(this.defaultRelays, pointer.relays),
-        {
-          kinds: [kinds.LongFormArticle],
-          authors: [pointer.pubkey],
-          limit: 100,
-        },
-      ).pipe(
-        onlyEvents(),
-        mapEventsToTimeline(),
-        simpleTimeout(60_000))
-      );
+      const events = await this.requestAuthorEvents(pointer, { kinds: [kinds.LongFormArticle], limit: 100 })
 
       console.log(`[NostrService] Loaded ${events.length} long-form events for ${identifier.substring(0, 16)}...`);
       return events
