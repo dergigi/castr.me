@@ -1,12 +1,17 @@
 import CopyButton from '@/components/CopyButton'
 import { HTTP_NOSTR_GATEWAY, NEXT_PUBLIC_BASE_URL } from '@/config/env'
 import { NostrProfile, NostrService } from '@/services/nostr/NostrService'
+import { isValidNostrIdentifier } from '@/services/nostr/identifier'
 import { NostrEvent } from 'applesauce-core/helpers/event'
 import DOMPurify from 'isomorphic-dompurify'
 import { marked } from 'marked'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import type { ReactElement } from 'react'
+
+// Cache the rendered page (and its relay fetches) at the CDN for 15 minutes per
+// npub, so repeated visits don't each trigger a relay fan-out.
+export const revalidate = 900
 
 // Function to count words in a string
 function countWords(str: string): number {
@@ -149,12 +154,13 @@ export default async function NpubPage({
     // If not URL-encoded, use as-is
   }
 
-  if (!npub) {
+  // Reject malformed identifiers before doing any relay work
+  if (!isValidNostrIdentifier(npub)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4 text-gray-900">Invalid Profile</h1>
-          <p className="text-gray-600">No profile ID provided.</p>
+          <p className="text-gray-600">No valid Nostr profile ID was provided.</p>
         </div>
       </div>
     )
