@@ -99,7 +99,7 @@ describe('NostrService', () => {
 
     it('should use first line of content as title when no title tag exists', () => {
       const event = {
-        tags: [],
+        tags: [] as string[][],
         content: 'First line\nSecond line'
       } as NostrEvent;
       const title = nostrService['extractTitle'](event);
@@ -108,7 +108,7 @@ describe('NostrService', () => {
 
     it('should truncate long titles', () => {
       const event = {
-        tags: [],
+        tags: [] as string[][],
         content: 'A'.repeat(150)
       } as NostrEvent;
       const title = nostrService['extractTitle'](event);
