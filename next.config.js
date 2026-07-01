@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ['isomorphic-dompurify', 'dompurify', 'jsdom'],
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'localhost:3001']
@@ -15,8 +16,9 @@ const nextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    // Ensure nostr-tools is properly resolved for server-side rendering
-    if (isServer) {
+    // Browser bundles need fallbacks for Node-only modules. Server bundles must
+    // keep native Node resolution so jsdom can read its packaged assets.
+    if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,

@@ -55,7 +55,11 @@ export class NostrService {
 
     // Close all relay connections
     for (const [, relay] of Array.from(this.pool.relays.entries())) {
-      await relay.close()
+      try {
+        await relay.close()
+      } catch (error) {
+        console.error('Error closing relay:', error)
+      }
     }
   }
 
@@ -267,8 +271,10 @@ export class NostrService {
       const longFormEvent = longFormMap.get(kind1Title)
 
       if (longFormEvent) {
-        // Add show notes tag to the event
-        event.tags.push(['show_notes', longFormEvent.content])
+        return {
+          ...event,
+          tags: [...event.tags, ['show_notes', longFormEvent.content]],
+        }
       }
 
       return event

@@ -11,7 +11,7 @@ import {
 
 // Create service instances
 const nostrService = new NostrService()
-const feedGenerator = new PodcastFeedGenerator()
+const feedGenerator = new PodcastFeedGenerator(nostrService)
 
 export async function GET(
   request: NextRequest,
