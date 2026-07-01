@@ -4,6 +4,7 @@ import ExamplesGrid from '@/components/ExamplesGrid'
 import NpubInput from '@/components/NpubInput'
 import { Suspense } from 'react'
 import PrefetchDemo from '@/components/PrefetchDemo'
+import { HTTP_NOSTR_GATEWAY } from '@/config/env'
 
 export default function Home(): React.JSX.Element {
   return (
@@ -14,7 +15,7 @@ export default function Home(): React.JSX.Element {
         <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
           <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
         </div>
-        
+
         <div className="mx-auto max-w-2xl pt-32 pb-20 sm:pt-48 sm:pb-24 lg:pt-56 lg:pb-28">
           <div className="text-center">
             <div className="flex justify-center mb-8">
@@ -27,11 +28,11 @@ export default function Home(): React.JSX.Element {
                 </div>
               </div>
             </div>
-            
+
             <p className="mt-6 text-lg leading-8 text-gray-600 max-w-2xl mx-auto">
               Transform Nostr feeds into beautiful podcast feeds. Listen to your favorite Nostr content on any podcast app with castr.me.
             </p>
-            
+
             <div className="mt-10 mb-20 flex flex-col items-center justify-center gap-8">
               <NpubInput placeholder="npub1..." />
               <div className="flex items-center justify-center gap-x-6">
@@ -52,7 +53,7 @@ export default function Home(): React.JSX.Element {
             </div>
           </div>
         </div>
-        
+
         <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
           <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
         </div>
@@ -70,7 +71,7 @@ export default function Home(): React.JSX.Element {
               These npubs regularly share media on Nostr. Subscribe to their RSS feeds and listen using your favorite podcast app.
             </p>
           </div>
-          
+
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
             <Suspense fallback={
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -97,7 +98,7 @@ export default function Home(): React.JSX.Element {
               castr.me bridges the gap between Nostr and traditional podcast platforms, making decentralized content accessible everywhere.
             </p>
           </div>
-          
+
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
             <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
               <div className="flex flex-col">
@@ -111,7 +112,7 @@ export default function Home(): React.JSX.Element {
                   </p>
                 </dd>
               </div>
-              
+
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
                   <GlobeAltIcon className="h-5 w-5 flex-none text-indigo-600" />
@@ -123,7 +124,7 @@ export default function Home(): React.JSX.Element {
                   </p>
                 </dd>
               </div>
-              
+
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
                   <SparklesIcon className="h-5 w-5 flex-none text-indigo-600" />
@@ -161,7 +162,7 @@ export default function Home(): React.JSX.Element {
                 Contribute on GitHub
               </Link>
               <Link
-                href={`${process.env.HTTP_NOSTR_GATEWAY || 'https://njump.to'}/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme`}
+                href={`${HTTP_NOSTR_GATEWAY}/npub196qvw7utjs0cnztlg4aww98ekql9svm6c4wlv6sug70nzz0uujxsprafme`}
                 className="rounded-full bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 transition-all duration-200 flex items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -206,4 +207,4 @@ export default function Home(): React.JSX.Element {
       </div>
     </div>
   )
-} 
+}

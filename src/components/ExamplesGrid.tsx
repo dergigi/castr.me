@@ -126,9 +126,6 @@ const examples: Example[] = [
 // Create service instance
 const nostrService = new NostrService()
 
-// Initialize NDK connection
-let initialized = false
-
 const PROFILE_TIMEOUT_MS = 800
 
 function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => T): Promise<T> {
@@ -162,14 +159,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => T): Pr
 // Function to truncate description to keep it very short
 function truncateDescription(description: string): string {
   if (!description) return ''
-  
+
   // Remove extra whitespace and newlines
   const cleanDescription = description.trim().replace(/\s+/g, ' ')
-  
+
   // If it's already short (4 words or less), return as is
   const words = cleanDescription.split(' ')
   if (words.length <= 4) return cleanDescription
-  
+
   // Find the first sentence (ending with . ! ?)
   const sentenceMatch = cleanDescription.match(/^[^.!?]+[.!?]/)
   if (sentenceMatch) {
@@ -177,19 +174,13 @@ function truncateDescription(description: string): string {
     // If the sentence is very short, use it
     if (sentence.length <= 50) return sentence
   }
-  
+
   // Otherwise, take first 4 words and add ellipsis
   return words.slice(0, 4).join(' ') + '...'
 }
 
 async function getProfileData(npub: string): Promise<NostrProfile | null> {
   try {
-    // Initialize NDK if not already initialized
-    if (!initialized) {
-      await nostrService.initialize()
-      initialized = true
-    }
-    
     const fetchProfile = nostrService.getUserProfile(npub)
     // Timebox the profile fetch so we don't block rendering for too long
     const profile = await withTimeout(fetchProfile, PROFILE_TIMEOUT_MS, () => null)
@@ -212,7 +203,7 @@ export default async function ExamplesGrid(): Promise<React.JSX.Element> {
         const displayName = profile?.name || example.name
         const profileImage = profile?.picture
         const displayDescription = truncateDescription(profile?.about || example.fallbackDescription)
-        
+
         return (
           <Link
             key={example.npub}

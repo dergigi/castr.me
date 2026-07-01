@@ -5,6 +5,7 @@ import { load, trackPageview } from 'fathom-client';
 import type { ReactElement } from 'react';
 import { Suspense, useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { NEXT_PUBLIC_FATHOM_ID } from '@/config/env';
 
 function TrackPageView(): ReactElement | null {
   const pathname = usePathname();
@@ -18,7 +19,7 @@ function TrackPageView(): ReactElement | null {
       return;
     }
 
-    load(process.env.NEXT_PUBLIC_FATHOM_ID, {
+    load(NEXT_PUBLIC_FATHOM_ID, {
       auto: false,
     });
   }, []);

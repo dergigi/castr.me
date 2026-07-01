@@ -1,17 +1,13 @@
-import express from 'express';
-import { NostrService } from '@/services/nostr/NostrService';
+import { PORT } from '@/config/env';
 import { PodcastFeedGenerator } from '@/services/feed/PodcastFeedGenerator';
-import { NDKEvent } from '@nostr-dev-kit/ndk';
-import { NostrProfile } from '@/services/nostr/NostrService';
+import { NostrProfile, NostrService } from '@/services/nostr/NostrService';
+import express from 'express';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = PORT;
 
 const nostrService = new NostrService();
 const feedGenerator = new PodcastFeedGenerator();
-
-// Initialize Nostr service
-nostrService.initialize().catch(console.error);
 
 // Content negotiation middleware
 app.use((req, res, next) => {
@@ -29,7 +25,7 @@ app.get('/', (req, res) => {
 app.get('/:npub', async (req, res) => {
   const npub = req.params.npub;
   const profile = await nostrService.getUserProfile(npub) as NostrProfile;
-  
+
   if (!profile) {
     return res.status(404).send('Profile not found');
   }
@@ -37,7 +33,7 @@ app.get('/:npub', async (req, res) => {
   const events = await nostrService.getKind1Events(npub);
   const audioEvents = events.filter(event => nostrService.isMediaEvent(event))
     .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
-  
+
   res.send(`
     <!DOCTYPE html>
     <html>
@@ -63,7 +59,7 @@ app.get('/:npub', async (req, res) => {
           </div>
         </div>
         <h2>Episodes</h2>
-        ${audioEvents.map((event: NDKEvent) => {
+        ${audioEvents.map((event) => {
           const audioUrl = event.content.match(/https?:\/\/[^\s]+\.(mp3|m4a|wav|ogg)/)?.[0];
           const title = nostrService.extractTitle(event);
           return `
@@ -83,7 +79,7 @@ app.get('/:npub', async (req, res) => {
 app.get('/feed/:npub', async (req, res) => {
   const npub = req.params.npub;
   const profile = await nostrService.getUserProfile(npub) as NostrProfile;
-  
+
   if (!profile) {
     return res.status(404).send('Profile not found');
   }
@@ -91,11 +87,11 @@ app.get('/feed/:npub', async (req, res) => {
   const events = await nostrService.getKind1Events(npub);
   const audioEvents = events.filter(event => nostrService.isMediaEvent(event));
   const feed = feedGenerator.generateFeed(profile, audioEvents, npub);
-  
+
   res.set('Content-Type', 'application/xml');
   res.send(feed);
 });
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-}); 
+});
