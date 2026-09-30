@@ -88,10 +88,15 @@ See [VALUE_SPLITS.md](docs/VALUE_SPLITS.md) for details.
 
 ## Installation
 
+Use Node.js 24 (also selected for Vercel deployments by `engines.node` in `package.json`).
+
 ```bash
+# Select the project runtime with nvm
+nvm install
+nvm use
 
 # Install dependencies
-npm install
+npm ci
 
 # Build the project
 npm run build
